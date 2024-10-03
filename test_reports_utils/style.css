@@ -1,0 +1,108 @@
+
+table, th, td, tr {
+   border: 1px solid black;
+   border-collapse: collapse;
+   padding: 10px;
+}
+
+p {
+   max-width: 50em;
+}
+.section {
+	border:1px solid black; 
+	border-radius:4px;
+	padding-left: 10px;
+}
+
+.metric {
+	border:1px solid gray; 
+	border-radius:4px;
+	padding: 8px;
+   display: inline-block; 
+   max-width: 45em;
+}
+
+.met_name {
+   font-size: larger;
+}
+
+.met_id {
+   font-size: smaller;
+   font-style: italic;
+}
+
+.v_center_text {
+   vertical-align: middle;
+}
+
+.jod_text {
+   vertical-align: middle;
+   font-size: larger;
+   height: 200px;
+}
+
+.larger_text {
+   font-size: larger;
+}
+
+.st_box {
+   padding: 10px;
+   width: 345px;
+   display: inline-block;   
+   text-align: center;
+}
+
+.st_box p {
+   line-height: 1.0;
+   display: inline-block;
+   vertical-align: middle;
+}
+
+
+h2 {
+   color: teal;
+}
+
+.test_separator {
+   height: 2px;
+   background-color: chocolate;   
+}
+
+.cell-content {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+}
+
+.cell-content img {
+   max-width: 100%;
+   max-height: 80%;
+   cursor: pointer;
+}
+
+.cell-content video {
+   max-width: 100%;
+   max-height: 80%;
+   cursor: pointer;
+}
+
+.cell-content p {
+   margin: 10px 0 0;
+}
+
+.image-container {
+   display: flex;                 /* Enable Flexbox */
+   flex-wrap: wrap;               /* Allow images to wrap onto new lines */
+   justify-content: flex-start; /* Distribute images with space between them */
+   align-items: center;           /* Align images vertically */
+   gap: 20px;                     /* Optional: Add space between items */
+}
+
+/* Image styling */
+.image-container img {
+   max-width: 100%;                /* Make image responsive */
+   max-height: 100%;               /* Scale image within container */
+   object-fit: cover;              /* Maintain aspect ratio and cover */
+   border-radius: 10px;            /* Optional: Add rounded corners */
+}

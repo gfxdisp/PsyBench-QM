@@ -1,5 +1,5 @@
 from math import log10
-
+import abc
 from pyst.synthetic_test import SyntheticTest
 import numpy as np
 import os
@@ -74,10 +74,15 @@ class GaborPatchTest(SyntheticTest):
         self._preview_folder = 'gabor_tests'
         self._preview_as = None
 
+        self.csf_data_folder = 'pyst/pyst_data/gabor_tests_castlecsf_results'
+
 
     def __len__(self):
         return self.N_contrasts*self.N_s_freq*self.N_t_freq*self.N_L*self.N_orien*self.N_size*self.N_ecc
 
+    @abc.abstractmethod
+    def get_csf_results(self):
+        pass
 
     def get_test_condition_parameters(self, index):
 
@@ -167,6 +172,15 @@ class GaborPatchTest(SyntheticTest):
         plt.xticks(np.unique(x_condition), formatted_xticks, fontsize=10)
         plt.yticks(np.unique(y_condition), formatted_yticks, fontsize=10)
 
+        # Plot the csf results
+
+        x_csf, y_csf = self.get_csf_results()
+
+        plt.plot(x_csf, y_csf+0.01, marker='o', color='red', linewidth=1, markerfacecolor='none', markeredgecolor='red')
+
+        plt.xlim([np.min(x_condition), np.max(x_condition)])
+        plt.ylim([np.min(y_condition), np.max(y_condition)])
+
         if title is not None:
             plt.title(title, fontsize=14)
 
@@ -209,6 +223,12 @@ class GaborPatchSpatialFreqAchTest(GaborPatchTest):
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_ach')
         self._preview_as = 'image'
 
+    def get_csf_results(self):
+        x = self.spatial_frequencies
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_ach.txt'))
+
+        return x, y
+
     def get_row_header(self):
         return ['Contrast', 'Spatial Frequency']
 
@@ -242,6 +262,12 @@ class GaborPatchSpatialFreqRGTest(GaborPatchTest):
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_rg')
         self._preview_as = 'image'
+    
+    def get_csf_results(self):
+        x = self.spatial_frequencies
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_rg.txt'))
+
+        return x, y
 
     def get_row_header(self):
         return ['Contrast', 'Spatial Frequency']
@@ -277,6 +303,12 @@ class GaborPatchSpatialFreqYVTest(GaborPatchTest):
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_yv')
         self._preview_as = 'image'
 
+    def get_csf_results(self):
+        x = self.spatial_frequencies
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_yv.txt'))
+
+        return x, y
+
     def get_row_header(self):
         return ['Contrast', 'Spatial Frequency']
 
@@ -311,6 +343,12 @@ class GaborPatchLuminanceAchTest(GaborPatchTest):
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_ach')
         self._preview_as = 'image'
+    
+    def get_csf_results(self):
+        x = self.bkg_luminances
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+        return x, y
 
     def get_row_header(self):
         return ['Contrast', 'Luminance']
@@ -345,6 +383,12 @@ class GaborPatchSizeAchTest(GaborPatchTest):
 
         self._preview_folder = os.path.join(self._preview_folder, 'sizes_ach')
         self._preview_as = 'image'
+    
+    def get_csf_results(self):
+        x = self.sizes
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'size_ach.txt'))
+
+        return x, y
 
     def get_row_header(self):
         return ['Contrast', 'Size']
@@ -362,73 +406,73 @@ class GaborPatchSizeAchTest(GaborPatchTest):
         return 'Gabor Patch Size Achromatic Test'
 
 
-class GaborPatchEccAchTest(GaborPatchTest):
+# class GaborPatchEccAchTest(GaborPatchTest):
 
-    def __init__(self, width=1024, height=1024, N_contrasts=10, N_ecc=7, device=None):
+#     def __init__(self, width=1024, height=1024, N_contrasts=10, N_ecc=7, device=None):
 
-        channel = 'Ach'
-        frames = 1
-        fps = 1
+#         channel = 'Ach'
+#         frames = 1
+#         fps = 1
 
-        eccentricities = torch.linspace(0, 6, N_ecc)
-        contrasts = torch.logspace(-2, 0, N_contrasts)
+#         eccentricities = torch.linspace(0, 6, N_ecc)
+#         contrasts = torch.logspace(-2, 0, N_contrasts)
 
-        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+#         gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, eccentricities=eccentricities, sizes=1, device=device)
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, eccentricities=eccentricities, sizes=1, device=device)
 
-        self._preview_folder = os.path.join(self._preview_folder, 'eccentricities_ach')
-        self._preview_as = 'image'
+#         self._preview_folder = os.path.join(self._preview_folder, 'eccentricities_ach')
+#         self._preview_as = 'image'
 
-    def get_row_header(self):
-        return ['Contrast', 'Eccentricity']
+#     def get_row_header(self):
+#         return ['Contrast', 'Eccentricity']
 
-    def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.eccentricities[self.ecc_indices]]
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.eccentricities[self.ecc_indices]]
 
-    def size(self):
-        return self.N_contrasts, self.N_ecc
+#     def size(self):
+#         return self.N_contrasts, self.N_ecc
 
-    def units(self):
-        return ['log', 'linear'], [None, 'deg']
+#     def units(self):
+#         return ['log', 'linear'], [None, 'deg']
 
-    def short_name(self):
-        return 'Gabor Patch Eccentricity Achromatic Test'
+#     def short_name(self):
+#         return 'Gabor Patch Eccentricity Achromatic Test'
 
-class GaborPatchOrientationAchTest(GaborPatchTest):
+# class GaborPatchOrientationAchTest(GaborPatchTest):
 
-    def __init__(self, width=1024, height=1024, N_contrasts=10, N_oriantation=6, device=None):
+#     def __init__(self, width=1024, height=1024, N_contrasts=10, N_oriantation=6, device=None):
 
-        channel = 'Ach'
-        frames = 1
-        fps = 1
+#         channel = 'Ach'
+#         frames = 1
+#         fps = 1
 
-        orientations = torch.linspace(0, 160, N_oriantation)
-        contrasts = torch.logspace(-2, 0, N_contrasts)
+#         orientations = torch.linspace(0, 160, N_oriantation)
+#         contrasts = torch.logspace(-2, 0, N_contrasts)
 
-        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+#         gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, orientations=orientations, device=device)
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, orientations=orientations, device=device)
 
-        self._preview_folder = os.path.join(self._preview_folder, 'orientations_ach')
-        self._preview_as = 'image'
+#         self._preview_folder = os.path.join(self._preview_folder, 'orientations_ach')
+#         self._preview_as = 'image'
 
-    def get_row_header(self):
-        return ['Contrast', 'Orientation']
+#     def get_row_header(self):
+#         return ['Contrast', 'Orientation']
 
-    def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.orientations[self.orien_indices]]
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.orientations[self.orien_indices]]
 
-    def size(self):
-        return self.N_contrasts, self.N_orien
+#     def size(self):
+#         return self.N_contrasts, self.N_orien
 
-    def units(self):
-        return ['log', 'linear'], [None, '$^\circ$']
+#     def units(self):
+#         return ['log', 'linear'], [None, '$^\circ$']
 
-    def short_name(self):
-        return 'Gabor Patch Orientation Achromatic Test'
+#     def short_name(self):
+#         return 'Gabor Patch Orientation Achromatic Test'
 
 class GaborPatchTempFreqAchTest(GaborPatchTest):
 
@@ -448,6 +492,12 @@ class GaborPatchTempFreqAchTest(GaborPatchTest):
 
         self._preview_folder = os.path.join(self._preview_folder, 'temporal_frequencies_ach')
         self._preview_as = 'video'
+    
+    def get_csf_results(self):
+        x = self.temporal_frequencies
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'temporal_freq_ach.txt'))
+
+        return x, y
 
     def get_row_header(self):
         return ['Contrast', 'Temporal Frequency']

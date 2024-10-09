@@ -28,6 +28,29 @@ def generate_gabor_patch(width, height, frames, ppd, fps, s_freq, t_freq, orient
 
     return LMS
 
+def generate_gabor_mask(width, height, ppd, s_freq, orientation, LMS_mean, LMS_delta, device=None):
+    
+    # We are using a cos grating! 
+
+    width_deg = width / ppd
+    height_deg = height / ppd
+
+    xx, yy = torch.meshgrid(torch.linspace(0, width_deg, width).to(device) , torch.linspace(0, height_deg, height).to(device), indexing='xy')
+    
+    dd = torch.sqrt(xx**2 + yy**2)
+    cosB = ( xx * torch.sin(torch.deg2rad(-orientation)) + yy * torch.cos(torch.deg2rad(-orientation)) ) / dd
+    cosB[0, 0] = 1
+    d = torch.sqrt(1 - cosB**2) * dd 
+
+    grating = torch.cos(2*pi*d*s_freq)
+    masker_grating = grating.view(height, width, 1, 1) * LMS_delta.view(1, 1, 3, 1)
+
+    LMS_mean = LMS_mean.view(1, 1, 3, 1)
+
+    LMS = LMS_mean + masker_grating
+
+    return LMS
+
 def Yxy2XYZ(Yxy):
 
     # We will assume that Yxy is a tensor of the sahpe X,C
@@ -45,7 +68,7 @@ def XYZ2LMS2006(XYZ):
     M_xyz_lms2006 = torch.tensor([ 
         [0.187596268556126, 0.585168649077728, -0.026384263306304],
         [-0.133397430663221, 0.405505777260049, 0.034502127690364],
-        [0.000244379021663, -0.000542995890619, 0.019406849066323 ]], device=XYZ.get_device())
+        [0.000244379021663, -0.000542995890619, 0.019406849066323 ]], device=XYZ.device)
     
     return torch.matmul(XYZ, M_xyz_lms2006.T)
 
@@ -59,7 +82,7 @@ def DKL2LMS2006_D65(DKL):
     M_lms2006_dkl = torch.tensor([
         [1, 1, 0],
         [1, -mc1, 0],
-        [-1, -1, mc2]], device=DKL.get_device())
+        [-1, -1, mc2]], device=DKL.device)
 
     M_dkl_lms2006 = M_lms2006_dkl.inverse()
 
@@ -71,7 +94,7 @@ def LMS20062XYZ_nd(LMS):
     M_lms2006_xyz = torch.tensor([
         [2.629129278399650, -3.780202391780134, 10.294956387893450],
         [0.865649062438827, 1.215555811642301, -0.984175688105352],
-        [0.008886561474676, 0.081612628990755, 51.371024830897888 ]], device=LMS.get_device())
+        [0.008886561474676, 0.081612628990755, 51.371024830897888 ]], device=LMS.device)
     
     return torch.matmul(M_lms2006_xyz, LMS.reshape(3, -1)).reshape(LMS.size())
 
@@ -81,7 +104,7 @@ def XYZ2RGB709_nd(XYZ):
     M_xyz2rgb = torch.tensor([ 
         [3.2406, -1.5372, -0.4986],
         [-0.9689, 1.8758, 0.0415],
-        [0.0557, -0.2040, 1.0570]], device=XYZ.get_device())
+        [0.0557, -0.2040, 1.0570]], device=XYZ.device)
 
     return torch.matmul(M_xyz2rgb, XYZ.reshape(3, -1)).reshape(XYZ.size())
 
@@ -91,7 +114,7 @@ def XYZ2RGB2020_nd(XYZ):
     M_xyz2rgb = torch.tensor([
         [0.636953507, 0.144619185, 0.168855854],
         [0.262698339, 0.678008766, 0.0592928953],
-        [4.99407097e-17, 0.0280731358, 1.06082723]], device=XYZ.get_device()).inverse()
+        [4.99407097e-17, 0.0280731358, 1.06082723]], device=XYZ.device).inverse()
 
     return torch.matmul(M_xyz2rgb, XYZ.reshape(3, -1)).reshape(XYZ.size())
 

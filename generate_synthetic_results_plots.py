@@ -3,6 +3,7 @@ import logging
 from tqdm import trange
 
 from pyst.GaborPatch import *
+from pyst.ContrastMasking import *
 from pyst.tests_utils import get_all_tests
 from metrics.piq_metrics import *
 from metrics.pyiqa_metrics import *
@@ -13,6 +14,7 @@ if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
     tests = get_all_tests()
+    tests = [ContrastMakingAchTest]
 
     input_folder = 'results'
     output_folder = 'plots'

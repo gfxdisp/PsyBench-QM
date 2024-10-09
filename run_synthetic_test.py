@@ -3,6 +3,7 @@ import logging
 from tqdm import trange
 
 from pyst.GaborPatch import *
+from pyst.ContrastMasking import *
 from pyst.tests_utils import get_all_tests
 from metrics.piq_metrics import *
 from metrics.pyiqa_metrics import *
@@ -15,12 +16,12 @@ if __name__ == '__main__':
     tests = get_all_tests()
 
     #tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
-    #tests = [GaborPatchLuminanceAchTest]
+    tests = [ContrastMakingAchTest]
 
     output_folder = 'results'
 
     metrics = [dss_metric, fsim_metric, gmsd_metric, haarpsi_metric, iw_ssim_metric, mdsi_metric, ms_gmsd_metric, ms_ssim_metric, ssim_metric, vif_metric, vsi_metric, mad_metric, psnr_metric]
-
+    
     for T in tests:
         Test = T()
         test_name = Test.short_name()

@@ -39,3 +39,7 @@ class topiq_metric(vq_metric):
 
     def short_name(self):
         return "TOPIQ"
+    
+    @staticmethod
+    def name():
+        return "TOPIQ"

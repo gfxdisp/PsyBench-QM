@@ -3,10 +3,10 @@ from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
 
 """
-LIQE metric.
+LPIPS-VGG metric.
 """
 
-class liqe_metric(vq_metric):
+class lpips_vgg_metric(vq_metric):
 
     def __init__(self, device=None):
 
@@ -21,7 +21,7 @@ class liqe_metric(vq_metric):
 
         self.color_space = 'display_encoded_dmax'
 
-        self.metric = create_metric('liqe', device=self.device)
+        self.metric = create_metric('lpips-vgg', device=self.device)
 
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
@@ -31,10 +31,15 @@ class liqe_metric(vq_metric):
         score = 0
         for ff in range(N_frames):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
+            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            score += self.metric(T) / N_frames
+            score += self.metric(T, R) / N_frames
 
         return score, None
 
     def short_name(self):
-        return "LIQE"
+        return "LPIPS-VGG"
+    
+    @staticmethod
+    def name():
+        return "LPIPS-VGG"

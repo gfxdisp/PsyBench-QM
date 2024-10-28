@@ -40,9 +40,13 @@ class iw_ssim_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            score += information_weighted_ssim(T, R, data_range=1.) / N_frames
+            score += information_weighted_ssim(T, R, data_range=1., k2=0.4) / N_frames
 
         return score, None
 
     def short_name(self):
+        return "IW-SSIM"
+
+    @staticmethod
+    def name():
         return "IW-SSIM"

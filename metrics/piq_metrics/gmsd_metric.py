@@ -1,7 +1,7 @@
 import torch
 from piq import gmsd
 from pycvvdp.vq_metric import vq_metric
-
+from pyst.utils import display_encode
 """
 GMSD metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
 """
@@ -12,7 +12,7 @@ To be able to use this metric, you will need to install piq: $ pip install piq
 
 class gmsd_metric(vq_metric):
 
-    def __init__(self, device=None, apply_pq=False):
+    def __init__(self, device=None):
         # Use GPU if available
         if device is None:
             if torch.cuda.is_available() and torch.cuda.device_count() > 0:
@@ -22,10 +22,7 @@ class gmsd_metric(vq_metric):
         else:
             self.device = device
             
-        if apply_pq:
-            self.color_space = 'RGB2020pq'
-        else:
-            self.color_space = 'display_encoded_dmax'
+        self.color_space = 'Y'
 
     '''
     The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
@@ -37,12 +34,19 @@ class gmsd_metric(vq_metric):
 
         score = 0
         for ff in range(N_frames):
-            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
-            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
+            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
+            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
+
+            T = display_encode(T, self.display_photometry)
+            R = display_encode(R, self.display_photometry)
 
             score += gmsd(T, R, data_range=1.) / N_frames
 
         return score, None
 
     def short_name(self):
+        return "GMSD"
+
+    @staticmethod
+    def name():
         return "GMSD"

@@ -1,18 +1,15 @@
 import torch
-from piq import multi_scale_ssim
+from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
 
 """
-MS-SSIM metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
-"""
-
-"""
-To be able to use this metric, you will need to install piq: $ pip install piq
+MS-SSIM metric.
 """
 
 class ms_ssim_metric(vq_metric):
 
-    def __init__(self, device=None, apply_pq=False):
+    def __init__(self, device=None):
+
         # Use GPU if available
         if device is None:
             if torch.cuda.is_available() and torch.cuda.device_count() > 0:
@@ -21,15 +18,11 @@ class ms_ssim_metric(vq_metric):
                 self.device = torch.device('cpu')
         else:
             self.device = device
-            
-        if apply_pq:
-            self.color_space = 'RGB2020pq'
-        else:
-            self.color_space = 'display_encoded_dmax'
 
-    '''
-    The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
-    '''
+        self.color_space = 'display_encoded_dmax'
+
+        self.metric = create_metric('ms_ssim', device=self.device)
+
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
 
@@ -40,9 +33,13 @@ class ms_ssim_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            score += multi_scale_ssim(T, R, data_range=1.) / N_frames
+            score += self.metric(T, R) / N_frames
 
         return score, None
 
     def short_name(self):
+        return "MS-SSIM"
+
+    @staticmethod
+    def name():
         return "MS-SSIM"

@@ -10,7 +10,7 @@ VIF metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
 To be able to use this metric, you will need to install piq: $ pip install piq
 """
 
-class vif_metric(vq_metric):
+class vifp_metric(vq_metric):
 
     def __init__(self, device=None, apply_pq=False):
         # Use GPU if available
@@ -45,4 +45,8 @@ class vif_metric(vq_metric):
         return score, None
 
     def short_name(self):
-        return "VIF"
+        return "VIFp"
+    
+    @staticmethod
+    def name():
+        return "VIFp"

@@ -46,3 +46,7 @@ class mdsi_metric(vq_metric):
 
     def short_name(self):
         return "MDSI"
+
+    @staticmethod
+    def name():
+        return "MDSI"

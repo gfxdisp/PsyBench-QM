@@ -45,6 +45,10 @@ class ahiq_metric(vq_metric):
             score += self.metric(T, R) / N_frames
 
         return score, None
-
+        
     def short_name(self):
+        return "AHIQ"
+
+    @staticmethod
+    def name():
         return "AHIQ"

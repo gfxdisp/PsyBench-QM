@@ -46,3 +46,7 @@ class ms_gmsd_metric(vq_metric):
 
     def short_name(self):
         return "MS-GMSD"
+
+    @staticmethod
+    def name():
+        return "MS-GMSD"

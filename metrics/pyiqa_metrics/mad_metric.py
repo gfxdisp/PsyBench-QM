@@ -39,3 +39,7 @@ class mad_metric(vq_metric):
 
     def short_name(self):
         return "MAD"
+    
+    @staticmethod
+    def name():
+        return "MAD"

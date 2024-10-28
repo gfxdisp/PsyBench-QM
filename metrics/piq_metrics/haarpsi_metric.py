@@ -46,3 +46,7 @@ class haarpsi_metric(vq_metric):
 
     def short_name(self):
         return "HaarPSI"
+
+    @staticmethod
+    def name():
+        return "HaarPSI"

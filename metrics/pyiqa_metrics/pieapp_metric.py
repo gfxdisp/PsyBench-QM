@@ -44,3 +44,7 @@ class pieapp_metric(vq_metric):
 
     def short_name(self):
         return "PieAPP"
+
+    @staticmethod
+    def name():
+        return "PieAPP"

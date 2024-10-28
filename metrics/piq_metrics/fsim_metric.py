@@ -45,4 +45,8 @@ class fsim_metric(vq_metric):
         return score, None
 
     def short_name(self):
-        return "FSIM"
+        return "FSIMc"
+
+    @staticmethod
+    def name():
+        return "FSIMc"

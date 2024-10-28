@@ -39,3 +39,7 @@ class wadiqam_metric(vq_metric):
 
     def short_name(self):
         return "WaDIQaM"
+
+    @staticmethod
+    def name():
+        return "WaDIQaM"

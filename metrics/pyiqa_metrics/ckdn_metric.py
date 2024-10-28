@@ -48,3 +48,7 @@ class ckdn_metric(vq_metric):
 
     def short_name(self):
         return "CKDN"
+
+    @staticmethod
+    def name():
+        return "CKDN"

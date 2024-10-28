@@ -48,3 +48,7 @@ class dists_metric(vq_metric):
 
     def short_name(self):
         return "DISTS"
+
+    @staticmethod
+    def name():
+        return "DISTS"

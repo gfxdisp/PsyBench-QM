@@ -46,3 +46,7 @@ class vsi_metric(vq_metric):
 
     def short_name(self):
         return "VSI"
+    
+    @staticmethod
+    def name():
+        return "VSI"

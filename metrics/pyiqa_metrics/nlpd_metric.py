@@ -48,3 +48,7 @@ class nlpd_metric(vq_metric):
 
     def short_name(self):
         return "NLPD"
+
+    @staticmethod
+    def name():
+        return "NLPD"

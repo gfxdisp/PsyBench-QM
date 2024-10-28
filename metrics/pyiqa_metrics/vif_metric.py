@@ -3,10 +3,10 @@ from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
 
 """
-Q-ALIGN metric.
+VIF metric (not in pixel domain, I think).
 """
 
-class qalign_metric(vq_metric):
+class vif_metric(vq_metric):
 
     def __init__(self, device=None):
 
@@ -21,7 +21,7 @@ class qalign_metric(vq_metric):
 
         self.color_space = 'display_encoded_dmax'
 
-        self.metric = create_metric('qalign', device=self.device)
+        self.metric = create_metric('vif', device=self.device)
 
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
@@ -31,10 +31,15 @@ class qalign_metric(vq_metric):
         score = 0
         for ff in range(N_frames):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
+            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            score += self.metric(T) / N_frames
+            score += self.metric(T, R) / N_frames
 
         return score, None
 
     def short_name(self):
-        return "Q-Align"
+        return "VIF"
+    
+    @staticmethod
+    def name():
+        return "VIF"

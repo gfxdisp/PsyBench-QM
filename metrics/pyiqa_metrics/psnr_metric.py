@@ -1,12 +1,13 @@
 import torch
 from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
+from pyst.utils import display_encode
 
 """
 PSNR metric.
 """
 
-class psnr_metric(vq_metric):
+class psnry_metric(vq_metric):
 
     def __init__(self, device=None):
 
@@ -19,23 +20,30 @@ class psnr_metric(vq_metric):
         else:
             self.device = device
 
-        self.color_space = 'display_encoded_dmax'
-
-        self.metric = create_metric('psnr', device=self.device)
+        self.color_space = 'Y'
 
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
 
         _, _, N_frames = vid_source.get_video_size()
 
-        score = 0
+        mse = 0
         for ff in range(N_frames):
-            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
-            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
+            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
+            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
 
-            score += self.metric(T, R) / N_frames
+            T = display_encode(T, self.display_photometry)
+            R = display_encode(R, self.display_photometry)
+
+            mse += torch.mean( (T - R)**2 )
+        
+        score = 20*torch.log10( 1.0 /torch.sqrt(mse/N_frames) ) 
 
         return score, None
 
     def short_name(self):
-        return "PSNR"
+        return "PSNR-Y"
+
+    @staticmethod
+    def name():
+        return "PSNR-Y"

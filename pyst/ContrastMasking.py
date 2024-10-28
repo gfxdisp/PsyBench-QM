@@ -29,8 +29,6 @@ class ContrastMakingTest(SyntheticTest):
         self.test_channel = test_channel
         self.masker_channel = masker_channel
 
-        self.xy_bkg = torch.tensor([0.31271, 0.32902], device=self.device)
-
         if test_channel == 'Ach':
             self.test_dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
         elif test_channel == 'RG':
@@ -122,22 +120,24 @@ class ContrastMakingTest(SyntheticTest):
 
         # We need to calculate both LMS mean and LMS delta, depending on the channel!
 
-        Yxy_bkg = torch.cat((L.view(1), self.xy_bkg), axis=0).reshape((1, 3))
+        # Yxy_bkg = torch.cat((L.view(1), self.xy_bkg), axis=0).reshape((1, 3))
         
-        LMS_mean_test = torch.tensor([0, 0, 0])
-        LMS_mean_masker = XYZ2LMS2006(Yxy2XYZ(Yxy_bkg))
+        # LMS_mean_test = torch.tensor([0, 0, 0], device=self.device)
+        # LMS_mean_masker = XYZ2LMS2006(Yxy2XYZ(Yxy_bkg))
 
-        LMS_delta_test = DKL2LMS2006_D65(self.test_dkl_col_direction) * L * test_contrast
-        LMS_delta_masker = DKL2LMS2006_D65(self.masker_dkl_col_direction) * L * masker_contrast
+        # LMS_delta_test = DKL2LMS2006_D65(self.test_dkl_col_direction) * L * test_contrast
+        # LMS_delta_masker = DKL2LMS2006_D65(self.masker_dkl_col_direction) * L * masker_contrast
 
-        test_patch = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, s_freq, t_freq, test_orien, LMS_mean_test, LMS_delta_test, size, ecc, phase=90, device=self.device).permute(2, 3, 0, 1) # FROM HWCF to CFHW
-        masker = generate_gabor_mask(self.width, self.height, self.ppd, s_freq, masker_orien, LMS_mean_masker, LMS_delta_masker, device=self.device).permute(2, 3, 0, 1) # FROM HWCF to CFHW
+        # LMS_delta_test = LMS_mean_masker * test_contrast
+        # LMS_delta_masker = LMS_mean_masker * masker_contrast
 
-        test_patch = XYZ2RGB709_nd(LMS20062XYZ_nd(test_patch)).unsqueeze(0)
-        masker = XYZ2RGB709_nd(LMS20062XYZ_nd(masker)).unsqueeze(0)
+        XYZ_target, XYZ_masker = generate_gabor_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, masker_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, device=self.device)
 
-        test_condition = lin2srgb( (test_patch + masker) / Lmax )
-        reference_condition = lin2srgb(masker / Lmax)
+        test_patch = XYZ2RGB709_nd(XYZ_target / Lmax).unsqueeze(0)
+        masker = XYZ2RGB709_nd(XYZ_masker / Lmax).unsqueeze(0)
+
+        test_condition = lin2srgb(test_patch + masker)
+        reference_condition = lin2srgb(masker)
 
         return video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
 
@@ -153,10 +153,6 @@ class ContrastMakingTest(SyntheticTest):
         x_condition_name = condition_names[1]
 
         predictions = predictions.reshape(self.size())
-
-        print(y_condition)
-        print(x_condition)
-        print(predictions)
 
         fig = plt.figure(figsize=(4, 4))
         plt.contour(x_condition, y_condition, predictions, 30)
@@ -218,7 +214,7 @@ class ContrastMakingTest(SyntheticTest):
 
 class ContrastMakingAchTest(ContrastMakingTest):
 
-    def __init__(self, width=512, height=512, N_test_contrasts=20, N_masker_contrasts=20, device=None):
+    def __init__(self, width=1920, height=1080, N_test_contrasts=20, N_masker_contrasts=20, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -226,11 +222,11 @@ class ContrastMakingAchTest(ContrastMakingTest):
         frames = 1
         fps = 1
 
-        test_contrasts = torch.logspace(-2, np.log10(0.5), N_test_contrasts)
-        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_masker_contrasts)
+        test_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_test_contrasts)
+        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_masker_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
         super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, device=device)
 

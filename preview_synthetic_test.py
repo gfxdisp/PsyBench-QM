@@ -10,7 +10,11 @@ Tests = get_all_tests()
 output_folder = 'previews'
 
 #Tests = [GaborPatchLuminanceAchTest, GaborPatchSpatialFreqAchTest]
-Tests = [ContrastMakingAchTest]
+#Tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
+#Tests = [ContrastMakingAchTest]
+#Tests = [GaborPatchLuminanceHLGAchTest]
+
+Tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest, GaborPatchLuminanceHLGAchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminancePU21AchTest]
 
 for T in Tests:
     Test = T()

@@ -1,10 +1,10 @@
 import torch 
-from math import pi
+from math import pi, log
+from pycvvdp.utils import PU
 
-def generate_gabor_patch(width, height, frames, ppd, fps, s_freq, t_freq, orientation, LMS_mean, LMS_delta, ge_sigma, eccentricity, phase=0, device=None):
+def generate_gabor_patch(width, height, frames, ppd, fps, contrast, s_freq, t_freq, orientation, luminance, dkl_col_direction, ge_sigma, eccentricity, phase=0, device=None):
 
-    # I need to find a way to include the batch in all of this! To make it work for multiple batches!
-    # For now, we will keep it simple!
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
 
     width_deg = width / ppd
     height_deg = height / ppd
@@ -13,8 +13,8 @@ def generate_gabor_patch(width, height, frames, ppd, fps, s_freq, t_freq, orient
     
     rr = xx * torch.cos(torch.deg2rad(-orientation)) + yy * torch.sin(torch.deg2rad(-orientation))
 
-    grating = torch.sin(2*pi*rr*s_freq + torch.deg2rad(torch.tensor(phase)))
-    sine_grating = grating.view(height, width, 1, 1) * LMS_delta.view(1, 1, 3, 1)
+    grating = torch.sin(2*pi*rr*s_freq + torch.deg2rad(torch.tensor(phase))) * contrast * luminance
+    sine_grating = grating.view(height, width, 1, 1)
 
     t = torch.linspace(0, frames/fps, frames).to(device)
     temporal_sine = torch.cos(2*pi*t*t_freq).view(1, 1, 1, frames) # This is giving us H,W,C,F maybe we will want to change that
@@ -22,15 +22,25 @@ def generate_gabor_patch(width, height, frames, ppd, fps, s_freq, t_freq, orient
     R2 = xx**2 + yy**2
     ge =  torch.exp(-R2/(2*ge_sigma**2)).view(height, width, 1, 1)  # Create the gaussian envelope
 
-    LMS_mean = LMS_mean.view(1, 1, 3, 1)
+    test_stimuli = sine_grating * ge * temporal_sine
 
-    LMS = LMS_mean + sine_grating * ge * temporal_sine
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
 
-    return LMS
+    DKL_reference = torch.ones(height, width, 3, frames).to(device) * DKL_gray
+    DKL_test = DKL_reference + test_stimuli * dkl_col_direction.view(1, 1, 3, 1)
 
-def generate_gabor_mask(width, height, ppd, s_freq, orientation, LMS_mean, LMS_delta, device=None):
+    XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
+    XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
+
+    return XYZ_test, XYZ_reference
+
+def generate_gabor_mask(width, height, ppd, test_contrast, masker_contrast, s_freq, test_orientation, masker_orientation, luminance, test_dkl_col_direction, masker_dkl_col_direction, ge_sigma, device=None):
     
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
+
     # We are using a cos grating! 
+
+    # Create the masker!
 
     width_deg = width / ppd
     height_deg = height / ppd
@@ -38,18 +48,90 @@ def generate_gabor_mask(width, height, ppd, s_freq, orientation, LMS_mean, LMS_d
     xx, yy = torch.meshgrid(torch.linspace(0, width_deg, width).to(device) , torch.linspace(0, height_deg, height).to(device), indexing='xy')
     
     dd = torch.sqrt(xx**2 + yy**2)
-    cosB = ( xx * torch.sin(torch.deg2rad(-orientation)) + yy * torch.cos(torch.deg2rad(-orientation)) ) / dd
+    cosB = ( xx * torch.sin(torch.deg2rad(-masker_orientation)) + yy * torch.cos(torch.deg2rad(-masker_orientation)) ) / dd
     cosB[0, 0] = 1
     d = torch.sqrt(1 - cosB**2) * dd 
 
-    grating = torch.cos(2*pi*d*s_freq)
-    masker_grating = grating.view(height, width, 1, 1) * LMS_delta.view(1, 1, 3, 1)
+    grating = torch.cos(2*pi*d*s_freq) * masker_contrast * luminance
+    masker_grating = grating.view(height, width, 1, 1) 
 
-    LMS_mean = LMS_mean.view(1, 1, 3, 1)
+    # Create the target!
 
-    LMS = LMS_mean + masker_grating
+    xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
+    
+    rr = xx * torch.cos(torch.deg2rad(-test_orientation)) + yy * torch.sin(torch.deg2rad(-test_orientation))
 
-    return LMS
+    grating = torch.cos(2*pi*rr*s_freq) * test_contrast * luminance
+    sine_grating = grating.view(height, width, 1, 1)
+
+    R2 = xx**2 + yy**2
+    ge =  torch.exp(-R2/(2*ge_sigma**2)).view(height, width, 1, 1)  # Create the gaussian envelope
+
+    target_grating = sine_grating * ge
+
+    # Get the stimuli!
+
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
+    DKL_reference = torch.ones(height, width, 3, 1).to(device) * DKL_gray
+
+
+    DKL_target = target_grating * test_dkl_col_direction.view(1, 1, 3, 1)
+    DKL_masker = DKL_reference + masker_grating * masker_dkl_col_direction.view(1, 1, 3, 1)
+
+    XYZ_masker = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_masker.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
+    XYZ_target = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_target.permute(2, 3, 0, 1)))
+
+    return XYZ_target, XYZ_masker
+
+# def generate_gabor_patch_old(width, height, frames, ppd, fps, s_freq, t_freq, orientation, LMS_mean, LMS_delta, ge_sigma, eccentricity, phase=0, device=None):
+
+#     # I need to find a way to include the batch in all of this! To make it work for multiple batches!
+#     # For now, we will keep it simple!
+
+#     width_deg = width / ppd
+#     height_deg = height / ppd
+
+#     xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) - eccentricity , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
+    
+#     rr = xx * torch.cos(torch.deg2rad(-orientation)) + yy * torch.sin(torch.deg2rad(-orientation))
+
+#     grating = torch.sin(2*pi*rr*s_freq + torch.deg2rad(torch.tensor(phase)))
+#     sine_grating = grating.view(height, width, 1, 1) * LMS_delta.view(1, 1, 3, 1)
+
+#     t = torch.linspace(0, frames/fps, frames).to(device)
+#     temporal_sine = torch.cos(2*pi*t*t_freq).view(1, 1, 1, frames) # This is giving us H,W,C,F maybe we will want to change that
+
+#     R2 = xx**2 + yy**2
+#     ge =  torch.exp(-R2/(2*ge_sigma**2)).view(height, width, 1, 1)  # Create the gaussian envelope
+
+#     LMS_mean = LMS_mean.view(1, 1, 3, 1)
+
+#     LMS = LMS_mean + sine_grating * ge * temporal_sine
+
+#     return LMS
+
+# def generate_gabor_mask_old(width, height, ppd, s_freq, orientation, LMS_mean, LMS_delta, device=None):
+    
+#     # We are using a cos grating! 
+
+#     width_deg = width / ppd
+#     height_deg = height / ppd
+
+#     xx, yy = torch.meshgrid(torch.linspace(0, width_deg, width).to(device) , torch.linspace(0, height_deg, height).to(device), indexing='xy')
+    
+#     dd = torch.sqrt(xx**2 + yy**2)
+#     cosB = ( xx * torch.sin(torch.deg2rad(-orientation)) + yy * torch.cos(torch.deg2rad(-orientation)) ) / dd
+#     cosB[0, 0] = 1
+#     d = torch.sqrt(1 - cosB**2) * dd 
+
+#     grating = torch.cos(2*pi*d*s_freq)
+#     masker_grating = grating.view(height, width, 1, 1) * LMS_delta.view(1, 1, 3, 1)
+
+#     LMS_mean = LMS_mean.view(1, 1, 3, 1)
+
+#     LMS = LMS_mean + masker_grating
+
+#     return LMS
 
 def Yxy2XYZ(Yxy):
 
@@ -72,10 +154,38 @@ def XYZ2LMS2006(XYZ):
     
     return torch.matmul(XYZ, M_xyz_lms2006.T)
 
-def DKL2LMS2006_D65(DKL):
+
+def LMS2DKL_D65(LMS):
+
     # We expect a vector of shape X,C
 
+    # We define the XYZ of the D65, go to LMS and get the LMS_gray!
+
     lms_gray = [0.739876529525622,   0.320136241543338,   0.020793708751515]
+    # wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=LMS.device)
+    # lms_gray = XYZ2LMS2006(wp_d65)
+
+    mc1 = lms_gray[0]/lms_gray[1]
+    mc2 = (lms_gray[0]+lms_gray[1])/lms_gray[2]
+
+    M_lms2006_dkl = torch.tensor([
+        [1, 1, 0],
+        [1, -mc1, 0],
+        [-1, -1, mc2]], device=LMS.device)
+
+    return torch.matmul(LMS, M_lms2006_dkl.T)
+
+
+def DKL2LMS_D65_nd(DKL):
+
+    # We expect the input to be a multi-dimensional tensor of the shape (C,...)
+
+    # We define the XYZ of the D65, go to LMS and get the LMS_gray!
+
+    lms_gray = [0.739876529525622,   0.320136241543338,   0.020793708751515]
+    # wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=DKL.device)
+    # lms_gray = XYZ2LMS2006(wp_d65)
+
     mc1 = lms_gray[0]/lms_gray[1]
     mc2 = (lms_gray[0]+lms_gray[1])/lms_gray[2]
 
@@ -86,7 +196,8 @@ def DKL2LMS2006_D65(DKL):
 
     M_dkl_lms2006 = M_lms2006_dkl.inverse()
 
-    return torch.matmul(DKL, M_dkl_lms2006.T)
+    return torch.matmul(M_dkl_lms2006, DKL.reshape(3, -1)).reshape(DKL.size())
+
 
 def LMS20062XYZ_nd(LMS):
     # We expect the input to be a multi-dimensional tensor of the shape (C,...)
@@ -94,7 +205,7 @@ def LMS20062XYZ_nd(LMS):
     M_lms2006_xyz = torch.tensor([
         [2.629129278399650, -3.780202391780134, 10.294956387893450],
         [0.865649062438827, 1.215555811642301, -0.984175688105352],
-        [0.008886561474676, 0.081612628990755, 51.371024830897888 ]], device=LMS.device)
+        [-0.008886561474676, 0.081612628990755, 51.371024830897888 ]], device=LMS.device)
     
     return torch.matmul(M_lms2006_xyz, LMS.reshape(3, -1)).reshape(LMS.size())
 
@@ -128,3 +239,54 @@ def lin2srgb(L):
 
 def tensor_to_numpy_image(T):
     return torch.squeeze(T.permute((3,4,1,0,2)), dim=(3,4)).cpu().numpy()
+
+def lin2pq( L ):
+    """ Convert from absolute linear values (between 0.005 and 10000) to PQ-encoded values V (between 0 and 1)
+    """
+    Lmax = 10000
+    #Lmin = 0.005
+    n    = 0.15930175781250000
+    m    = 78.843750000000000
+    c1   = 0.83593750000000000
+    c2   = 18.851562500000000
+    c3   = 18.687500000000000
+    im_t = (torch.clip(L,0,Lmax)/Lmax) ** n
+    V  = ((c2*im_t + c1) / (1+c3*im_t)) ** m
+    return V
+
+def lin2hlg(L, Lmax=10000):
+
+    L = (L/Lmax).clip(min=0, max=1)
+
+    a = 0.17883277
+    b = 1 - 4 * a
+    c = 0.5 - a * log(4 * a)
+
+    # OETF
+    V = torch.where(
+        L <= 1/12,
+        torch.sqrt(3*L),
+        a * torch.log(12*L - b) + c
+    )
+
+    return V
+
+
+def display_encode(L, display_photometry):
+
+    EOTF = display_photometry.EOTF
+    Lmax = display_photometry.get_peak_luminance()
+
+    if EOTF == 'sRGB':
+        luma = lin2srgb(L/Lmax)
+    elif EOTF == 'PQ':
+        luma = lin2pq(L)
+    elif EOTF == 'HLG':
+        luma = lin2hlg(L, Lmax)
+    elif EOTF == 'linear':
+        PU_obj = PU()
+        PU_max = PU_obj.encode(torch.as_tensor(Lmax))
+        luma = PU_obj.encode(L) / PU_max 
+    
+    return luma
+

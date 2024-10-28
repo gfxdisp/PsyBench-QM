@@ -18,7 +18,7 @@ class GaborPatchTest(SyntheticTest):
     # For now we may not need these informations! It is not as important
 
     def __init__(self, width, height, channel, display_photometry, display_geometry, frames, fps, contrasts, spatial_frequencies=2, temporal_frequencies=0,
-                 bkg_luminances=21.4, orientations=0, sizes=1.5, eccentricities=0, device=None):
+                 bkg_luminances=21.4, orientations=0, sizes=2, eccentricities=0, device=None):
 
 
         super().__init__(device)
@@ -29,13 +29,13 @@ class GaborPatchTest(SyntheticTest):
 
         self.xy_bkg = torch.tensor([0.31271, 0.32902], device=self.device)
         if channel == 'Ach':
-            self.xy_modulation = torch.tensor([0.3127, 0.3290], device=self.device)
+            #self.xy_modulation = torch.tensor([0.3127, 0.3290], device=self.device)
             self.dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
         elif channel == 'RG':
-            self.xy_modulation = torch.tensor([0.5027, 0.2322], device=self.device)
+            #self.xy_modulation = torch.tensor([0.5027, 0.2322], device=self.device)
             self.dkl_col_direction = torch.tensor([0, 0.610649, 0], device=self.device)
         elif channel == 'YV':
-            self.xy_modulation = torch.tensor([0.3313, 0.3738], device=self.device)
+            #self.xy_modulation = torch.tensor([0.3313, 0.3738], device=self.device)
             self.dkl_col_direction = torch.tensor([0, 0, 4.203636], device=self.device)
         
         self.display_photometry = display_photometry
@@ -84,6 +84,10 @@ class GaborPatchTest(SyntheticTest):
     def get_csf_results(self):
         pass
 
+    @abc.abstractmethod
+    def get_ticks(self):
+        pass
+
     def get_test_condition_parameters(self, index):
 
         contrast = self.contrasts[self.contrast_indices[index]]
@@ -101,10 +105,10 @@ class GaborPatchTest(SyntheticTest):
         contrast, s_freq, t_freq, L, orien, size, ecc = self.get_test_condition_parameters(index)
         Lmax = self.display_photometry.get_peak_luminance()
 
-        # We need to calculate both LMS mean and LMS delta, depending on the channel!
+        # # We need to calculate both LMS mean and LMS delta, depending on the channel!
 
-        Yxy_bkg = torch.cat((L.view(1), self.xy_bkg), axis=0).reshape((1, 3))
-        LMS_mean = XYZ2LMS2006(Yxy2XYZ(Yxy_bkg))
+        # Yxy_bkg = torch.cat((L.view(1), self.xy_bkg), axis=0).reshape((1, 3))
+        # LMS_mean = XYZ2LMS2006(Yxy2XYZ(Yxy_bkg))
 
         # if self.channel == 'Ach':
         #     LMS_delta = LMS_mean * contrast
@@ -113,23 +117,40 @@ class GaborPatchTest(SyntheticTest):
         #     LMS_mdoulation_peak = XYZ2LMS2006(Yxy2XYZ(Yxy_modulation))
         #     LMS_delta = (LMS_mdoulation_peak - LMS_mean) * contrast
 
-        LMS_delta = DKL2LMS2006_D65(self.dkl_col_direction) * L * contrast
+        #LMS_delta = DKL2LMS2006_D65(self.dkl_col_direction) * L * contrast
 
-        gabor_patch = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, s_freq, t_freq, orien, LMS_mean, LMS_delta, size, ecc, device=self.device).permute(2, 3, 0, 1) # FROM HWCF to CFHW
+        #gabor_patch = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, s_freq, t_freq, orien, LMS_mean, LMS_delta, size, ecc, device=self.device).permute(2, 3, 0, 1) # FROM HWCF to CFHW
 
-        # If luminance test we go from LMS2006 to RGB2020
-        # If other tests, we go from LMS2006 to RGB709, then we apply lin2srgb
+        XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
 
-        if self.display_photometry.is_input_display_encoded():
-            # we go from LMS2006 to RGB709, then we apply lin2srgb
-            test_condition = XYZ2RGB709_nd(LMS20062XYZ_nd(gabor_patch)).unsqueeze(0)
-            test_condition = lin2srgb(test_condition / Lmax)
-            reference_condition = lin2srgb(torch.ones(1, 3, self.frames, self.height, self.width).to(self.device) * L / Lmax)# need to kind of divide by Lpeak and then apply sRGB encoding!
+        # If luminance test we go from XYZ to RGB2020 and then apply appropriate endoing
+        # If other tests, we go from XYZ to RGB709, then we apply lin2srgb
 
-        else:
-            # we go from LMS2006 to RGB2020
-            test_condition = XYZ2RGB2020_nd(LMS20062XYZ_nd(gabor_patch)).unsqueeze(0)
-            reference_condition = torch.ones(1, 3, self.frames, self.height, self.width).to(self.device) * L
+        if self.display_photometry.EOTF == 'sRGB':
+            # we go from XYZ to RGB709, then we apply lin2srgb
+            #test_condition = XYZ2RGB709_nd(LMS20062XYZ_nd(gabor_patch)).unsqueeze(0)
+            #test_condition = lin2srgb(test_condition / Lmax)
+            #reference_condition = lin2srgb(torch.ones(1, 3, self.frames, self.height, self.width).to(self.device) * L / Lmax)# need to kind of divide by Lpeak and then apply sRGB encoding!
+
+            test_condition = lin2srgb(XYZ2RGB709_nd(XYZ_test / Lmax).unsqueeze(0))
+            reference_condition = lin2srgb(XYZ2RGB709_nd(XYZ_reference / Lmax).unsqueeze(0))
+
+
+        elif self.display_photometry.EOTF in ['PQ', 'HLG', 'linear']:
+            # we go from XYZ to RGB2020
+            #test_condition = XYZ2RGB2020_nd(LMS20062XYZ_nd(gabor_patch)).unsqueeze(0)
+            #reference_condition = torch.ones(1, 3, self.frames, self.height, self.width).to(self.device) * L
+
+            test_condition = XYZ2RGB2020_nd(XYZ_test).unsqueeze(0)
+            reference_condition = XYZ2RGB2020_nd(XYZ_reference).unsqueeze(0)
+
+            if self.display_photometry.EOTF == 'PQ':
+                test_condition = lin2pq(test_condition)
+                reference_condition = lin2pq(reference_condition)
+            
+            elif self.display_photometry.EOTF == 'HLG':
+                test_condition = lin2hlg(test_condition, Lmax)
+                reference_condition = lin2hlg(reference_condition, Lmax)
 
         return video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
 
@@ -165,18 +186,23 @@ class GaborPatchTest(SyntheticTest):
             plt.ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
         else:
             plt.ylabel(y_condition_name, fontsize=12)
+        
+        x_ticks, y_ticks = self.get_ticks()
+        x_ticks = x_ticks.cpu().numpy()
+        y_ticks = y_ticks.cpu().numpy()
 
-        formatted_xticks = [f'{tick:g}' for tick in np.unique(x_condition)]
-        formatted_yticks = [f'{tick:.2g}' for tick in np.unique(y_condition)]
+        formatted_xticks = [f'{tick:g}' for tick in x_ticks]
+        formatted_yticks = [f'{tick:.2g}' for tick in y_ticks]
 
-        plt.xticks(np.unique(x_condition), formatted_xticks, fontsize=10)
-        plt.yticks(np.unique(y_condition), formatted_yticks, fontsize=10)
+        plt.xticks(x_ticks, formatted_xticks, fontsize=10)
+        plt.yticks(y_ticks, formatted_yticks, fontsize=10)
 
         # Plot the csf results
 
         x_csf, y_csf = self.get_csf_results()
 
-        plt.plot(x_csf, y_csf+0.01, marker='o', color='red', linewidth=1, markerfacecolor='none', markeredgecolor='red')
+        #plt.plot(x_csf, y_csf+0.01, marker='o', color='red', linewidth=1, markerfacecolor='none', markeredgecolor='red')
+        plt.plot(x_csf, y_csf, color='red', linewidth=1)
 
         plt.xlim([np.min(x_condition), np.max(x_condition)])
         plt.ylim([np.min(y_condition), np.max(y_condition)])
@@ -206,17 +232,17 @@ class GaborPatchTest(SyntheticTest):
 
 class GaborPatchSpatialFreqAchTest(GaborPatchTest):
 
-    def __init__(self, width=512, height=512, N_contrasts=10, N_freq=7, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
         
         channel = 'Ach'
         frames = 1
         fps = 1
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-2, 0, N_contrasts)
+        contrasts = torch.logspace(log10(0.0035), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, device=device)
 
@@ -224,8 +250,14 @@ class GaborPatchSpatialFreqAchTest(GaborPatchTest):
         self._preview_as = 'image'
 
     def get_csf_results(self):
-        x = self.spatial_frequencies
+        x = torch.logspace(-1, 5, 100, base=2)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_ach.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        y = self.contrasts
 
         return x, y
 
@@ -246,17 +278,17 @@ class GaborPatchSpatialFreqAchTest(GaborPatchTest):
 
 class GaborPatchSpatialFreqRGTest(GaborPatchTest):
 
-    def __init__(self, width=512, height=512, N_contrasts=10, N_freq=7, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
         
         channel = 'RG'
         frames = 1
         fps = 1
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-2, log10(0.4), N_contrasts)
+        contrasts = torch.logspace(log10(0.002), log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, device=device)
 
@@ -264,8 +296,14 @@ class GaborPatchSpatialFreqRGTest(GaborPatchTest):
         self._preview_as = 'image'
     
     def get_csf_results(self):
-        x = self.spatial_frequencies
+        x = torch.logspace(-1, 5, 100, base=2)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_rg.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        y = self.contrasts
 
         return x, y
 
@@ -286,17 +324,17 @@ class GaborPatchSpatialFreqRGTest(GaborPatchTest):
 
 class GaborPatchSpatialFreqYVTest(GaborPatchTest):
 
-    def __init__(self, width=512, height=512, N_contrasts=10, N_freq=7, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
         
         channel = 'YV'
         frames = 1
         fps = 1
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-2, log10(0.3), N_contrasts)
+        contrasts = torch.logspace(-2, log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, device=device)
 
@@ -304,8 +342,14 @@ class GaborPatchSpatialFreqYVTest(GaborPatchTest):
         self._preview_as = 'image'
 
     def get_csf_results(self):
-        x = self.spatial_frequencies
+        x = x = torch.logspace(-1, 5, 100, base=2)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_yv.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        y = self.contrasts
 
         return x, y
 
@@ -325,28 +369,34 @@ class GaborPatchSpatialFreqYVTest(GaborPatchTest):
         return 'Gabor Patch Spatial Frequency YV Test'
 
 
-class GaborPatchLuminanceAchTest(GaborPatchTest):
+class GaborPatchLuminancePU21AchTest(GaborPatchTest):
 
-    def __init__(self, width=512, height=512, N_contrasts=10, N_L=7, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
         
         channel = 'Ach'
         frames = 1
         fps = 1
 
         bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(-2, 0, N_contrasts)
+        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, device=device)
 
-        self._preview_folder = os.path.join(self._preview_folder, 'luminances_ach')
+        self._preview_folder = os.path.join(self._preview_folder, 'luminances_pu21_ach')
         self._preview_as = 'image'
     
     def get_csf_results(self):
-        x = self.bkg_luminances
+        x = torch.logspace(-2, 4, 100)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+        return x, y
+    
+    def get_ticks(self):
+        x = torch.logspace(-2, 4, 7)
+        y = self.contrasts
 
         return x, y
 
@@ -363,48 +413,195 @@ class GaborPatchLuminanceAchTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cd/m$^2$']
 
     def short_name(self):
-        return 'Gabor Patch Background Luminance Achromatic Test'
+        return 'Gabor Patch Background Luminance with PU21 encoding - Achromatic Test'
 
 
-class GaborPatchSizeAchTest(GaborPatchTest):
+class GaborPatchLuminancePQAchTest(GaborPatchTest):
 
-    def __init__(self, width=512, height=512, N_contrasts=10, N_size=7, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+        
         channel = 'Ach'
         frames = 1
         fps = 1
 
-        sizes = torch.logspace(-3, 3, N_size, base=2)
-        contrasts = torch.logspace(-2, 0, N_contrasts)
+        bkg_luminances = torch.logspace(-2, 4, N_L)
+        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
 
-        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
+        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-PQ')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, device=device)
 
-        self._preview_folder = os.path.join(self._preview_folder, 'sizes_ach')
+        self._preview_folder = os.path.join(self._preview_folder, 'luminances_pq_ach')
         self._preview_as = 'image'
     
     def get_csf_results(self):
-        x = self.sizes
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'size_ach.txt'))
+        x = torch.logspace(-2, 4, 100)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+        return x, y
+    
+    def get_ticks(self):
+        x = torch.logspace(-2, 4, 7)
+        y = self.contrasts
 
         return x, y
 
     def get_row_header(self):
-        return ['Contrast', 'Size']
+        return ['Contrast', 'Luminance']
 
     def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.sizes[self.size_indices]]
+        return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
 
     def size(self):
-        return self.N_contrasts, self.N_size
+        return self.N_contrasts, self.N_L
 
     def units(self):
-        return ['log', 'log'], [None, 'deg$^2$']
+        return ['log', 'log'], [None, 'cd/m$^2$']
 
     def short_name(self):
-        return 'Gabor Patch Size Achromatic Test'
+        return 'Gabor Patch Background Luminance with PQ encoding - Achromatic Test'
 
+
+class GaborPatchLuminanceHLGAchTest(GaborPatchTest):
+
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+        
+        channel = 'Ach'
+        frames = 1
+        fps = 1
+
+        bkg_luminances = torch.logspace(-2, 4, N_L)
+        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-HLG')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'luminances_hlg_ach')
+        self._preview_as = 'image'
+    
+    def get_csf_results(self):
+        x = torch.logspace(-2, 4, 100)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+        return x, y
+    
+    def get_ticks(self):
+        x = torch.logspace(-2, 4, 7)
+        y = self.contrasts
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Luminance']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_L
+
+    def units(self):
+        return ['log', 'log'], [None, 'cd/m$^2$']
+
+    def short_name(self):
+        return 'Gabor Patch Background Luminance with HLG encoding - Achromatic Test'
+
+
+# class GaborPatchSizeAchTest(GaborPatchTest):
+
+#     def __init__(self, width=1920, height=1080, N_contrasts=20, N_size=20, device=None):
+#         channel = 'Ach'
+#         frames = 1
+#         fps = 1
+
+#         sizes = torch.logspace(-1, 5, N_size, base=2)
+#         contrasts = torch.logspace(-3, 0, N_contrasts)
+
+#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+#         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, device=device)
+
+#         self._preview_folder = os.path.join(self._preview_folder, 'sizes_ach')
+#         self._preview_as = 'image'
+    
+#     def get_csf_results(self):
+#         x = torch.logspace(-1, 5, 100, base=2)
+#         y = np.loadtxt(os.path.join(self.csf_data_folder, 'size_ach.txt'))
+
+#         return x, y
+
+#     def get_ticks(self):
+#         x = torch.logspace(-1, 5, 7, base=2)
+#         y = self.contrasts
+
+#         return x, y
+
+#     def get_row_header(self):
+#         return ['Contrast', 'Size']
+
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.sizes[self.size_indices]]
+
+#     def size(self):
+#         return self.N_contrasts, self.N_size
+
+#     def units(self):
+#         return ['log', 'log'], [None, 'deg$^2$']
+
+#     def short_name(self):
+#         return 'Gabor Patch Size Achromatic Test'
+
+
+# class GaborPatchTempFreqAchTest(GaborPatchTest):
+
+#     def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+
+#         channel = 'Ach'
+#         frames = 60
+#         fps = 60
+
+#         frequencies = torch.linspace(0, 60, N_freq)
+#         contrasts = torch.logspace(-3, 0, N_contrasts)
+
+#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+#         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, temporal_frequencies=frequencies, device=device)
+
+#         self._preview_folder = os.path.join(self._preview_folder, 'temporal_frequencies_ach')
+#         self._preview_as = 'video'
+    
+#     def get_csf_results(self):
+#         x = torch.linspace(0, 60, 100)
+#         y = np.loadtxt(os.path.join(self.csf_data_folder, 'temporal_freq_ach.txt'))
+
+#         return x, y
+    
+#     def get_ticks(self):
+#         x = torch.linspace(0, 60, 7)
+#         y = self.contrasts
+
+#         return x, y
+
+#     def get_row_header(self):
+#         return ['Contrast', 'Temporal Frequency']
+
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.temporal_frequencies[self.t_freq_indices]]
+
+#     def size(self):
+#         return self.N_contrasts, self.N_t_freq
+
+#     def units(self):
+#         return ['log', 'linear'], [None, 'Hz']
+
+#     def short_name(self):
+#         return 'Gabor Patch Temporal Frequency Achromatic Test'
+    
 
 # class GaborPatchEccAchTest(GaborPatchTest):
 
@@ -473,43 +670,3 @@ class GaborPatchSizeAchTest(GaborPatchTest):
 
 #     def short_name(self):
 #         return 'Gabor Patch Orientation Achromatic Test'
-
-class GaborPatchTempFreqAchTest(GaborPatchTest):
-
-    def __init__(self, width=1024, height=1024, N_contrasts=10, N_freq=7, device=None):
-
-        channel = 'Ach'
-        frames = 60
-        fps = 60
-
-        frequencies = torch.linspace(0, 60, N_freq)
-        contrasts = torch.logspace(-2, 0, N_contrasts)
-
-        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
-
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, temporal_frequencies=frequencies, device=device)
-
-        self._preview_folder = os.path.join(self._preview_folder, 'temporal_frequencies_ach')
-        self._preview_as = 'video'
-    
-    def get_csf_results(self):
-        x = self.temporal_frequencies
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'temporal_freq_ach.txt'))
-
-        return x, y
-
-    def get_row_header(self):
-        return ['Contrast', 'Temporal Frequency']
-
-    def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.temporal_frequencies[self.t_freq_indices]]
-
-    def size(self):
-        return self.N_contrasts, self.N_t_freq
-
-    def units(self):
-        return ['log', 'linear'], [None, 'Hz']
-
-    def short_name(self):
-        return 'Gabor Patch Temporal Frequency Achromatic Test'

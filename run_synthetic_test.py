@@ -5,8 +5,7 @@ from tqdm import trange
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.tests_utils import get_all_tests
-from metrics.piq_metrics import *
-from metrics.pyiqa_metrics import *
+from metrics import *
 
 if __name__ == '__main__':
 
@@ -15,13 +14,16 @@ if __name__ == '__main__':
 
     tests = get_all_tests()
 
-    #tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
-    tests = [ContrastMakingAchTest]
+    tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest,
+            GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
+    
 
     output_folder = 'results'
-
-    metrics = [dss_metric, fsim_metric, gmsd_metric, haarpsi_metric, iw_ssim_metric, mdsi_metric, ms_gmsd_metric, ms_ssim_metric, ssim_metric, vif_metric, vsi_metric, mad_metric, psnr_metric]
     
+    metrics = [cvvdp_met, vmaf_met, vmaf_neg_met, lpips_metric, lpips_vgg_metric, haarpsi_metric, dss_metric, gmsd_metric, ms_gmsd_metric, vsi_metric, fsim_metric, mdsi_metric, ahiq_metric, ckdn_metric, dists_metric, mad_metric, nlpd_metric, pieapp_metric, topiq_metric, wadiqam_metric]  
+
+    metrics = [cvvdp_met, lpips_metric, haarpsi_metric, dss_metric, psnry_metric, ssim_metric, gmsd_metric, ahiq_metric, dists_metric, topiq_metric, wadiqam_metric]
+
     for T in tests:
         Test = T()
         test_name = Test.short_name()
@@ -46,7 +48,7 @@ if __name__ == '__main__':
 
                 try:
                     Metric = M()
-                    metric_name = Metric.short_name()
+                    metric_name = M.name()
 
                     if i==0:
                         metric_names.append(metric_name)

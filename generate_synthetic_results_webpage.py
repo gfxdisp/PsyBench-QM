@@ -6,8 +6,8 @@ import shutil
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.tests_utils import get_all_tests
-from metrics.piq_metrics import *
-from metrics.pyiqa_metrics import *
+from metrics import *
+from pycvvdp import cvvdp
 
 from test_reports_utils.html_report import html_report
 
@@ -20,23 +20,24 @@ if __name__ == '__main__':
     tests = get_all_tests()
     tests.append(ContrastMakingAchTest)
 
+    tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest,
+             GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
+
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage'
 
     generate_stimuli = False
     generate_metrics_results = True
 
-
-    metrics = [dss_metric, fsim_metric, gmsd_metric, haarpsi_metric, iw_ssim_metric, mdsi_metric, ms_gmsd_metric,
-               ms_ssim_metric, ssim_metric, vif_metric, vsi_metric, mad_metric, psnr_metric]
+    metrics = [cvvdp_met, lpips_metric, haarpsi_metric, dss_metric, psnry_metric, ssim_metric, gmsd_metric, ahiq_metric, dists_metric, topiq_metric, wadiqam_metric]
 
     # Create the directory and its associated html file!
 
-    #if not os.path.exists(output_folder):
-    #os.makedirs(os.path.join(output_folder, 'html_files'))
-    #os.makedirs(os.path.join(output_folder, 'previews'))
-    #os.makedirs(os.path.join(output_folder, 'plots'))
-    #os.makedirs(os.path.join(output_folder, 'css_files'))
+    if not os.path.exists(output_folder):
+        os.makedirs(os.path.join(output_folder, 'html_files'))
+        os.makedirs(os.path.join(output_folder, 'previews'))
+        os.makedirs(os.path.join(output_folder, 'plots'))
+        os.makedirs(os.path.join(output_folder, 'css_files'))
 
     shutil.copyfile(os.path.join('test_reports_utils', 'style.css'), os.path.join(output_folder, 'css_files', 'style.css'))
 
@@ -137,8 +138,8 @@ if __name__ == '__main__':
         for j, M in enumerate(metrics):
 
             try:
-                Metric = M()
-                metric_name = Metric.short_name()
+                #Metric = M()
+                metric_name = M.name()
 
                 metric_predictions_file = os.path.join(results_folder, metric_name+'.csv')
 

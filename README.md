@@ -18,8 +18,12 @@ pip install ffmpeg-python
 ```commandline
 git clone https://github.com/gfxdisp/PyST.git
 ```
-6. Finally, run PyST (for now this should be good)
-7. If you want to run the metrics I provide, please install [PyIQA](https://github.com/chaofengc/IQA-PyTorch) and [PIQ](https://github.com/photosynthesis-team/piq) using the following commands:
+6. Install dependencies (I think that is the only one for now at least):
+```commandline
+pip install imutils
+```
+7. Finally, run PyST (for now this should be good)
+8. If you want to run the metrics I provide, please install [PyIQA](https://github.com/chaofengc/IQA-PyTorch) and [PIQ](https://github.com/photosynthesis-team/piq) using the following commands:
 ```commandline
 pip install pyiqa
 pip install piq

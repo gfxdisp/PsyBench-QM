@@ -113,23 +113,8 @@ class ContrastMakingTest(SyntheticTest):
     
     def get_test_condition(self, index):
 
-        ecc = 0
-
         test_contrast, masker_contrast, s_freq, t_freq, L, test_orien, masker_orien, size = self.get_test_condition_parameters(index)
         Lmax = self.display_photometry.get_peak_luminance()
-
-        # We need to calculate both LMS mean and LMS delta, depending on the channel!
-
-        # Yxy_bkg = torch.cat((L.view(1), self.xy_bkg), axis=0).reshape((1, 3))
-        
-        # LMS_mean_test = torch.tensor([0, 0, 0], device=self.device)
-        # LMS_mean_masker = XYZ2LMS2006(Yxy2XYZ(Yxy_bkg))
-
-        # LMS_delta_test = DKL2LMS2006_D65(self.test_dkl_col_direction) * L * test_contrast
-        # LMS_delta_masker = DKL2LMS2006_D65(self.masker_dkl_col_direction) * L * masker_contrast
-
-        # LMS_delta_test = LMS_mean_masker * test_contrast
-        # LMS_delta_masker = LMS_mean_masker * masker_contrast
 
         XYZ_target, XYZ_masker = generate_gabor_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, masker_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, device=self.device)
 

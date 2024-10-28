@@ -27,15 +27,11 @@ class GaborPatchTest(SyntheticTest):
         self.height = height
         self.channel = channel
 
-        self.xy_bkg = torch.tensor([0.31271, 0.32902], device=self.device)
         if channel == 'Ach':
-            #self.xy_modulation = torch.tensor([0.3127, 0.3290], device=self.device)
             self.dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
         elif channel == 'RG':
-            #self.xy_modulation = torch.tensor([0.5027, 0.2322], device=self.device)
             self.dkl_col_direction = torch.tensor([0, 0.610649, 0], device=self.device)
         elif channel == 'YV':
-            #self.xy_modulation = torch.tensor([0.3313, 0.3738], device=self.device)
             self.dkl_col_direction = torch.tensor([0, 0, 4.203636], device=self.device)
         
         self.display_photometry = display_photometry
@@ -105,42 +101,16 @@ class GaborPatchTest(SyntheticTest):
         contrast, s_freq, t_freq, L, orien, size, ecc = self.get_test_condition_parameters(index)
         Lmax = self.display_photometry.get_peak_luminance()
 
-        # # We need to calculate both LMS mean and LMS delta, depending on the channel!
-
-        # Yxy_bkg = torch.cat((L.view(1), self.xy_bkg), axis=0).reshape((1, 3))
-        # LMS_mean = XYZ2LMS2006(Yxy2XYZ(Yxy_bkg))
-
-        # if self.channel == 'Ach':
-        #     LMS_delta = LMS_mean * contrast
-        # else:
-        #     Yxy_modulation = torch.cat((L.view(1), self.xy_modulation), axis=0).reshape((1, 3))
-        #     LMS_mdoulation_peak = XYZ2LMS2006(Yxy2XYZ(Yxy_modulation))
-        #     LMS_delta = (LMS_mdoulation_peak - LMS_mean) * contrast
-
-        #LMS_delta = DKL2LMS2006_D65(self.dkl_col_direction) * L * contrast
-
-        #gabor_patch = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, s_freq, t_freq, orien, LMS_mean, LMS_delta, size, ecc, device=self.device).permute(2, 3, 0, 1) # FROM HWCF to CFHW
-
         XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
 
         # If luminance test we go from XYZ to RGB2020 and then apply appropriate endoing
         # If other tests, we go from XYZ to RGB709, then we apply lin2srgb
 
         if self.display_photometry.EOTF == 'sRGB':
-            # we go from XYZ to RGB709, then we apply lin2srgb
-            #test_condition = XYZ2RGB709_nd(LMS20062XYZ_nd(gabor_patch)).unsqueeze(0)
-            #test_condition = lin2srgb(test_condition / Lmax)
-            #reference_condition = lin2srgb(torch.ones(1, 3, self.frames, self.height, self.width).to(self.device) * L / Lmax)# need to kind of divide by Lpeak and then apply sRGB encoding!
-
             test_condition = lin2srgb(XYZ2RGB709_nd(XYZ_test / Lmax).unsqueeze(0))
             reference_condition = lin2srgb(XYZ2RGB709_nd(XYZ_reference / Lmax).unsqueeze(0))
 
-
         elif self.display_photometry.EOTF in ['PQ', 'HLG', 'linear']:
-            # we go from XYZ to RGB2020
-            #test_condition = XYZ2RGB2020_nd(LMS20062XYZ_nd(gabor_patch)).unsqueeze(0)
-            #reference_condition = torch.ones(1, 3, self.frames, self.height, self.width).to(self.device) * L
-
             test_condition = XYZ2RGB2020_nd(XYZ_test).unsqueeze(0)
             reference_condition = XYZ2RGB2020_nd(XYZ_reference).unsqueeze(0)
 

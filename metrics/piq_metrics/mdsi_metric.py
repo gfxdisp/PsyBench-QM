@@ -50,3 +50,7 @@ class mdsi_metric(vq_metric):
     @staticmethod
     def name():
         return "MDSI"
+
+    @staticmethod
+    def is_lower_better():
+        return True

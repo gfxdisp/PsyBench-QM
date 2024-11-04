@@ -52,3 +52,7 @@ class ahiq_metric(vq_metric):
     @staticmethod
     def name():
         return "AHIQ"
+    
+    @staticmethod
+    def is_lower_better():
+        return False

@@ -43,3 +43,7 @@ class lpips_metric(vq_metric):
     @staticmethod
     def name():
         return "LPIPS-Alex"
+
+    @staticmethod
+    def is_lower_better():
+        return True

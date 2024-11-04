@@ -43,3 +43,7 @@ class topiq_metric(vq_metric):
     @staticmethod
     def name():
         return "TOPIQ"
+    
+    @staticmethod
+    def is_lower_better():
+        return False

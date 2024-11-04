@@ -1,6 +1,7 @@
 import torch
 from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
+from pyst.utils import RGB2Y
 
 """
 MS-SSIM metric.
@@ -33,6 +34,9 @@ class ms_ssim_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
+            T = RGB2Y(T, self.display_photometry)
+            R = RGB2Y(R, self.display_photometry)
+
             score += self.metric(T, R) / N_frames
 
         return score, None
@@ -43,3 +47,7 @@ class ms_ssim_metric(vq_metric):
     @staticmethod
     def name():
         return "MS-SSIM"
+
+    @staticmethod
+    def is_lower_better():
+        return False

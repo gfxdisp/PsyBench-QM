@@ -52,3 +52,7 @@ class dists_metric(vq_metric):
     @staticmethod
     def name():
         return "DISTS"
+    
+    @staticmethod
+    def is_lower_better():
+        return True

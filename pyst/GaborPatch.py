@@ -6,7 +6,7 @@ import os
 import matplotlib.pyplot as plt
 from pyst.utils import *
 import torch 
-from pycvvdp.video_source import video_source_array
+from pycvvdp import video_source
 from pycvvdp.display_model import vvdp_display_photo_eotf, vvdp_display_geometry
 
 
@@ -122,9 +122,9 @@ class GaborPatchTest(SyntheticTest):
                 test_condition = lin2hlg(test_condition, Lmax)
                 reference_condition = lin2hlg(reference_condition, Lmax)
 
-        return video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
+        return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
 
-    def plot(self, predictions, output_filename=None, title=None):
+    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
 
         conditions = self.get_rows_conditions()
         condition_names = self.get_row_header()
@@ -137,8 +137,17 @@ class GaborPatchTest(SyntheticTest):
 
         predictions = predictions.reshape(self.size())
 
-        fig = plt.figure(figsize=(4, 4))
-        plt.contour(x_condition, y_condition, predictions, 30)
+        cmap = 'viridis'
+
+        if reverse_color_order:
+            cmap = 'viridis_r'
+
+        fig = plt.figure(figsize=(5, 4))
+        contour = plt.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
+
+        #plt.clabel(contour, inline=True, fontsize=8)
+
+        colorbar = fig.colorbar(contour)
 
         plt.grid(alpha=0.4, axis='x')
 

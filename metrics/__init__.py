@@ -34,6 +34,7 @@ except ImportError as e:
 
 from metrics.vmaf_metric import vmaf_met
 from metrics.vmaf_neg_metric import vmaf_neg_met
+from metrics.funque_metric import funque_met
 
 from metrics.cvvdp_metric import cvvdp_met
 from metrics.fvvdp_metric import fvvdp_met

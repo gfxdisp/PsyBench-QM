@@ -1,7 +1,7 @@
 import torch
 from piq import gmsd
 from pycvvdp.vq_metric import vq_metric
-from pyst.utils import display_encode
+from pyst.utils import RGB2Y
 """
 GMSD metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
 """
@@ -22,7 +22,7 @@ class gmsd_metric(vq_metric):
         else:
             self.device = device
             
-        self.color_space = 'Y'
+        self.color_space = 'display_encoded_dmax'
 
     '''
     The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
@@ -34,11 +34,11 @@ class gmsd_metric(vq_metric):
 
         score = 0
         for ff in range(N_frames):
-            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
-            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
+            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
+            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            T = display_encode(T, self.display_photometry)
-            R = display_encode(R, self.display_photometry)
+            T = RGB2Y(T, self.display_photometry)
+            R = RGB2Y(R, self.display_photometry)
 
             score += gmsd(T, R, data_range=1.) / N_frames
 
@@ -46,6 +46,10 @@ class gmsd_metric(vq_metric):
 
     def short_name(self):
         return "GMSD"
+    
+    @staticmethod
+    def is_lower_better():
+        return True
 
     @staticmethod
     def name():

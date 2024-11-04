@@ -232,3 +232,33 @@ def display_encode(L, display_photometry):
     
     return luma
 
+
+def RGB2Y(I, display_photometry):
+
+    # The shape of the input is BCHW
+
+    rgb2y_matrix = torch.tensor( display_photometry.rgb2xyz_list[1], dtype=I.dtype, device=I.device )
+    
+    Y = torch.sum(I*(rgb2y_matrix.view(1,3,1,1)), dim=-3, keepdim=True)
+
+    return Y
+
+
+# def display_encode(L, display_photometry):
+
+#     EOTF = display_photometry.EOTF
+#     Lmax = display_photometry.get_peak_luminance()
+
+#     if EOTF == 'sRGB':
+#         luma = lin2srgb(L/Lmax)
+#     elif EOTF == 'PQ':
+#         luma = lin2pq(L)
+#     elif EOTF == 'HLG':
+#         luma = lin2hlg(L, Lmax)
+#     elif EOTF == 'linear':
+#         PU_obj = PU()
+#         PU_max = PU_obj.encode(torch.as_tensor(Lmax))
+#         luma = PU_obj.encode(L) / PU_max 
+    
+#     return luma
+

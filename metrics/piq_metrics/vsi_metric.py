@@ -50,3 +50,7 @@ class vsi_metric(vq_metric):
     @staticmethod
     def name():
         return "VSI"
+    
+    @staticmethod
+    def is_lower_better():
+        return False

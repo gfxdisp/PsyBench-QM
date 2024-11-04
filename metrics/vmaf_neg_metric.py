@@ -65,15 +65,22 @@ class vmaf_neg_met(vq_metric):
 
         h, w, N_frames = vid_source.get_video_size()
 
-        with tempfile.TemporaryDirectory(prefix=self.short_name(), dir=self.cache_ref_loc) as temp_dir:
+        vprops = dict()
+        vprops["width"]=w
+        vprops["height"]=h
+        vprops["fps"] = vid_source.get_frames_per_second()
+        vprops["chroma_ss"] = '444'
 
-            vprops = dict()
-            vprops["width"]=w
-            vprops["height"]=h
-            vprops["fps"] = vid_source.get_frames_per_second()
-            vprops["bit_depth"] = 10
+        if self.display_photometry == 'sRGB':
+            vprops["bit_depth"] = 8
             vprops["color_space"] = '709'
-            vprops["chroma_ss"] = '444'
+            bit_depth = 8
+        else:
+            vprops["bit_depth"] = 10
+            vprops["color_space"] = '2020'
+            bit_depth = 10
+
+        with tempfile.TemporaryDirectory(prefix=self.short_name(), dir=self.cache_ref_loc) as temp_dir:
 
             out_fname = os.path.join( temp_dir, "vmaf.json" )
 
@@ -88,7 +95,7 @@ class vmaf_neg_met(vq_metric):
                     test_vw.append_frame_rgb(T)
                     ref_vw.append_frame_rgb(R)
 
-                vmaf_cmd = f'vmaf --pixel_format 444 --width {w} --height {h} --bitdepth 10 --distorted {test_vw.fname} --reference {ref_vw.fname} --json -o {out_fname} --model version=vmaf_v0.6.1neg --threads 32 --quiet'
+                vmaf_cmd = f'vmaf --pixel_format 444 --width {w} --height {h} --bitdepth {bit_depth} --distorted {test_vw.fname} --reference {ref_vw.fname} --json -o {out_fname} --model version=vmaf_v0.6.1neg --threads 32 --quiet'
 
                 os.system(vmaf_cmd)
                 with open(out_fname) as f:
@@ -103,4 +110,12 @@ class vmaf_neg_met(vq_metric):
     @staticmethod
     def name():
         return 'VMAF_v0.6.1neg'
+
+    @staticmethod
+    def is_lower_better():
+        return False
+
+    @staticmethod
+    def predictions_range():
+        return [0, 100]
 

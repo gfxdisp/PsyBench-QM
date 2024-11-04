@@ -43,3 +43,7 @@ class wadiqam_metric(vq_metric):
     @staticmethod
     def name():
         return "WaDIQaM"
+
+    @staticmethod
+    def is_lower_better():
+        return False

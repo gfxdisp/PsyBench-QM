@@ -1,6 +1,7 @@
 import torch
 from piq import multi_scale_gmsd
 from pycvvdp.vq_metric import vq_metric
+from pyst.utils import RGB2Y
 
 """
 MS-GMSD metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
@@ -40,7 +41,10 @@ class ms_gmsd_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            score += multi_scale_gmsd(T, R, data_range=1.) / N_frames
+            T = RGB2Y(T, self.display_photometry)
+            R = RGB2Y(R, self.display_photometry)
+
+            score += multi_scale_gmsd(T, R, data_range=1., chromatic=False) / N_frames
 
         return score, None
 
@@ -50,3 +54,7 @@ class ms_gmsd_metric(vq_metric):
     @staticmethod
     def name():
         return "MS-GMSD"
+    
+    @staticmethod
+    def is_lower_better():
+        return True

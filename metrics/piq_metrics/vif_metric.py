@@ -1,6 +1,7 @@
 import torch
 from piq import vif_p
 from pycvvdp.vq_metric import vq_metric
+from pyst.utils import RGB2Y
 
 """
 VIF metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
@@ -40,6 +41,9 @@ class vifp_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
+            T = RGB2Y(T, self.display_photometry)
+            R = RGB2Y(R, self.display_photometry)
+
             score += vif_p(T, R, data_range=1.) / N_frames
 
         return score, None
@@ -50,3 +54,7 @@ class vifp_metric(vq_metric):
     @staticmethod
     def name():
         return "VIFp"
+    
+    @staticmethod
+    def is_lower_better():
+        return False

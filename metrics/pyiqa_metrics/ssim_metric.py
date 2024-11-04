@@ -2,7 +2,7 @@ import torch
 from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
 from pycvvdp.third_party.ssim import SSIM
-from pyst.utils import display_encode
+from pyst.utils import RGB2Y
 
 """
 SSIM metric.
@@ -21,7 +21,7 @@ class ssim_metric(vq_metric):
         else:
             self.device = device
 
-        self.color_space = 'Y'
+        self.color_space = 'display_encoded_dmax'
 
         self.metric = SSIM(channel=1, data_range=1.)
 
@@ -32,11 +32,11 @@ class ssim_metric(vq_metric):
 
         score = 0
         for ff in range(N_frames):
-            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
-            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2)
+            T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
+            R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
-            T = display_encode(T, self.display_photometry)
-            R = display_encode(R, self.display_photometry)
+            T = RGB2Y(T, self.display_photometry)
+            R = RGB2Y(R, self.display_photometry)
 
             score += self.metric.forward(T, R) / N_frames
 
@@ -48,3 +48,7 @@ class ssim_metric(vq_metric):
     @staticmethod
     def name():
         return "SSIM"
+
+    @staticmethod
+    def is_lower_better():
+        return False

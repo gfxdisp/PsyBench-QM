@@ -50,3 +50,7 @@ class haarpsi_metric(vq_metric):
     @staticmethod
     def name():
         return "HaarPSI"
+
+    @staticmethod
+    def is_lower_better():
+        return False

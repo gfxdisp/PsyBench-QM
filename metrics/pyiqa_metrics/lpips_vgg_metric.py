@@ -43,3 +43,7 @@ class lpips_vgg_metric(vq_metric):
     @staticmethod
     def name():
         return "LPIPS-VGG"
+    
+    @staticmethod
+    def is_lower_better():
+        return True

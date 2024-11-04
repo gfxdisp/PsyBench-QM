@@ -15,15 +15,16 @@ if __name__ == '__main__':
     tests = get_all_tests()
 
     tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest,
-            GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
-    
+            GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]    
 
     output_folder = 'results'
     
-    metrics = [cvvdp_met, vmaf_met, vmaf_neg_met, lpips_metric, lpips_vgg_metric, haarpsi_metric, dss_metric, gmsd_metric, ms_gmsd_metric, vsi_metric, fsim_metric, mdsi_metric, ahiq_metric, ckdn_metric, dists_metric, mad_metric, nlpd_metric, pieapp_metric, topiq_metric, wadiqam_metric]  
+    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, vmaf_neg_met, lpips_metric, lpips_vgg_metric, haarpsi_metric, dss_metric, gmsd_metric, ms_gmsd_metric, vsi_metric, fsim_metric, mdsi_metric, ahiq_metric, dists_metric, mad_metric, nlpd_metric, pieapp_metric, topiq_metric, wadiqam_metric, psnry_metric, ssim_metric, ms_ssim_metric] 
 
-    metrics = [cvvdp_met, lpips_metric, haarpsi_metric, dss_metric, psnry_metric, ssim_metric, gmsd_metric, ahiq_metric, dists_metric, topiq_metric, wadiqam_metric]
+    metrics = [fvvdp_met, funque_met, vmaf_met, vmaf_neg_met, lpips_vgg_metric, ssim_metric, dss_metric, ms_gmsd_metric, vsi_metric, mdsi_metric, mad_metric, nlpd_metric, vifp_metric, ms_ssim_metric]   
 
+    metrics = [fsim_metric]
+    
     for T in tests:
         Test = T()
         test_name = Test.short_name()

@@ -7,7 +7,6 @@ from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.tests_utils import get_all_tests
 from metrics import *
-from pycvvdp import cvvdp
 
 from test_reports_utils.html_report import html_report
 
@@ -17,8 +16,6 @@ if __name__ == '__main__':
     level = logging.INFO
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
-    tests = get_all_tests()
-    tests.append(ContrastMakingAchTest)
 
     tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest,
              GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
@@ -29,7 +26,7 @@ if __name__ == '__main__':
     generate_stimuli = False
     generate_metrics_results = True
 
-    metrics = [cvvdp_met, lpips_metric, haarpsi_metric, dss_metric, psnry_metric, ssim_metric, gmsd_metric, ahiq_metric, dists_metric, topiq_metric, wadiqam_metric]
+    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, vmaf_neg_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
 
     # Create the directory and its associated html file!
 
@@ -150,7 +147,7 @@ if __name__ == '__main__':
                 output_filename = os.path.join(plot_folder, metric_name+'.png')
 
                 if generate_metrics_results:
-                    Test.plot(predictions, output_filename=output_filename, title=metric_name+' Metric')
+                    Test.plot(predictions, reverse_color_order=M.is_lower_better(), output_filename=output_filename, title=metric_name+' Metric')
 
                 # Now add them to the webpage
 

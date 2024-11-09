@@ -148,6 +148,8 @@ class GaborPatchTest(SyntheticTest):
         #plt.clabel(contour, inline=True, fontsize=8)
 
         colorbar = fig.colorbar(contour)
+        if reverse_color_order:
+            colorbar.ax.invert_yaxis()
 
         plt.grid(alpha=0.4, axis='x')
 
@@ -195,6 +197,111 @@ class GaborPatchTest(SyntheticTest):
             fig.savefig(output_filename)
 
         plt.close(fig)
+    
+    def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
+        # The code will return the JS script that should work with plotly
+
+        js_command = ""
+
+        conditions = self.get_rows_conditions()
+        condition_names = self.get_row_header()
+
+        y_condition = np.unique(conditions[0].cpu().numpy())
+        y_condition_name = condition_names[0]
+
+        x_condition = np.unique(conditions[1].cpu().numpy())
+        x_condition_name = condition_names[1]
+
+        z_condition_name = "Metric Prediction"
+
+        predictions = predictions.reshape(self.size())
+
+        z = "["
+
+        for i, row in enumerate(predictions):
+            if i>0:
+                z += ", "
+            z += "["
+            for j, el in enumerate(row):
+                if j > 0:
+                    z += ", "
+                z += str(el)
+            z += "]"
+
+        z += "]"
+
+        x = "["
+        for i, el in enumerate(x_condition):
+            if i>0:
+                x += ", "
+            x += str(el)
+        x += "]"
+
+        y = "["
+        for i, el in enumerate(y_condition):
+            if i>0:
+                y += ", "
+            y += str(el)
+        y += "]"
+
+        # Contour plot data
+
+        js_command += "var Contourdata = {\n"
+        js_command += "z: " + z + ",\nx: " + x + ",\ny: " + y
+
+        extra_params = "type: 'contour',\ncolorscale: 'Viridis',\nncontours: 30,\nline:{width:2},\n"
+        if reverse_color_order:
+            extra_params+= "reversescale: true,\n"
+
+        extra_params += "hovertemplate: '"+x_condition_name+": %"+r"{x:.2f}"+"<br>"+y_condition_name+": %"+r"{y:.2f}"+"<br>"+z_condition_name+": %"+r"{z:.2f}"+"<extra></extra>',\n"
+        
+        extra_params += r"contours:{coloring:'lines'}"
+
+        js_command += ",\n" + extra_params
+
+        js_command += "\n};"
+
+        # Ground Truth Data 
+
+        x_gt, y_gt = self.get_csf_results()
+
+        x = "["
+        for i, el in enumerate(x_gt):
+            if i>0:
+                x += ", "
+            x += str(el.cpu().numpy())
+        x += "]"
+
+        y = "["
+        for i, el in enumerate(y_gt):
+            if i>0:
+                y += ", "
+            y += str(el)
+        y += "]"
+
+        js_command += "\nvar Linedata = {\n"
+        js_command += "x: " + x + ",\ny: " + y
+
+        extra_params = "mode: 'lines',\ntype: 'scatter',\nline:{color: 'red', width:2},marker:{symbol:'circle-open', size:8},\nname: 'CastleCSF'"
+
+        js_command += ",\n" + extra_params
+
+        js_command += "\n};"
+
+        js_command += "\nvar data = [Contourdata, Linedata]"
+
+        # Layout of the Figure
+
+        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], title:'"+y_condition_name+"'}"
+        edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
+        margin_info = r"margin: {l:50, r:40, t:50, b:40}"
+
+        js_command += "\nvar layout = {\ntitle: {text: '"+title+"', y: 0.95}, width:500, height:400, "+axes_info+",\n"+edge_info+",\n"+margin_info+"\n};"
+        
+        if fig_id:
+            js_command += "\nPlotly.newPlot('"+fig_id+"', data, layout);\n\n"
+
+        return js_command
 
     def get_condition(self, index):
         return self.get_test_condition(index), self.display_photometry, self.display_geometry

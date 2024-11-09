@@ -106,3 +106,10 @@ h2 {
    object-fit: cover;              /* Maintain aspect ratio and cover */
    border-radius: 10px;            /* Optional: Add rounded corners */
 }
+
+.image-container div {
+   max-width: 100%;                /* Make image responsive */
+   max-height: 100%;               /* Scale image within container */
+   object-fit: cover;              /* Maintain aspect ratio and cover */
+   border-radius: 10px;            /* Optional: Add rounded corners */
+}

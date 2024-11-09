@@ -45,7 +45,7 @@ class html_report:
                 line = f.readline()
                 if not line:
                     break
-                self.println(line)
+                self.println(line)        
 
     def insert_image(self, image, mousedown_image=None, class_tag=None):
 
@@ -154,7 +154,8 @@ class html_report:
             self.println( "<{tag}>{cell}</{tag}>".format(tag=tag, cell=cell))
 
     def close( self ):
-
+        
+        self.println('<script type="text/javascript" src="js_files/script.js"></script>')
         self.insert_file(os.path.join(os.path.dirname(__file__), "html_preable.html"))
         self.println( "</body>")
         self.println( "</html>")

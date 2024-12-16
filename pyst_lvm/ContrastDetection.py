@@ -209,7 +209,7 @@ class ContrastDetectionSpatialFreqAchGaborTest(ContrastDetectionTest):
         return 'Contrast Detection - Spatial Frequency - Achromatic Gabor'
     
     def preview_filepath(self):
-        return "Gabor_SpF_Contrast_sup.png"
+        return "Gabor_SpF_Contrast_supplementary.png"
 
 class ContrastDetectionSpatialFreqAchNoiseTest(ContrastDetectionTest):
 
@@ -252,7 +252,7 @@ class ContrastDetectionSpatialFreqAchNoiseTest(ContrastDetectionTest):
         return 'Contrast Detection - Spatial Frequency - Achromatic Noise'
     
     def preview_filepath(self):
-        return "Band_limited_noise_SpF_Contrast_sup.png"
+        return "Noise_SpF_Contrast_supplementary.png"
 
 class ContrastDetectionSpatialFreqRGGaborTest(ContrastDetectionTest):
 
@@ -295,7 +295,7 @@ class ContrastDetectionSpatialFreqRGGaborTest(ContrastDetectionTest):
         return 'Contrast Detection - Spatial Frequency - Red-Green Gabor'
 
     def preview_filepath(self):
-        return "Gabor_SpF_Contrast_RG_sup.png"
+        return "Gabor_SpF_Contrast_RG_supplementary.png"
 
 class ContrastDetectionSpatialFreqYVGaborTest(ContrastDetectionTest):
 
@@ -338,7 +338,7 @@ class ContrastDetectionSpatialFreqYVGaborTest(ContrastDetectionTest):
         return 'Contrast Detection - Spatial Frequency - Yellow-Violet Gabor'
 
     def preview_filepath(self):
-        return "Gabor_SpF_Contrast_YV_sup.png"
+        return "Gabor_SpF_Contrast_YV_supplementary.png"
 
 class ContrastDetectionLuminanceTest(ContrastDetectionTest):
 
@@ -381,7 +381,7 @@ class ContrastDetectionLuminanceTest(ContrastDetectionTest):
         return 'Contrast Detection - Luminance'
     
     def preview_filepath(self):
-        return "Gabor_Luminance_Contrast_sup.png"
+        return "Gabor_Luminance_Contrast_supplementary.png"
 
 class ContrastDetectionAreaTest(ContrastDetectionTest):
 
@@ -424,4 +424,4 @@ class ContrastDetectionAreaTest(ContrastDetectionTest):
         return 'Contrast Detection - Area'
     
     def preview_filepath(self):
-        return "Gabor_Area_Contrast_sup.png"
+        return "Gabor_Area_Contrast_supplementary.png"

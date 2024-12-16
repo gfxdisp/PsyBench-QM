@@ -167,6 +167,10 @@ body {
    color:inherit;
    text-decoration: none;
 }
+.sidebar a{
+   color:inherit;
+   text-decoration: none;
+}
 .other_content {
    margin-left: 280px;
    padding: 20px;

@@ -52,7 +52,7 @@ class ContrastMaskingTest(SyntheticTest):
         x_condition = np.unique(x_condition)
         x_condition_name = condition_names[1]
 
-        z_condition_name = "Latent code angular distance"
+        z_condition_name = "Latent code dissimilarity"
 
         predictions = np.transpose(np.array(predictions))
 
@@ -209,7 +209,7 @@ class ContrastMaskingPhaseCoherentTest(ContrastMaskingTest):
         return 'Contrast Masking - Phase Coherent Masking'
     
     def preview_filepath(self):
-        return "Contrast_Masking_Gabor_sup.png"
+        return "Contrast_Masking_Gabor_supplementary.png"
 
 class ContrastMaskingPhaseIncoherentTest(ContrastMaskingTest):
 
@@ -252,4 +252,4 @@ class ContrastMaskingPhaseIncoherentTest(ContrastMaskingTest):
         return 'Contrast Masking - Phase Incoherent Masking'
     
     def preview_filepath(self):
-        return "Contrast_Masking_Gabor_on_Noise_sup.png"
+        return "Contrast_Masking_Gabor_on_Noise_supplementary.png"

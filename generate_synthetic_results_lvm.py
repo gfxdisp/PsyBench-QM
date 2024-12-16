@@ -29,7 +29,7 @@ if __name__ == '__main__':
     generate_stimuli = False
     generate_metrics_results = True
 
-    metrics = ['no_encoder', 'cvvdp_hdr', 'dino', 'dinov2', 'openclip', 'sam', 'sam2', 'mae', 'vae']
+    metrics = ['no_encoder', 'cvvdp_hdr', 'dino', 'dinov2', 'openclip', 'sam_float', 'sam2_float', 'mae', 'vae']
     metrics_names = ['No Encoder', 'ColorVideoVDP', 'DINO', 'DINOv2', 'OpenCLIP', 'SAM', 'SAM-2', 'MAE', 'SD-VAE']
 
     submetrics_names = [['/'], ['/'], ['ResNet-50', 'ViT-S/16', 'ViT-S/8', 'ViT-B/16', 'ViT-B/8', 'Xcit-S-12/16', 'Xcit-S-12/8',
@@ -83,9 +83,6 @@ if __name__ == '__main__':
         Test = T()
         test_name = Test.short_name()
 
-        if test_name == 'Supra-threshold Vision - Contrast Matching':
-            break_point = True
-
         [test_rows, test_columns] = Test.size()
         [x_variable_name, y_variable_name] = Test.get_row_header()
 
@@ -110,8 +107,11 @@ if __name__ == '__main__':
 
         hr_test.insert_text('The plots are generated with Plotly JS, please wait for few seconds for all the plots to be generated.')
         hr_test.insert_text('The countour plots are dynamic, you can hover over them and read the results, or zoom in and zoom out.')
-        hr_test.insert_text('Click <a href={link}>here</a> to view examples of the test stimuli used to generate these results.'.format(link=os.path.join("previews", Test.preview_filepath())))
-
+        
+        if test_name != 'Contrast Constancy - Contrast Matching':
+            hr_test.insert_text('Each contour plot corresponds to the results of a model for the "{the_test_name}" test in terms of the latent space dissimilarity S<sub>ac</sub>, while the red line corresponds to the ground truth. The test stimuli examples can be found <a href={link}>here</a>.'.format(link=os.path.join("previews", Test.preview_filepath()), the_test_name=test_name))
+        else:
+            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching" experiment, where different colors represent different contrast C<sub>r</sub> values. The dashed lines are human results, while the solid lines are model-predicted results. The test stimuli examples can be found <a href={link}>here.'.format(link=os.path.join("previews", Test.preview_filepath())))
 
         # Now, we want to add all metric results to this test webpage
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                 for submetric, submetric_name, submetric_dataset in zip(submetrics, submetrics_name, submetrics_dataset):
 
                     score_name = 'Alignment score'
-                    if test_name == 'Supra-threshold Vision - Contrast Matching':
+                    if test_name == 'Contrast Constancy - Contrast Matching':
                         score_name = 'RMSE'
 
                     if len(submetrics)>1:
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
                     metric_id = test_name.lower().replace(' ', '_').replace('(', '').replace(')', '')+'_'+metric_name_id.lower().replace(' ', '_')
 
-                    if test_name != 'Supra-threshold Vision - Contrast Matching':
+                    if test_name != 'Contrast Constancy - Contrast Matching':
                         x_condition = metric_results[submetric][Test.get_rows_conditions()[0]]
                         y_condition = metric_results[submetric][Test.get_rows_conditions()[1]]
 

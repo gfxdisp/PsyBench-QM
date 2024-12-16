@@ -36,7 +36,7 @@ class ContrastMatchingTest(SyntheticTest):
         condition_names = self.get_row_header()
         y_condition_name = condition_names[0]
         x_condition_name = condition_names[1]
-        z_condition_name = "Latent code angular distance"
+        z_condition_name = "Latent code dissimilarity"
 
         x_tick_vals, y_tick_vals = self.get_ticks()
 
@@ -165,7 +165,7 @@ class ContrastMatchingTest(SyntheticTest):
         return self._preview_folder
 
     def short_name(self):
-        return 'Supra-threshold Vision - Contrast Matching'
+        return 'Contrast Constancy - Contrast Matching'
     
     def get_csf_results(self):
         path = os.path.join(self.csf_data_folder, 'contrast_constancy_sin_5_cpd.json')
@@ -193,7 +193,7 @@ class ContrastMatchingTest(SyntheticTest):
         return ['log', 'log'], [None, 'cpd']
 
     def preview_filepath(self):
-        return "Contrast_Masking_Gabor_on_Noise_sup.png"
+        return "Contrast_Matching_supplementary.png"
 
 
 

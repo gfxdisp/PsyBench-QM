@@ -18,7 +18,7 @@ class ContrastMakingTest(SyntheticTest):
     # For now we may not need these informations! It is not as important
 
     def __init__(self, width, height, test_channel, masker_channel, display_photometry, display_geometry, frames, fps, test_contrasts, masker_contrasts, spatial_frequencies=2, temporal_frequencies=0,
-                 bkg_luminances=21.4, masker_orientations=0, test_orientations=0, test_sizes=1, device=None):
+                 bkg_luminances=21.4, masker_orientations=0, test_orientations=0, test_sizes=1, phase_masking='coherent', device=None):
 
 
         super().__init__(device)
@@ -28,6 +28,8 @@ class ContrastMakingTest(SyntheticTest):
 
         self.test_channel = test_channel
         self.masker_channel = masker_channel
+
+        self.phase_masking = phase_masking
 
         if test_channel == 'Ach':
             self.test_dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
@@ -322,6 +324,8 @@ class ContrastMakingAchTest(ContrastMakingTest):
         test_channel = 'Ach'
         masker_channel = 'Ach'
 
+        phase_masking = 'coherent'
+
         frames = 1
         fps = 1
 
@@ -331,7 +335,7 @@ class ContrastMakingAchTest(ContrastMakingTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, device=device)
+        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, phase_masking=phase_masking, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'ach')
         self._preview_as = 'image'
@@ -358,5 +362,5 @@ class ContrastMakingAchTest(ContrastMakingTest):
         return ['log', 'log'], [None, None]
 
     def short_name(self):
-        return 'Contrast Masking (Gabor Patch) Achromatic Test'
+        return 'Contrast Masking - Phase Coherent Masking'
 

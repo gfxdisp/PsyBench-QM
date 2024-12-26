@@ -18,16 +18,30 @@ if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
 
-    tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest,
-             GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
+    tests = [GaborPatchSpatialFreqAchTest, GaborPatchSizeAchTest, ContrastMakingAchTest]
+
+    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+
+    tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
+
+    metrics = [cvvdp_met, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+
+    tests = [GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
+
+    metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+
+    tests = [GaborPatchLuminanceAchTest]
+
+    metrics = [cvvdp_met, fvvdp_met]
+
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
 
-    generate_stimuli = True
+    generate_stimuli = False
     generate_metrics_results = True
 
-    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, vmaf_neg_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
+    
 
     # Create the directory and its associated html file!
 

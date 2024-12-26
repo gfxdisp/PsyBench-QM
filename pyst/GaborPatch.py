@@ -10,7 +10,7 @@ from pycvvdp import video_source
 from pycvvdp.display_model import vvdp_display_photo_eotf, vvdp_display_geometry
 
 
-class GaborPatchTest(SyntheticTest):
+class ContrastDetectionTest(SyntheticTest):
     """
     Abstract class for all synthetic tests relying on gabor patches
     """
@@ -18,10 +18,12 @@ class GaborPatchTest(SyntheticTest):
     # For now we may not need these informations! It is not as important
 
     def __init__(self, width, height, channel, display_photometry, display_geometry, frames, fps, contrasts, spatial_frequencies=2, temporal_frequencies=0,
-                 bkg_luminances=21.4, orientations=0, sizes=2, eccentricities=0, device=None):
+                 bkg_luminances=21.4, orientations=0, sizes=2, eccentricities=0, stimuli_type='gabor_patch', device=None):
 
 
         super().__init__(device)
+
+        self.stimuli_type = stimuli_type
 
         self.width = width
         self.height = height
@@ -67,7 +69,11 @@ class GaborPatchTest(SyntheticTest):
         self.size_indices = self.size_indices.flatten()
         self.ecc_indices = self.ecc_indices.flatten()
 
-        self._preview_folder = 'gabor_tests'
+        if self.stimuli_type == 'gabor_patch':
+            self._preview_folder = 'gabor_tests'
+        else:
+            self._preview_folder = 'band_limited_noise_tests'
+
         self._preview_as = None
 
         self.csf_data_folder = 'pyst/pyst_data/gabor_tests_castlecsf_results'
@@ -101,7 +107,12 @@ class GaborPatchTest(SyntheticTest):
         contrast, s_freq, t_freq, L, orien, size, ecc = self.get_test_condition_parameters(index)
         Lmax = self.display_photometry.get_peak_luminance()
 
-        XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
+        if self.stimuli_type == 'gabor_patch':
+            XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
+        else:
+            # For now, we will keep it as such!
+            XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
+
 
         # If luminance test we go from XYZ to RGB2020 and then apply appropriate endoing
         # If other tests, we go from XYZ to RGB709, then we apply lin2srgb
@@ -123,6 +134,7 @@ class GaborPatchTest(SyntheticTest):
                 reference_condition = lin2hlg(reference_condition, Lmax)
 
         return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
+
 
     def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
 
@@ -313,10 +325,10 @@ class GaborPatchTest(SyntheticTest):
         return self._preview_as
 
     def short_name(self):
-        return 'Gabor Patch Test'
+        return 'Contrast Detection Test'
 
 
-class GaborPatchSpatialFreqAchTest(GaborPatchTest):
+class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
 
     def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
         
@@ -324,13 +336,15 @@ class GaborPatchSpatialFreqAchTest(GaborPatchTest):
         frames = 1
         fps = 1
 
+        stimuli_type='gabor_patch'
+
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
         contrasts = torch.logspace(log10(0.0035), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_ach')
         self._preview_as = 'image'
@@ -360,9 +374,9 @@ class GaborPatchSpatialFreqAchTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cpd']
 
     def short_name(self):
-        return 'Gabor Patch Spatial Frequency Achromatic Test'
+        return 'Contrast Detection - Spatial Frequency - Achromatic Gabor Patch'
 
-class GaborPatchSpatialFreqRGTest(GaborPatchTest):
+class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
     def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
         
@@ -370,13 +384,15 @@ class GaborPatchSpatialFreqRGTest(GaborPatchTest):
         frames = 1
         fps = 1
 
+        stimuli_type='gabor_patch'
+
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
         contrasts = torch.logspace(log10(0.002), log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_rg')
         self._preview_as = 'image'
@@ -406,9 +422,9 @@ class GaborPatchSpatialFreqRGTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cpd']
 
     def short_name(self):
-        return 'Gabor Patch Spatial Frequency RG Test'
+        return 'Contrast Detection - Spatial Frequency - Red-Green Gabor Patch'
 
-class GaborPatchSpatialFreqYVTest(GaborPatchTest):
+class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
     def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
         
@@ -416,13 +432,15 @@ class GaborPatchSpatialFreqYVTest(GaborPatchTest):
         frames = 1
         fps = 1
 
+        stimuli_type='gabor_patch'
+
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
         contrasts = torch.logspace(-2, log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_yv')
         self._preview_as = 'image'
@@ -452,10 +470,10 @@ class GaborPatchSpatialFreqYVTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cpd']
 
     def short_name(self):
-        return 'Gabor Patch Spatial Frequency YV Test'
+        return 'Contrast Detection - Spatial Frequency - Yellow-Violet Gabor Patch'
 
 
-class GaborPatchLuminancePU21AchTest(GaborPatchTest):
+class GaborPatchLuminanceAchTest(ContrastDetectionTest):
 
     def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
         
@@ -463,13 +481,64 @@ class GaborPatchLuminancePU21AchTest(GaborPatchTest):
         frames = 1
         fps = 1
 
+        stimuli_type='gabor_patch'
+
         bkg_luminances = torch.logspace(-2, 4, N_L)
         contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'luminances_ach')
+        self._preview_as = 'image'
+    
+    def get_csf_results(self):
+        x = torch.logspace(-2, 4, 100)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+        return x, y
+    
+    def get_ticks(self):
+        x = torch.logspace(-2, 4, 7)
+        y = self.contrasts
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Luminance']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_L
+
+    def units(self):
+        return ['log', 'log'], [None, 'cd/m$^2$']
+
+    def short_name(self):
+        return 'Luminance Masking'
+    
+
+class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
+
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+        
+        channel = 'Ach'
+        frames = 1
+        fps = 1
+
+        stimuli_type='gabor_patch'
+
+        bkg_luminances = torch.logspace(-2, 4, N_L)
+        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_pu21_ach')
         self._preview_as = 'image'
@@ -499,10 +568,10 @@ class GaborPatchLuminancePU21AchTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cd/m$^2$']
 
     def short_name(self):
-        return 'Gabor Patch Background Luminance with PU21 encoding - Achromatic Test'
+        return 'Luminance Masking - PU21 Encoding'
 
 
-class GaborPatchLuminancePQAchTest(GaborPatchTest):
+class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
 
     def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
         
@@ -510,13 +579,15 @@ class GaborPatchLuminancePQAchTest(GaborPatchTest):
         frames = 1
         fps = 1
 
+        stimuli_type='gabor_patch'
+
         bkg_luminances = torch.logspace(-2, 4, N_L)
         contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-PQ')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_pq_ach')
         self._preview_as = 'image'
@@ -546,10 +617,10 @@ class GaborPatchLuminancePQAchTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cd/m$^2$']
 
     def short_name(self):
-        return 'Gabor Patch Background Luminance with PQ encoding - Achromatic Test'
+        return 'Luminance Masking - PQ Encoding'
 
 
-class GaborPatchLuminanceHLGAchTest(GaborPatchTest):
+class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
 
     def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
         
@@ -557,13 +628,15 @@ class GaborPatchLuminanceHLGAchTest(GaborPatchTest):
         frames = 1
         fps = 1
 
+        stimuli_type='gabor_patch'
+
         bkg_luminances = torch.logspace(-2, 4, N_L)
         contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-HLG')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_hlg_ach')
         self._preview_as = 'image'
@@ -593,53 +666,55 @@ class GaborPatchLuminanceHLGAchTest(GaborPatchTest):
         return ['log', 'log'], [None, 'cd/m$^2$']
 
     def short_name(self):
-        return 'Gabor Patch Background Luminance with HLG encoding - Achromatic Test'
+        return 'Luminance Masking - HLG Encoding'
 
 
-# class GaborPatchSizeAchTest(GaborPatchTest):
+class GaborPatchSizeAchTest(ContrastDetectionTest):
 
-#     def __init__(self, width=1920, height=1080, N_contrasts=20, N_size=20, device=None):
-#         channel = 'Ach'
-#         frames = 1
-#         fps = 1
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_size=20, device=None):
+        channel = 'Ach'
+        frames = 1
+        fps = 1
 
-#         sizes = torch.logspace(-1, 5, N_size, base=2)
-#         contrasts = torch.logspace(-3, 0, N_contrasts)
+        stimuli_type='gabor_patch'
 
-#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-#         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        sizes = torch.logspace(-1, 5, N_size, base=2)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
-#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, device=device)
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
 
-#         self._preview_folder = os.path.join(self._preview_folder, 'sizes_ach')
-#         self._preview_as = 'image'
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, stimuli_type=stimuli_type, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'sizes_ach')
+        self._preview_as = 'image'
     
-#     def get_csf_results(self):
-#         x = torch.logspace(-1, 5, 100, base=2)
-#         y = np.loadtxt(os.path.join(self.csf_data_folder, 'size_ach.txt'))
+    def get_csf_results(self):
+        x = torch.logspace(-1, 5, 100, base=2)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'size_ach.txt'))
 
-#         return x, y
+        return x, y
 
-#     def get_ticks(self):
-#         x = torch.logspace(-1, 5, 7, base=2)
-#         y = self.contrasts
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        y = self.contrasts
 
-#         return x, y
+        return x, y
 
-#     def get_row_header(self):
-#         return ['Contrast', 'Size']
+    def get_row_header(self):
+        return ['Contrast', 'Radius']
 
-#     def get_rows_conditions(self):
-#         return [self.contrasts[self.contrast_indices], self.sizes[self.size_indices]]
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.sizes[self.size_indices]]
 
-#     def size(self):
-#         return self.N_contrasts, self.N_size
+    def size(self):
+        return self.N_contrasts, self.N_size
 
-#     def units(self):
-#         return ['log', 'log'], [None, 'deg$^2$']
+    def units(self):
+        return ['log', 'log'], [None, 'deg']
 
-#     def short_name(self):
-#         return 'Gabor Patch Size Achromatic Test'
+    def short_name(self):
+        return 'Contrast Detection - Stimuli Size - Achromatic Gabor Patch'
 
 
 # class GaborPatchTempFreqAchTest(GaborPatchTest):
@@ -687,72 +762,3 @@ class GaborPatchLuminanceHLGAchTest(GaborPatchTest):
 
 #     def short_name(self):
 #         return 'Gabor Patch Temporal Frequency Achromatic Test'
-    
-
-# class GaborPatchEccAchTest(GaborPatchTest):
-
-#     def __init__(self, width=1024, height=1024, N_contrasts=10, N_ecc=7, device=None):
-
-#         channel = 'Ach'
-#         frames = 1
-#         fps = 1
-
-#         eccentricities = torch.linspace(0, 6, N_ecc)
-#         contrasts = torch.logspace(-2, 0, N_contrasts)
-
-#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-#         gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
-
-#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, eccentricities=eccentricities, sizes=1, device=device)
-
-#         self._preview_folder = os.path.join(self._preview_folder, 'eccentricities_ach')
-#         self._preview_as = 'image'
-
-#     def get_row_header(self):
-#         return ['Contrast', 'Eccentricity']
-
-#     def get_rows_conditions(self):
-#         return [self.contrasts[self.contrast_indices], self.eccentricities[self.ecc_indices]]
-
-#     def size(self):
-#         return self.N_contrasts, self.N_ecc
-
-#     def units(self):
-#         return ['log', 'linear'], [None, 'deg']
-
-#     def short_name(self):
-#         return 'Gabor Patch Eccentricity Achromatic Test'
-
-# class GaborPatchOrientationAchTest(GaborPatchTest):
-
-#     def __init__(self, width=1024, height=1024, N_contrasts=10, N_oriantation=6, device=None):
-
-#         channel = 'Ach'
-#         frames = 1
-#         fps = 1
-
-#         orientations = torch.linspace(0, 160, N_oriantation)
-#         contrasts = torch.logspace(-2, 0, N_contrasts)
-
-#         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-#         gm = vvdp_display_geometry([3840, 2160], diagonal_size_inches=30, ppd=64)
-
-#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, orientations=orientations, device=device)
-
-#         self._preview_folder = os.path.join(self._preview_folder, 'orientations_ach')
-#         self._preview_as = 'image'
-
-#     def get_row_header(self):
-#         return ['Contrast', 'Orientation']
-
-#     def get_rows_conditions(self):
-#         return [self.contrasts[self.contrast_indices], self.orientations[self.orien_indices]]
-
-#     def size(self):
-#         return self.N_contrasts, self.N_orien
-
-#     def units(self):
-#         return ['log', 'linear'], [None, '$^\circ$']
-
-#     def short_name(self):
-#         return 'Gabor Patch Orientation Achromatic Test'

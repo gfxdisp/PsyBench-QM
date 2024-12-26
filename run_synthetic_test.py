@@ -12,18 +12,24 @@ if __name__ == '__main__':
     level = logging.INFO
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
-    tests = get_all_tests()
+    """ We will need at some point to add arguments, you simply call this with all tests and metrics for those tests, so we can parallalize it easily or run it with ssh"""
 
-    tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastMakingAchTest,
-            GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]    
+    # At each time choose the metrics for a specific test!
+
+    # tests = [GaborPatchSpatialFreqAchTest, GaborPatchSizeAchTest, ContrastMakingAchTest]
+    # metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+
+    # tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
+    # metrics = [cvvdp_met, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+
+    tests = [GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
+    metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+
+    # tests = [GaborPatchLuminanceAchTest]
+    # metrics = [cvvdp_met, fvvdp_met]  
 
     output_folder = 'results'
-    
-    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, vmaf_neg_met, lpips_metric, lpips_vgg_metric, haarpsi_metric, dss_metric, gmsd_metric, ms_gmsd_metric, vsi_metric, fsim_metric, mdsi_metric, ahiq_metric, dists_metric, mad_metric, nlpd_metric, pieapp_metric, topiq_metric, wadiqam_metric, psnry_metric, ssim_metric, ms_ssim_metric] 
 
-    metrics = [fvvdp_met, funque_met, vmaf_met, vmaf_neg_met, lpips_vgg_metric, ssim_metric, dss_metric, ms_gmsd_metric, vsi_metric, mdsi_metric, mad_metric, nlpd_metric, vifp_metric, ms_ssim_metric]   
-
-    metrics = [fsim_metric]
     
     for T in tests:
         Test = T()

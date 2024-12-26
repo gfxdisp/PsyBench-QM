@@ -12,7 +12,7 @@ To be able to use this metric, you will need to install pyiqa: $ pip install pyi
 
 class ahiq_metric(vq_metric):
 
-    def __init__(self, device=None, apply_pq=False):
+    def __init__(self, device=None):
         # Use GPU if available
         if device is None:
             if torch.cuda.is_available() and torch.cuda.device_count() > 0:
@@ -22,10 +22,7 @@ class ahiq_metric(vq_metric):
         else:
             self.device = device
             
-        if apply_pq:
-            self.color_space = 'RGB2020pq'
-        else:
-            self.color_space = 'display_encoded_dmax'
+        self.color_space = 'display_encoded_dmax'
 
         self.metric = create_metric('ahiq', device=self.device)
 

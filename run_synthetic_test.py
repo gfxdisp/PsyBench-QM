@@ -16,19 +16,24 @@ if __name__ == '__main__':
 
     # At each time choose the metrics for a specific test!
 
-    # tests = [GaborPatchSpatialFreqAchTest, GaborPatchSizeAchTest, ContrastMakingAchTest]
-    # metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+    # tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
+    # metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
 
-    # tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
-    # metrics = [cvvdp_met, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+    tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest]
+    tests = [BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest]
+    metrics = [cvvdp_met, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
 
-    tests = [GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
-    metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+    # tests = [GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
+    # metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
 
     # tests = [GaborPatchLuminanceAchTest]
     # metrics = [cvvdp_met, fvvdp_met]  
 
     output_folder = 'results'
+
+    metric_classes = []
+    for j, M in enumerate(metrics):
+        metric_classes.append(M())
 
     
     for T in tests:
@@ -54,7 +59,8 @@ if __name__ == '__main__':
             for j, M in enumerate(metrics):
 
                 try:
-                    Metric = M()
+                    #Metric = M()
+                    Metric = metric_classes[j]
                     metric_name = M.name()
 
                     if i==0:

@@ -51,6 +51,12 @@ class ContrastDetectionTest(SyntheticTest):
         self.sizes = torch.tensor([sizes], device=self.device) if isinstance(sizes, (int, float)) else sizes.to(self.device)
         self.eccentricities = torch.tensor([eccentricities], device=self.device) if isinstance(eccentricities, (int, float)) else eccentricities.to(self.device)
 
+        # If band limited noise, we want to be able to find the step
+        if stimuli_type == 'band_limited_noise':
+            bands = torch.log2(self.spatial_frequencies)
+            band_widths = bands[1:] - bands[:-1]
+            self.band_width = band_widths[0]
+    
         self.N_contrasts = len(self.contrasts)
         self.N_s_freq = len(self.spatial_frequencies)
         self.N_t_freq = len(self.temporal_frequencies)
@@ -86,9 +92,6 @@ class ContrastDetectionTest(SyntheticTest):
     def get_csf_results(self):
         pass
 
-    @abc.abstractmethod
-    def get_ticks(self):
-        pass
 
     def get_test_condition_parameters(self, index):
 
@@ -110,8 +113,8 @@ class ContrastDetectionTest(SyntheticTest):
         if self.stimuli_type == 'gabor_patch':
             XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
         else:
-            # For now, we will keep it as such!
-            XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
+            # We have the method that allow us to get the edges! using self.band_width!
+            XYZ_test, XYZ_reference = generate_band_limited_noise(self.width, self.height, self.ppd, contrast, s_freq, self.band_width, L, self.dkl_col_direction, self.frames, device=self.device)
 
 
         # If luminance test we go from XYZ to RGB2020 and then apply appropriate endoing
@@ -217,16 +220,26 @@ class ContrastDetectionTest(SyntheticTest):
 
         conditions = self.get_rows_conditions()
         condition_names = self.get_row_header()
+        units_scales, units_names = self.units()
+
 
         y_condition = np.unique(conditions[0].cpu().numpy())
         y_condition_name = condition_names[0]
+        if units_names[0] is not None:
+            y_condition_name += " ["+units_names[0]+"]"
+
 
         x_condition = np.unique(conditions[1].cpu().numpy())
         x_condition_name = condition_names[1]
+        if units_names[1] is not None:
+            x_condition_name += " ["+units_names[1]+"]"
 
         z_condition_name = "Metric Prediction"
 
         predictions = predictions.reshape(self.size())
+
+        x_tick_vals, y_tick_vals = self.get_ticks()
+        x_tick_vals = x_tick_vals.cpu().numpy()
 
         z = "["
 
@@ -304,11 +317,25 @@ class ContrastDetectionTest(SyntheticTest):
 
         # Layout of the Figure
 
-        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], title:'"+y_condition_name+"'}"
+        x = "["
+        for i, el in enumerate(x_tick_vals):
+            if i>0:
+                x += ", "
+            x += str(el)
+        x += "]"
+
+        y = "["
+        for i, el in enumerate(y_tick_vals):
+            if i>0:
+                y += ", "
+            y += str(el)
+        y += "]"
+
+        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
         edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
         margin_info = r"margin: {l:50, r:40, t:50, b:40}"
 
-        js_command += "\nvar layout = {\ntitle: {text: '"+title+"', y: 0.95}, width:500, height:400, "+axes_info+",\n"+edge_info+",\n"+margin_info+"\n};"
+        js_command += "\nvar layout = {\ntitle: {text: '"+title+"', y: 0.95}, width:450, height:400, "+axes_info+",\n"+edge_info+",\n"+margin_info+"\n};"
         
         if fig_id:
             js_command += "\nPlotly.newPlot('"+fig_id+"', data, layout);\n\n"
@@ -357,7 +384,8 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -405,7 +433,8 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -453,7 +482,8 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -471,6 +501,154 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Yellow-Violet Gabor Patch'
+
+class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
+
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+        
+        channel = 'Ach'
+        frames = 1
+        fps = 1
+
+        stimuli_type='band_limited_noise'
+
+        spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
+        contrasts = torch.logspace(log10(0.0035), 0, N_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_ach')
+        self._preview_as = 'image'
+
+    def get_csf_results(self):
+        x = torch.logspace(-1, 5, 100, base=2)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_ach.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Spatial Frequency']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.spatial_frequencies[self.s_freq_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_s_freq
+
+    def units(self):
+        return ['log', 'log'], [None, 'cpd']
+
+    def short_name(self):
+        return 'Contrast Detection - Spatial Frequency - Achromatic Band Limited Noise'
+
+class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
+
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+        
+        channel = 'RG'
+        frames = 1
+        fps = 1
+
+        stimuli_type='band_limited_noise'
+
+        spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
+        contrasts = torch.logspace(log10(0.002), log10(0.2), N_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_rg')
+        self._preview_as = 'image'
+
+    def get_csf_results(self):
+        x = torch.logspace(-1, 5, 100, base=2)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_rg.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Spatial Frequency']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.spatial_frequencies[self.s_freq_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_s_freq
+
+    def units(self):
+        return ['log', 'log'], [None, 'cpd']
+
+    def short_name(self):
+        return 'Contrast Detection - Spatial Frequency - Red-Green Band Limited Noise'
+
+class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
+
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+        
+        channel = 'YV'
+        frames = 1
+        fps = 1
+
+        stimuli_type='band_limited_noise'
+
+        spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
+        contrasts = torch.logspace(-2, log10(0.2), N_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_yv')
+        self._preview_as = 'image'
+
+    def get_csf_results(self):
+        x = torch.logspace(-1, 5, 100, base=2)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_yv.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Spatial Frequency']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.spatial_frequencies[self.s_freq_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_s_freq
+
+    def units(self):
+        return ['log', 'log'], [None, 'cpd']
+
+    def short_name(self):
+        return 'Contrast Detection - Spatial Frequency - Yellow-Violet Band Limited Noise'
+
 
 
 class GaborPatchLuminanceAchTest(ContrastDetectionTest):
@@ -502,7 +680,8 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -516,7 +695,7 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
         return self.N_contrasts, self.N_L
 
     def units(self):
-        return ['log', 'log'], [None, 'cd/m$^2$']
+        return ['log', 'log'], [None, 'cd/m²']
 
     def short_name(self):
         return 'Luminance Masking'
@@ -551,7 +730,8 @@ class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -565,7 +745,7 @@ class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
         return self.N_contrasts, self.N_L
 
     def units(self):
-        return ['log', 'log'], [None, 'cd/m$^2$']
+        return ['log', 'log'], [None, 'cd/m²']
 
     def short_name(self):
         return 'Luminance Masking - PU21 Encoding'
@@ -600,7 +780,8 @@ class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -614,7 +795,7 @@ class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
         return self.N_contrasts, self.N_L
 
     def units(self):
-        return ['log', 'log'], [None, 'cd/m$^2$']
+        return ['log', 'log'], [None, 'cd/m²']
 
     def short_name(self):
         return 'Luminance Masking - PQ Encoding'
@@ -649,7 +830,8 @@ class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 
@@ -663,7 +845,7 @@ class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
         return self.N_contrasts, self.N_L
 
     def units(self):
-        return ['log', 'log'], [None, 'cd/m$^2$']
+        return ['log', 'log'], [None, 'cd/m²']
 
     def short_name(self):
         return 'Luminance Masking - HLG Encoding'
@@ -679,7 +861,7 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         sizes = torch.logspace(-1, 5, N_size, base=2)
-        contrasts = torch.logspace(-3, 0, N_contrasts)
+        contrasts = torch.logspace(log10(0.0025), 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
@@ -697,7 +879,8 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        y = self.contrasts
+        #y = self.contrasts
+        y = [0, 0.01, 0.1, 1]
 
         return x, y
 

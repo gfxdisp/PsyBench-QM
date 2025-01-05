@@ -83,6 +83,106 @@ def generate_gabor_mask(width, height, ppd, test_contrast, masker_contrast, s_fr
 
     return XYZ_target, XYZ_masker
 
+
+def create_cycdeg_image(height, width, ppd, device=None):
+
+    KX = (torch.remainder(0.5 + torch.arange(width).to(device) / width, 1) - 0.5) * ppd
+    KY = (torch.remainder(0.5 + torch.arange(height).to(device) / height, 1) - 0.5) * ppd
+
+    XX, YY = torch.meshgrid(KX, KY, indexing='xy')
+
+    D = torch.sqrt(torch.add(torch.pow(XX, 2), torch.pow(YY, 2)))
+
+    return D
+
+
+def generate_band_limited_noise(width, height, ppd, contrast, s_freq, band_width, luminance, dkl_col_direction, frames, device=None):
+
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
+
+    noise = torch.randn((height, width)).to(device)
+    noise_f = torch.fft.fft2(noise)
+
+    rho = create_cycdeg_image(height, width, ppd, device=device)
+
+    freq_edge_low = torch.pow(2, torch.log2(s_freq) - (band_width/2))
+    freq_edge_high = torch.pow(2, torch.log2(s_freq) + (band_width/2))
+
+    noise_f[(rho<freq_edge_low) | (rho>freq_edge_high)] = 0
+
+    test_stimuli = torch.real(torch.fft.ifft2(noise_f)).view(height, width, 1, 1)
+    test_stimuli /= torch.std(test_stimuli)
+
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
+
+    DKL_reference = torch.ones(height, width, 3, frames).to(device) * DKL_gray
+    DKL_test = DKL_reference + test_stimuli * dkl_col_direction.view(1, 1, 3, 1) * luminance * contrast
+    DKL_test = DKL_test.clamp(min=0)
+
+    XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
+    XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
+
+    return XYZ_test, XYZ_reference
+
+
+def generate_band_limited_mask(width, height, ppd, test_contrast, masker_contrast, s_freq, test_orientation, luminance, test_dkl_col_direction, masker_dkl_col_direction, ge_sigma, band_width, device=None):
+    
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
+
+    # Create the masker!
+
+    noise = torch.randn((height, width)).to(device)
+    masker_noise_f = torch.fft.fft2(noise)
+
+    rho = create_cycdeg_image(height, width, ppd, device=device)
+    freq_edge_low = torch.pow(2, torch.log2(s_freq) - (band_width/2))
+    freq_edge_high = torch.pow(2, torch.log2(s_freq) + (band_width/2))
+
+    masker_noise_f[(rho<freq_edge_low) | (rho>freq_edge_high)] = 0
+
+    masker_stimuli = torch.real(torch.fft.ifft2(masker_noise_f)).view(height, width, 1, 1)
+    masker_stimuli /= torch.std(masker_stimuli)
+    masker_stimuli = masker_stimuli * luminance * masker_contrast
+
+    # Create the target! (we are using a cosine grating!)
+
+    # target_noise_f = torch.fft.fft2(noise)
+    # target_noise_f[(rho<freq_edge_low) | (rho>freq_edge_high)] = 0
+
+    # target_stimuli = torch.real(torch.fft.ifft2(target_noise_f)).view(height, width, 1, 1)
+    # target_stimuli /= torch.std(target_stimuli)
+    #
+
+    width_deg = width / ppd
+    height_deg = height / ppd
+
+    xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
+    
+    rr = xx * torch.cos(torch.deg2rad(-test_orientation)) + yy * torch.sin(torch.deg2rad(-test_orientation))
+    grating = torch.cos(2*pi*rr*s_freq) * test_contrast * luminance
+    sine_grating = grating.view(height, width, 1, 1)
+
+    R2 = xx**2 + yy**2
+    ge =  torch.exp(-R2/(2*ge_sigma**2)).view(height, width, 1, 1)  # Create the gaussian envelope
+
+    target_stimuli = sine_grating * ge
+    #target_stimuli = target_stimuli * ge * test_contrast * luminance
+
+    # Get the stimuli!
+
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
+    DKL_reference = torch.ones(height, width, 3, 1).to(device) * DKL_gray
+
+
+    DKL_target = target_stimuli * test_dkl_col_direction.view(1, 1, 3, 1)
+    DKL_masker = DKL_reference + masker_stimuli * masker_dkl_col_direction.view(1, 1, 3, 1)
+
+    XYZ_masker = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_masker.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
+    XYZ_target = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_target.permute(2, 3, 0, 1)))
+
+    return XYZ_target, XYZ_masker
+
+
 def Yxy2XYZ(Yxy):
 
     # We will assume that Yxy is a tensor of the sahpe X,C

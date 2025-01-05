@@ -9,6 +9,8 @@ import torch
 from pycvvdp import video_source
 from pycvvdp.display_model import vvdp_display_photo_eotf, vvdp_display_geometry
 import pandas as pd
+import json
+
 
 class ContrastMakingTest(SyntheticTest):
     """
@@ -18,7 +20,7 @@ class ContrastMakingTest(SyntheticTest):
     # For now we may not need these informations! It is not as important
 
     def __init__(self, width, height, test_channel, masker_channel, display_photometry, display_geometry, frames, fps, test_contrasts, masker_contrasts, spatial_frequencies=2, temporal_frequencies=0,
-                 bkg_luminances=21.4, masker_orientations=0, test_orientations=0, test_sizes=1, phase_masking='coherent', device=None):
+                 bkg_luminances=21.4, masker_orientations=0, test_orientations=0, test_sizes=2, phase_masking='coherent', device=None):
 
 
         super().__init__(device)
@@ -30,6 +32,8 @@ class ContrastMakingTest(SyntheticTest):
         self.masker_channel = masker_channel
 
         self.phase_masking = phase_masking
+
+        self.band_width = 1.0
 
         if test_channel == 'Ach':
             self.test_dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
@@ -118,7 +122,10 @@ class ContrastMakingTest(SyntheticTest):
         test_contrast, masker_contrast, s_freq, t_freq, L, test_orien, masker_orien, size = self.get_test_condition_parameters(index)
         Lmax = self.display_photometry.get_peak_luminance()
 
-        XYZ_target, XYZ_masker = generate_gabor_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, masker_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, device=self.device)
+        if self.phase_masking == 'coherent':
+            XYZ_target, XYZ_masker = generate_gabor_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, masker_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, device=self.device)
+        else: 
+            XYZ_target, XYZ_masker = generate_band_limited_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, self.band_width, device=self.device)
 
         test_patch = XYZ2RGB709_nd(XYZ_target / Lmax).unsqueeze(0)
         masker = XYZ2RGB709_nd(XYZ_masker / Lmax).unsqueeze(0)
@@ -204,16 +211,23 @@ class ContrastMakingTest(SyntheticTest):
 
         conditions = self.get_rows_conditions()
         condition_names = self.get_row_header()
+        units_scales, units_names = self.units()
 
         y_condition = np.unique(conditions[0].cpu().numpy())
         y_condition_name = condition_names[0]
+        if units_names[0] is not None:
+            y_condition_name += " ["+units_names[0]+"]"
 
         x_condition = np.unique(conditions[1].cpu().numpy())
         x_condition_name = condition_names[1]
+        if units_names[1] is not None:
+            x_condition_name += " ["+units_names[1]+"]"
 
         z_condition_name = "Metric Prediction"
 
         predictions = predictions.reshape(self.size())
+
+        x_tick_vals, y_tick_vals = self.get_ticks()
 
         z = "["
 
@@ -291,11 +305,25 @@ class ContrastMakingTest(SyntheticTest):
 
         # Layout of the Figure
 
-        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], title:'"+y_condition_name+"'}"
+        x = "["
+        for i, el in enumerate(x_tick_vals):
+            if i>0:
+                x += ", "
+            x += str(el)
+        x += "]"
+
+        y = "["
+        for i, el in enumerate(y_tick_vals):
+            if i>0:
+                y += ", "
+            y += str(el)
+        y += "]"
+
+        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
         edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
         margin_info = r"margin: {l:50, r:40, t:50, b:40}"
 
-        js_command += "\nvar layout = {\ntitle: {text: '"+title+"', y: 0.95}, width:500, height:400, "+axes_info+",\n"+edge_info+",\n"+margin_info+"\n};"
+        js_command += "\nvar layout = {\ntitle: {text: '"+title+"', y: 0.95}, width:450, height:400, "+axes_info+",\n"+edge_info+",\n"+margin_info+"\n};"
         
         if fig_id:
             js_command += "\nPlotly.newPlot('"+fig_id+"', data, layout);\n\n"
@@ -317,7 +345,7 @@ class ContrastMakingTest(SyntheticTest):
         return 'Contrast Masking Test'
 
 
-class ContrastMakingAchTest(ContrastMakingTest):
+class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
     def __init__(self, width=1920, height=1080, N_test_contrasts=20, N_masker_contrasts=20, device=None):
         
@@ -337,7 +365,7 @@ class ContrastMakingAchTest(ContrastMakingTest):
 
         super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, phase_masking=phase_masking, device=device)
 
-        self._preview_folder = os.path.join(self._preview_folder, 'ach')
+        self._preview_folder = os.path.join(self._preview_folder, 'coherent_ach')
         self._preview_as = 'image'
 
     def get_contrast_masking_results(self):
@@ -358,9 +386,67 @@ class ContrastMakingAchTest(ContrastMakingTest):
     def size(self):
         return self.N_test_contrasts, self.N_masker_contrasts
 
+    def get_ticks(self):
+        x = [0.01, 0.1]
+        y = [0.01, 0.1]
+
+        return x, y
+
     def units(self):
         return ['log', 'log'], [None, None]
 
     def short_name(self):
         return 'Contrast Masking - Phase Coherent Masking'
 
+
+class ContrastMakingIncoherentAchTest(ContrastMakingTest):
+
+    def __init__(self, width=1920, height=1080, N_test_contrasts=20, N_masker_contrasts=20, device=None):
+        
+        test_channel = 'Ach'
+        masker_channel = 'Ach'
+
+        phase_masking = 'incoherent'
+
+        frames = 1
+        fps = 1
+
+        test_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_test_contrasts)
+        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_masker_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+
+        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, phase_masking=phase_masking, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'incoherent_ach')
+        self._preview_as = 'image'
+
+    def get_contrast_masking_results(self):
+
+        df = json.load(open(os.path.join(self.data_folder, 'contrast_masking_data_gabor_on_noise.json')))
+        x = df['mask_contrast_list']
+        y = df['test_contrast_list']
+        
+        return x, y
+
+    def get_row_header(self):
+        return ['Test Contrast', 'Masker Contrast']
+
+    def get_rows_conditions(self):
+        return [self.test_contrasts[self.test_contrast_indices], self.masker_contrasts[self.masker_contrast_indices]]
+
+    def size(self):
+        return self.N_test_contrasts, self.N_masker_contrasts
+
+    def get_ticks(self):
+        x = [0.01, 0.1]
+        y = [0.01, 0.1]
+
+        return x, y
+
+    def units(self):
+        return ['log', 'log'], [None, None]
+
+    def short_name(self):
+        return 'Contrast Masking - Phase Incoherent Masking'

@@ -45,6 +45,10 @@ class SyntheticTest:
         pass
 
     @abc.abstractmethod
+    def get_ticks(self):
+        pass
+
+    @abc.abstractmethod
     def units(self):
         pass
 

@@ -3,7 +3,7 @@ from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
 
 """
-CKDN metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
+CKDN metric.
 """
 
 """

@@ -3,7 +3,7 @@ from piq import gmsd
 from pycvvdp.vq_metric import vq_metric
 from pyst.utils import RGB2Y
 """
-GMSD metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
+GMSD metric. Usage is same as the ColorVideoVDP metric (see examples).
 """
 
 """
@@ -24,10 +24,6 @@ class gmsd_metric(vq_metric):
             
         self.color_space = 'display_encoded_dmax'
 
-    '''
-    The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
-    '''
-
     def predict_video_source(self, vid_source, frame_padding="replicate"):
 
         _, _, N_frames = vid_source.get_video_size()
@@ -37,6 +33,7 @@ class gmsd_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
+            """ The metric excepts a gray image """
             T = RGB2Y(T, self.display_photometry)
             R = RGB2Y(R, self.display_photometry)
 

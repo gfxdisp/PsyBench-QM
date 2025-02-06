@@ -1,3 +1,5 @@
+import logging
+
 try:
     from metrics.piq_metrics.dss_metric import dss_metric
     from metrics.piq_metrics.fsim_metric import fsim_metric
@@ -9,7 +11,6 @@ try:
     from metrics.piq_metrics.vif_metric import vifp_metric
     from metrics.piq_metrics.vsi_metric import vsi_metric
 except ImportError as e:
-    import logging
     logging.warning( "Failed to import PIQ metrics. Run `pip install piq`.")
 
 try:
@@ -20,21 +21,31 @@ try:
     from metrics.pyiqa_metrics.ckdn_metric import ckdn_metric
     from metrics.pyiqa_metrics.ahiq_metric import ahiq_metric
     from metrics.pyiqa_metrics.mad_metric import mad_metric
-    from metrics.pyiqa_metrics.psnr_metric import psnry_metric
-    from metrics.pyiqa_metrics.ssim_metric import ssim_metric
     from metrics.pyiqa_metrics.ms_ssim_metric import ms_ssim_metric
     from metrics.pyiqa_metrics.vif_metric import vif_metric
     from metrics.pyiqa_metrics.wadiqam_metric import wadiqam_metric
     from metrics.pyiqa_metrics.lpips_vgg_metric import lpips_vgg_metric
     from metrics.pyiqa_metrics.lpips_alex_metric import lpips_metric
 except ImportError as e:
-    import logging
     logging.warning( "Failed to import PYIQA metrics. Run `pip install pyiqa`.")
 
+from metrics.psnr_metric import psnry_metric
+
+try:
+    from metrics.ssim_metric import ssim_metric
+except ImportError as e:
+    logging.warning( "Failed to import SSIM from pycvvdp. Ensure that you have the full installation of ColorVideoVDP.")
 
 from metrics.vmaf_metric import vmaf_met
 from metrics.vmaf_neg_metric import vmaf_neg_met
 from metrics.funque_metric import funque_met
 
-from metrics.cvvdp_metric import cvvdp_met
-from metrics.fvvdp_metric import fvvdp_met
+try:
+    from metrics.cvvdp_metric import cvvdp_met
+except ImportError as e:
+    logging.warning( "Failed to import pycvvdp. Ensure that you have the full installation of ColorVideoVDP.")
+
+try:
+    from metrics.fvvdp_metric import fvvdp_met
+except ImportError as e:
+    logging.warning( "Failed to import pyfvvdp. Ensure that you have the full installation of FovVideoVDP.")

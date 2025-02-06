@@ -3,7 +3,7 @@ from pyiqa import create_metric
 from pycvvdp.vq_metric import vq_metric
 
 """
-DISTS metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
+DISTS metric.
 """
 
 """
@@ -25,10 +25,6 @@ class dists_metric(vq_metric):
         self.color_space = 'display_encoded_dmax'
 
         self.metric = create_metric('dists', device=self.device)
-
-    '''
-    The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
-    '''
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
 

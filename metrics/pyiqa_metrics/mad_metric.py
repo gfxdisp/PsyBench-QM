@@ -34,6 +34,7 @@ class mad_metric(vq_metric):
             T = vid_source.get_test_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
+            """ The metric excepts a gray image """
             T = RGB2Y(T, self.display_photometry)
             R = RGB2Y(R, self.display_photometry)
 

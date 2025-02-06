@@ -3,7 +3,7 @@ from piq import haarpsi
 from pycvvdp.vq_metric import vq_metric
 
 """
-HaarPSI metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
+HaarPSI metric. Usage is same as the ColorVideoVDP metric (see examples).
 """
 
 """
@@ -24,10 +24,6 @@ class haarpsi_metric(vq_metric):
             
 
         self.color_space = 'display_encoded_dmax'
-
-    '''
-    The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
-    '''
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
 

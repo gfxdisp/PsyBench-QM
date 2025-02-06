@@ -3,7 +3,7 @@ from piq import vsi
 from pycvvdp.vq_metric import vq_metric
 
 """
-VSI metric. Usage is same as the FovVideoVDP metric (see pytorch_examples).
+VSI metric. Usage is same as the ColorVideoVDP metric (see examples).
 """
 
 """
@@ -23,10 +23,6 @@ class vsi_metric(vq_metric):
             self.device = device
             
         self.color_space = 'display_encoded_dmax'
-
-    '''
-    The same as `predict` but takes as input fvvdp_video_source_* object instead of Numpy/Pytorch arrays.
-    '''
 
     def predict_video_source(self, vid_source, frame_padding="replicate"):
 

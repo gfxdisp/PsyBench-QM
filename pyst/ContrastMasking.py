@@ -33,8 +33,6 @@ class ContrastMakingTest(SyntheticTest):
 
         self.phase_masking = phase_masking
 
-        self.band_width = 1.0
-
         if test_channel == 'Ach':
             self.test_dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
         elif test_channel == 'RG':
@@ -125,7 +123,7 @@ class ContrastMakingTest(SyntheticTest):
         if self.phase_masking == 'coherent':
             XYZ_target, XYZ_masker = generate_gabor_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, masker_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, device=self.device)
         else: 
-            XYZ_target, XYZ_masker = generate_band_limited_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, self.band_width, device=self.device)
+            XYZ_target, XYZ_masker = generate_flat_noise_mask(self.width, self.height, self.ppd, test_contrast, masker_contrast, s_freq, test_orien, L, self.test_dkl_col_direction, self.masker_dkl_col_direction, size, device=self.device)
 
         test_patch = XYZ2RGB709_nd(XYZ_target / Lmax).unsqueeze(0)
         masker = XYZ2RGB709_nd(XYZ_masker / Lmax).unsqueeze(0)
@@ -347,7 +345,7 @@ class ContrastMakingTest(SyntheticTest):
 
 class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
-    def __init__(self, width=1920, height=1080, N_test_contrasts=20, N_masker_contrasts=20, device=None):
+    def __init__(self, width=512, height=400, N_test_contrasts=20, N_masker_contrasts=20, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -357,13 +355,14 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
         frames = 1
         fps = 1
 
-        test_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_test_contrasts)
-        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_masker_contrasts)
+        test_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_test_contrasts)
+        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_masker_contrasts)
 
-        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        dm = vvdp_display_photo_eotf(Y_peak=150, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([512, 400], diagonal_size_inches=9.9, ppd=73)
 
-        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, phase_masking=phase_masking, device=device)
+        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, 
+                         spatial_frequencies=2, bkg_luminances=32, test_sizes=0.5, phase_masking=phase_masking, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'coherent_ach')
         self._preview_as = 'image'
@@ -401,7 +400,7 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
 class ContrastMakingIncoherentAchTest(ContrastMakingTest):
 
-    def __init__(self, width=1920, height=1080, N_test_contrasts=20, N_masker_contrasts=20, device=None):
+    def __init__(self, width=256, height=256, N_test_contrasts=20, N_masker_contrasts=20, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -411,13 +410,14 @@ class ContrastMakingIncoherentAchTest(ContrastMakingTest):
         frames = 1
         fps = 1
 
-        test_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_test_contrasts)
-        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.4), N_masker_contrasts)
+        test_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_test_contrasts)
+        masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_masker_contrasts)
 
-        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        dm = vvdp_display_photo_eotf(Y_peak=173, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([256, 256], diagonal_size_inches=7.8, ppd=51)
 
-        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, phase_masking=phase_masking, device=device)
+        super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, 
+                         spatial_frequencies=1.2, bkg_luminances=37, test_sizes=0.8, phase_masking=phase_masking, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'incoherent_ach')
         self._preview_as = 'image'

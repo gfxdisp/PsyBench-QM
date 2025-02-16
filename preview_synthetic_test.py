@@ -5,6 +5,7 @@ I will be calling some of the tests, and previewing them!
 from pyst.GaborPatch import *
 from pyst.tests_utils import get_all_tests
 from pyst.ContrastMasking import *
+from pyst.ContrastMatching import *
 
 Tests = get_all_tests()
 output_folder = 'previews'
@@ -14,7 +15,7 @@ output_folder = 'previews'
 #Tests = [ContrastMakingAchTest]
 #Tests = [GaborPatchLuminanceHLGAchTest]
 
-Tests = [ContrastMakingIncoherentAchTest]
+Tests = [ContrastConstancySpatialFreqAchTest]
 
 for T in Tests:
     Test = T()

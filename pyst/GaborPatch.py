@@ -366,10 +366,10 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(log10(0.0035), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
@@ -384,8 +384,7 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -415,10 +414,10 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(log10(0.002), log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
@@ -433,8 +432,7 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -464,10 +462,10 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-2, log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
@@ -482,8 +480,7 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -513,10 +510,10 @@ class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
         stimuli_type='band_limited_noise'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(log10(0.0035), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
@@ -531,8 +528,7 @@ class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -562,10 +558,10 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
         stimuli_type='band_limited_noise'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(log10(0.002), log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
@@ -580,8 +576,7 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -611,10 +606,10 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
         stimuli_type='band_limited_noise'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-2, log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
 
@@ -629,8 +624,7 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -662,10 +656,10 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
@@ -680,8 +674,7 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -712,10 +705,10 @@ class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
@@ -730,8 +723,7 @@ class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -762,10 +754,10 @@ class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-PQ')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
@@ -780,8 +772,7 @@ class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -812,10 +803,10 @@ class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(log10(0.003), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-HLG')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
 
@@ -830,8 +821,7 @@ class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
     
     def get_ticks(self):
         x = torch.logspace(-2, 4, 7)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 
@@ -861,10 +851,10 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         sizes = torch.logspace(-1, 5, N_size, base=2)
-        contrasts = torch.logspace(log10(0.0025), 0, N_contrasts)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=64)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, stimuli_type=stimuli_type, device=device)
 
@@ -879,8 +869,7 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
 
     def get_ticks(self):
         x = torch.logspace(-1, 5, 7, base=2)
-        #y = self.contrasts
-        y = [0, 0.01, 0.1, 1]
+        y = [0.001, 0.01, 0.1, 1]
 
         return x, y
 

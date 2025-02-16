@@ -30,6 +30,8 @@ except ImportError as e:
     logging.warning( "Failed to import PYIQA metrics. Run `pip install pyiqa`.")
 
 from metrics.psnr_metric import psnry_metric
+from metrics.hdr_flip import hdr_flip_metric
+from metrics.ldr_flip import ldr_flip_metric
 
 try:
     from metrics.ssim_metric import ssim_metric

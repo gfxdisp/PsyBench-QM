@@ -5,7 +5,7 @@ import shutil
 
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
-from pyst.tests_utils import get_all_tests
+from pyst.ContrastMatching import *
 from metrics import *
 
 from test_reports_utils.html_report import html_report
@@ -23,15 +23,16 @@ if __name__ == '__main__':
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
              GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest,
              GaborPatchLuminanceAchTest]
-    
-    #tests = [ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
-    
-    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
+
+    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, hdr_flip_metric, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
+
+    tests = [ContrastConstancySpatialFreqAchTest]
+    metrics = [cvvdp_met, psnry_metric]
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
 
-    generate_stimuli = False
+    generate_stimuli = True
     generate_metrics_results = True
 
 
@@ -102,7 +103,10 @@ if __name__ == '__main__':
             for j in np.linspace(0, test_columns-1, 5).astype(int):
                 hr_test_preview.beg_table_cell()
 
-                condition_index = i*test_columns+j
+                if test_name == 'Contrast Matching - Across Spatial Frequencies':
+                    condition_index = Test.N_ref_contrasts + i*test_columns + j
+                else:
+                    condition_index = i*test_columns+j
 
                 test_filename = os.path.join(preview_folder, 'test_' + str(condition_index))
                 ref_filename = os.path.join(preview_folder, 'ref_' + str(condition_index))

@@ -49,7 +49,7 @@ def generate_gabor_mask(width, height, ppd, test_contrast, masker_contrast, s_fr
     
     dd = torch.sqrt(xx**2 + yy**2)
     cosB = ( xx * torch.sin(torch.deg2rad(-masker_orientation)) + yy * torch.cos(torch.deg2rad(-masker_orientation)) ) / dd
-    cosB[0, 0] = 1
+    cosB[0, 0] = 0
     d = torch.sqrt(1 - cosB**2) * dd 
 
     grating = torch.cos(2*pi*d*s_freq) * masker_contrast * luminance
@@ -100,6 +100,9 @@ def generate_band_limited_noise(width, height, ppd, contrast, s_freq, band_width
 
     wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
 
+    # Fix Seed
+    torch.manual_seed(2)
+
     noise = torch.randn((height, width)).to(device)
     noise_f = torch.fft.fft2(noise)
 
@@ -116,8 +119,7 @@ def generate_band_limited_noise(width, height, ppd, contrast, s_freq, band_width
     DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
 
     DKL_reference = torch.ones(height, width, 3, frames).to(device) * DKL_gray
-    DKL_test = DKL_reference + test_stimuli * dkl_col_direction.view(1, 1, 3, 1) * luminance * contrast
-    DKL_test = DKL_test.clamp(min=0)
+    DKL_test = DKL_reference + test_stimuli * luminance * contrast * dkl_col_direction.view(1, 1, 3, 1) 
 
     XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
     XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
@@ -125,33 +127,23 @@ def generate_band_limited_noise(width, height, ppd, contrast, s_freq, band_width
     return XYZ_test, XYZ_reference
 
 
-def generate_band_limited_mask(width, height, ppd, test_contrast, masker_contrast, s_freq, test_orientation, luminance, test_dkl_col_direction, masker_dkl_col_direction, ge_sigma, band_width, device=None):
+def generate_flat_noise_mask(width, height, ppd, test_contrast, masker_contrast, s_freq, test_orientation, luminance, test_dkl_col_direction, masker_dkl_col_direction, ge_sigma, device=None):
     
     wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
 
-    # Create the masker!
+    # Create the masker! 
 
     noise = torch.randn((height, width)).to(device)
     masker_noise_f = torch.fft.fft2(noise)
 
     rho = create_cycdeg_image(height, width, ppd, device=device)
-    freq_edge_low = torch.pow(2, torch.log2(s_freq) - (band_width/2))
-    freq_edge_high = torch.pow(2, torch.log2(s_freq) + (band_width/2))
-
-    masker_noise_f[(rho<freq_edge_low) | (rho>freq_edge_high)] = 0
+    masker_noise_f[rho > 12] = 0
 
     masker_stimuli = torch.real(torch.fft.ifft2(masker_noise_f)).view(height, width, 1, 1)
     masker_stimuli /= torch.std(masker_stimuli)
     masker_stimuli = masker_stimuli * luminance * masker_contrast
 
     # Create the target! (we are using a cosine grating!)
-
-    # target_noise_f = torch.fft.fft2(noise)
-    # target_noise_f[(rho<freq_edge_low) | (rho>freq_edge_high)] = 0
-
-    # target_stimuli = torch.real(torch.fft.ifft2(target_noise_f)).view(height, width, 1, 1)
-    # target_stimuli /= torch.std(target_stimuli)
-    #
 
     width_deg = width / ppd
     height_deg = height / ppd
@@ -166,7 +158,6 @@ def generate_band_limited_mask(width, height, ppd, test_contrast, masker_contras
     ge =  torch.exp(-R2/(2*ge_sigma**2)).view(height, width, 1, 1)  # Create the gaussian envelope
 
     target_stimuli = sine_grating * ge
-    #target_stimuli = target_stimuli * ge * test_contrast * luminance
 
     # Get the stimuli!
 
@@ -182,6 +173,32 @@ def generate_band_limited_mask(width, height, ppd, test_contrast, masker_contras
 
     return XYZ_target, XYZ_masker
 
+
+def generate_sinusoidal_grating(width, height, frames, ppd, fps, contrast, s_freq, luminance, dkl_col_direction, phase=0, device=None):
+
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
+
+    width_deg = width / ppd
+    height_deg = height / ppd
+
+    xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
+    
+    rr = xx
+
+    grating = torch.sin(2*pi*rr*s_freq + torch.deg2rad(torch.tensor(phase))) * contrast * luminance
+    sine_grating = grating.view(height, width, 1, 1)
+
+    test_stimuli = sine_grating
+
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
+
+    DKL_reference = torch.ones(height, width, 3, frames).to(device) * DKL_gray
+    DKL_test = DKL_reference + test_stimuli * dkl_col_direction.view(1, 1, 3, 1)
+
+    XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
+    XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
+
+    return XYZ_test, XYZ_reference
 
 def Yxy2XYZ(Yxy):
 

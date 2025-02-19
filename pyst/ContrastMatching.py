@@ -557,47 +557,12 @@ class ContrastConstancyColorTest(SyntheticTest):
         condition_names = self.get_row_header()
         units_scales, units_names = self.units()
 
-        # Do the matching!
-
-        ref_contrasts = conditions[0][1:self.N_ref_contrasts].cpu().numpy()
-        ref_contrasts_predictions = predictions[1:self.N_ref_contrasts] / predictions[0]
-
-        test_contrasts = conditions[0][self.N_ref_contrasts:].cpu().numpy()
-        test_frequencies = conditions[1][self.N_ref_contrasts:].cpu().numpy()
-        predictions = predictions[self.N_ref_contrasts:]
-
-        matched_test_contrasts = []
-
-        for i, ref_contrast in enumerate(ref_contrasts):
-            ref_prediction = ref_contrasts_predictions[i]
-            indices = []
-            for test_freq in np.unique(test_frequencies):
-                test_freq_contrasts = test_contrasts[test_frequencies == test_freq]
-
-                test_freq_predictions = predictions[test_frequencies == test_freq]
-                test_freq_predictions = test_freq_predictions / test_freq_predictions[-1]
-
-                index = np.argmin((ref_prediction - test_freq_predictions) ** 2)
-                indices.append(test_freq_contrasts[index])
-
-            matched_test_contrasts.append(indices)
-
-        matched_test_contrasts = np.array(matched_test_contrasts)
-        test_frequencies = np.unique(test_frequencies)
-
-        # Get Ground Truth
-
-        _, _, matched_ref_contrasts = self.get_gt_results()
-        matched_ref_contrasts = np.array(matched_ref_contrasts)
-
-        # Now Making the figure!
-
         y_condition = np.unique(conditions[0].cpu().numpy())
         y_condition_name = condition_names[0]
         if units_names[0] is not None:
             y_condition_name += " [" + units_names[0] + "]"
 
-        x_condition = np.unique(conditions[1].cpu().numpy())
+        x_condition = np.unique(conditions[1])
         x_condition_name = condition_names[1]
         if units_names[1] is not None:
             x_condition_name += " [" + units_names[1] + "]"
@@ -607,89 +572,47 @@ class ContrastConstancyColorTest(SyntheticTest):
         predictions = predictions.reshape(self.size())
 
         x_tick_vals, y_tick_vals = self.get_ticks()
-        x_tick_vals = x_tick_vals.cpu().numpy()
 
-        z = "["
+        traces = ''
+        # Here, we want to simply draw lines
+        for i in range(len(predictions)):
+            trace = 'var trace'+str(i)+' = { '
+            x = 'x: [1, 2, 3]'
+            prediction = predictions[i]
+            y = 'y: ['
+            for j, val in enumerate(prediction):
+                if j>0:
+                    y += ', '
+                y += str(val)
+            y += ']'
 
-        for i, row in enumerate(predictions):
-            if i > 0:
-                z += ", "
-            z += "["
-            for j, el in enumerate(row):
-                if j > 0:
-                    z += ", "
-                z += str(el)
-            z += "]"
+            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: 'red', size:8}, line: {color: 'red', width:2},\n"
+            #trace += "hovertemplate: 'Prediction: %" + r"{y:.2f}" + "<extra></extra>',\n"
+            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"'"
+            trace += '};'
 
-        z += "]"
+            traces += trace +'\n'
 
-        x = "["
-        for i, el in enumerate(x_condition):
-            if i > 0:
-                x += ", "
-            x += str(el)
-        x += "]"
+        traces += 'var data = ['
+        for i in range(len(predictions)):
+            if i>0:
+                traces += ', '
+            traces += 'trace'+str(i)
+        traces += ']\n'
 
-        y = "["
-        for i, el in enumerate(y_condition):
-            if i > 0:
-                y += ", "
-            y += str(el)
-        y += "]"
+        # If reverse, we want to reverse the whole y axis!
 
-        # Contour plot data
-
-        js_command += "var Contourdata = {\n"
-        js_command += "z: " + z + ",\nx: " + x + ",\ny: " + y
-
-        extra_params = "type: 'contour',\ncolorscale: 'Viridis',\nncontours: 30,\nline:{width:2},\n"
-        if reverse_color_order:
-            extra_params += "reversescale: true,\n"
-
-        extra_params += "hovertemplate: '" + x_condition_name + ": %" + r"{x:.2f}" + "<br>" + y_condition_name + ": %" + r"{y:.2f}" + "<br>" + z_condition_name + ": %" + r"{z:.2f}" + "<extra></extra>',\n"
-
-        extra_params += r"contours:{coloring:'lines'}"
-
-        js_command += ",\n" + extra_params
-
-        js_command += "\n};"
-
-        # Ground Truth Data
-
-        x_gt, y_gt = self.get_csf_results()
-
-        x = "["
-        for i, el in enumerate(x_gt):
-            if i > 0:
-                x += ", "
-            x += str(el.cpu().numpy())
-        x += "]"
-
-        y = "["
-        for i, el in enumerate(y_gt):
-            if i > 0:
-                y += ", "
-            y += str(el)
-        y += "]"
-
-        js_command += "\nvar Linedata = {\n"
-        js_command += "x: " + x + ",\ny: " + y
-
-        extra_params = "mode: 'lines',\ntype: 'scatter',\nline:{color: 'red', width:2},marker:{symbol:'circle-open', size:8},\nname: 'CastleCSF'"
-
-        js_command += ",\n" + extra_params
-
-        js_command += "\n};"
-
-        js_command += "\nvar data = [Contourdata, Linedata]"
+        # We also want to find a way to include ground truth as well!
 
         # Layout of the Figure
+
+        js_command = traces
 
         x = "["
         for i, el in enumerate(x_tick_vals):
             if i > 0:
                 x += ", "
-            x += str(el)
+            x += "'"+el+"'"
         x += "]"
 
         y = "["
@@ -699,10 +622,9 @@ class ContrastConstancyColorTest(SyntheticTest):
             y += str(el)
         y += "]"
 
-        axes_info = "xaxis: {type:'log', range: [" + str(log10(np.min(x_condition))) + "," + str(log10(np.max(
-            x_condition))) + "], tickvals: " + x + ", ticktext: " + x + ", title:'" + x_condition_name + "'}, yaxis: {type:'log', range:[" + str(
-            log10(np.min(y_condition))) + "," + str(log10(
-            np.max(y_condition))) + "], tickvals: " + y + ", ticktext: " + y + ", title:'" + y_condition_name + "'}"
+        axes_info = "xaxis: {tickvals: [1, 2, 3], ticktext: " + x + ", title:'" + x_condition_name + "'}, yaxis: {type:'log', range:[" + str(
+            log10(np.min(predictions))) + "," + str(log10(
+            np.max(predictions))) + "], tickvals: " + y + ", ticktext: " + y + ", title:'" + y_condition_name + "'}"
         edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
         margin_info = r"margin: {l:50, r:40, t:50, b:40}"
 

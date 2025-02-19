@@ -20,7 +20,7 @@ class ContrastMakingTest(SyntheticTest):
     # For now we may not need these informations! It is not as important
 
     def __init__(self, width, height, test_channel, masker_channel, display_photometry, display_geometry, frames, fps, test_contrasts, masker_contrasts, spatial_frequencies=2, temporal_frequencies=0,
-                 bkg_luminances=21.4, masker_orientations=0, test_orientations=0, test_sizes=2, phase_masking='coherent', device=None):
+                 bkg_luminances=21.4, masker_orientations=0, test_orientations=0, test_sizes=2, phase_masking='coherent', N_multiplier=10, is_alignmenet_score=False, device=None):
 
 
         super().__init__(device)
@@ -54,7 +54,12 @@ class ContrastMakingTest(SyntheticTest):
         self.frames = frames
         self.fps = fps
 
-        self.test_contrasts = test_contrasts
+        self.is_alignmenet_score = is_alignmenet_score
+        if self.is_alignmenet_score:
+            self.test_contrasts = torch.logspace(log10(0.5), log10(2), N_multiplier).to(self.device)
+        else:
+            self.test_contrasts = test_contrasts
+
         self.masker_contrasts = masker_contrasts
 
         self.spatial_frequencies =  torch.tensor([spatial_frequencies], device=self.device) if isinstance(spatial_frequencies, (int, float)) else spatial_frequencies.to(self.device)
@@ -91,6 +96,12 @@ class ContrastMakingTest(SyntheticTest):
 
         self.data_folder = 'pyst/pyst_data/contrast_masking'
 
+        if self.is_alignmenet_score:
+            self.x_variable = self.masker_contrasts
+            self.x_variable_indices = self.masker_contrast_indices
+
+            self.x_gt, self.y_gt = self.get_contrast_masking_results()
+
 
     def __len__(self):
         return self.N_test_contrasts*self.N_masker_contrasts*self.N_s_freq*self.N_t_freq*self.N_L*self.N_test_orien*self.N_masker_orien*self.N_size
@@ -101,7 +112,15 @@ class ContrastMakingTest(SyntheticTest):
 
     def get_test_condition_parameters(self, index):
 
-        test_contrast = self.test_contrasts[self.test_contrast_indices[index]]
+        if self.is_alignmenet_score:
+            multiplier = self.test_contrasts[self.test_contrast_indices[index]]
+            x_var = self.x_variable[self.x_variable_indices[index]]
+            """ Using both the multiplier and the x_var_index, we can identify the contrast to be used!"""
+            sensitivity_gt = 1 / np.interp(x_var.cpu(), self.x_gt, self.y_gt)
+            test_contrast = 1 / (sensitivity_gt * multiplier)
+        else:
+            test_contrast = self.test_contrasts[self.test_contrast_indices[index]]
+
         masker_contrast = self.masker_contrasts[self.masker_contrast_indices[index]]
 
         s_freq = self.spatial_frequencies[self.s_freq_indices[index]]
@@ -236,7 +255,10 @@ class ContrastMakingTest(SyntheticTest):
             for j, el in enumerate(row):
                 if j > 0:
                     z += ", "
-                z += str(el)
+                if not np.isnan(el):
+                    z += str(el)
+                else:
+                    z += 'null'
             z += "]"
 
         z += "]"
@@ -264,7 +286,7 @@ class ContrastMakingTest(SyntheticTest):
         if reverse_color_order:
             extra_params+= "reversescale: true,\n"
 
-        extra_params += "hovertemplate: '"+x_condition_name+": %"+r"{x:.2f}"+"<br>"+y_condition_name+": %"+r"{y:.2f}"+"<br>"+z_condition_name+": %"+r"{z:.2f}"+"<extra></extra>',\n"
+        extra_params += "hovertemplate: '"+x_condition_name+": %"+r"{x:.4f}"+"<br>"+y_condition_name+": %"+r"{y:.4f}"+"<br>"+z_condition_name+": %"+r"{z:.4f}"+"<extra></extra>',\n"
         
         extra_params += r"contours:{coloring:'lines'}"
 
@@ -345,7 +367,7 @@ class ContrastMakingTest(SyntheticTest):
 
 class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
-    def __init__(self, width=512, height=400, N_test_contrasts=20, N_masker_contrasts=20, device=None):
+    def __init__(self, width=512, height=400, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -362,7 +384,7 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
         gm = vvdp_display_geometry([512, 400], diagonal_size_inches=9.9, ppd=73)
 
         super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, 
-                         spatial_frequencies=2, bkg_luminances=32, test_sizes=0.5, phase_masking=phase_masking, device=device)
+                         spatial_frequencies=2, bkg_luminances=32, test_sizes=0.5, phase_masking=phase_masking, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'coherent_ach')
         self._preview_as = 'image'
@@ -400,7 +422,7 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
 class ContrastMakingIncoherentAchTest(ContrastMakingTest):
 
-    def __init__(self, width=256, height=256, N_test_contrasts=20, N_masker_contrasts=20, device=None):
+    def __init__(self, width=256, height=256, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -417,7 +439,7 @@ class ContrastMakingIncoherentAchTest(ContrastMakingTest):
         gm = vvdp_display_geometry([256, 256], diagonal_size_inches=7.8, ppd=51)
 
         super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, 
-                         spatial_frequencies=1.2, bkg_luminances=37, test_sizes=0.8, phase_masking=phase_masking, device=device)
+                         spatial_frequencies=1.2, bkg_luminances=37, test_sizes=0.8, phase_masking=phase_masking, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'incoherent_ach')
         self._preview_as = 'image'

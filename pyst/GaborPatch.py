@@ -18,7 +18,7 @@ class ContrastDetectionTest(SyntheticTest):
     # For now we may not need these informations! It is not as important
 
     def __init__(self, width, height, channel, display_photometry, display_geometry, frames, fps, contrasts, spatial_frequencies=2, temporal_frequencies=0,
-                 bkg_luminances=21.4, orientations=0, sizes=2, eccentricities=0, stimuli_type='gabor_patch', device=None):
+                 bkg_luminances=21.4, orientations=0, sizes=2, eccentricities=0, stimuli_type='gabor_patch', N_multiplier=10, is_alignmenet_score=False , device=None):
 
 
         super().__init__(device)
@@ -43,7 +43,13 @@ class ContrastDetectionTest(SyntheticTest):
         self.frames = frames
         self.fps = fps
 
-        self.contrasts = contrasts
+        self.is_alignmenet_score = is_alignmenet_score
+
+        if self.is_alignmenet_score:
+            self.contrasts = torch.logspace(log10(0.5), log10(2), N_multiplier).to(self.device)
+        else:
+            self.contrasts = contrasts.to(self.device)
+
         self.spatial_frequencies = torch.tensor([spatial_frequencies], device=self.device) if isinstance(spatial_frequencies, (int, float)) else spatial_frequencies.to(self.device)
         self.temporal_frequencies = torch.tensor([temporal_frequencies], device=self.device) if isinstance(temporal_frequencies, (int, float)) else temporal_frequencies.to(self.device)
         self.bkg_luminances = torch.tensor([bkg_luminances], device=self.device) if isinstance(bkg_luminances, (int, float)) else bkg_luminances.to(self.device)
@@ -77,12 +83,37 @@ class ContrastDetectionTest(SyntheticTest):
 
         if self.stimuli_type == 'gabor_patch':
             self._preview_folder = 'gabor_tests'
-        else:
+        elif self.stimuli_type == 'band_limited_noise':
             self._preview_folder = 'band_limited_noise_tests'
+        elif self.stimuli_type == 'disk':
+            self._preview_folder = 'disk_tests'
 
         self._preview_as = None
 
         self.csf_data_folder = 'pyst/pyst_data/gabor_tests_castlecsf_results'
+
+        if self.is_alignmenet_score:
+            if self.N_s_freq > 1:
+                self.x_variable = self.spatial_frequencies
+                self.x_variable_indices = self.s_freq_indices
+            elif self.N_t_freq > 1:
+                self.x_variable = self.temporal_frequencies
+                self.x_variable_indices = self.t_freq_indices
+            elif self.N_L > 1:
+                self.x_variable = self.bkg_luminances
+                self.x_variable_indices = self.L_indices
+            elif self.N_orien > 1:
+                self.x_variable = self.orientations
+                self.x_variable_indices = self.orien_indices
+            elif self.N_size > 1:
+                self.x_variable = self.sizes
+                self.x_variable_indices = self.size_indices
+            elif self.N_ecc > 1:
+                self.x_variable = self.eccentricities
+                self.x_variable_indices = self.ecc_indices
+            
+            self.x_gt, self.y_gt = self.get_csf_results()
+            self.x_gt = self.x_gt.cpu().numpy()
 
 
     def __len__(self):
@@ -95,13 +126,22 @@ class ContrastDetectionTest(SyntheticTest):
 
     def get_test_condition_parameters(self, index):
 
-        contrast = self.contrasts[self.contrast_indices[index]]
         s_freq = self.spatial_frequencies[self.s_freq_indices[index]]
         t_freq = self.temporal_frequencies[self.t_freq_indices[index]]
         L = self.bkg_luminances[self.L_indices[index]]
         orien = self.orientations[self.orien_indices[index]]
         size = self.sizes[self.size_indices[index]]
         ecc = self.eccentricities[self.ecc_indices[index]]
+
+        if self.is_alignmenet_score:
+            multiplier = self.contrasts[self.contrast_indices[index]]
+            x_var = self.x_variable[self.x_variable_indices[index]]
+            """ Using both the multiplier and the x_var_index, we can identify the contrast to be used!"""
+            sensitivity_gt = 1 / np.interp(x_var.cpu(), self.x_gt, self.y_gt)
+            contrast = 1 / (sensitivity_gt * multiplier)
+        else:
+            contrast = self.contrasts[self.contrast_indices[index]]
+        
 
         return contrast, s_freq, t_freq, L, orien, size, ecc
     
@@ -112,10 +152,10 @@ class ContrastDetectionTest(SyntheticTest):
 
         if self.stimuli_type == 'gabor_patch':
             XYZ_test, XYZ_reference = generate_gabor_patch(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
-        else:
-            # We have the method that allow us to get the edges! using self.band_width!
+        elif self.stimuli_type == 'band_limited_noise':
             XYZ_test, XYZ_reference = generate_band_limited_noise(self.width, self.height, self.ppd, contrast, s_freq, self.band_width, L, self.dkl_col_direction, self.frames, device=self.device)
-
+        elif self.stimuli_type == 'disk':
+            XYZ_test, XYZ_reference = generate_disk(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, t_freq, orien, L, self.dkl_col_direction, size, ecc, device=self.device)
 
         # If luminance test we go from XYZ to RGB2020 and then apply appropriate endoing
         # If other tests, we go from XYZ to RGB709, then we apply lin2srgb
@@ -250,7 +290,10 @@ class ContrastDetectionTest(SyntheticTest):
             for j, el in enumerate(row):
                 if j > 0:
                     z += ", "
-                z += str(el)
+                if not np.isnan(el):
+                    z += str(el)
+                else:
+                    z+= 'null'
             z += "]"
 
         z += "]"
@@ -278,7 +321,7 @@ class ContrastDetectionTest(SyntheticTest):
         if reverse_color_order:
             extra_params+= "reversescale: true,\n"
 
-        extra_params += "hovertemplate: '"+x_condition_name+": %"+r"{x:.2f}"+"<br>"+y_condition_name+": %"+r"{y:.2f}"+"<br>"+z_condition_name+": %"+r"{z:.2f}"+"<extra></extra>',\n"
+        extra_params += "hovertemplate: '"+x_condition_name+": %"+r"{x:.3f}"+"<br>"+y_condition_name+": %"+r"{y:.4f}"+"<br>"+z_condition_name+": %"+r"{z:.4f}"+"<extra></extra>',\n"
         
         extra_params += r"contours:{coloring:'lines'}"
 
@@ -357,7 +400,7 @@ class ContrastDetectionTest(SyntheticTest):
 
 class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
         
         channel = 'Ach'
         frames = 1
@@ -371,7 +414,7 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_ach')
         self._preview_as = 'image'
@@ -405,7 +448,7 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
 
 class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
         
         channel = 'RG'
         frames = 1
@@ -419,7 +462,7 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_rg')
         self._preview_as = 'image'
@@ -453,7 +496,7 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
 class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
         
         channel = 'YV'
         frames = 1
@@ -467,7 +510,7 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_yv')
         self._preview_as = 'image'
@@ -501,7 +544,7 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
 class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
         
         channel = 'Ach'
         frames = 1
@@ -515,14 +558,14 @@ class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_ach')
         self._preview_as = 'image'
 
     def get_csf_results(self):
         x = torch.logspace(-1, 5, 100, base=2)
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_ach.txt'))
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_ach_band_limited_noise.txt'))
 
         return x, y
 
@@ -549,7 +592,7 @@ class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
 
 class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
         
         channel = 'RG'
         frames = 1
@@ -563,14 +606,14 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_rg')
         self._preview_as = 'image'
 
     def get_csf_results(self):
         x = torch.logspace(-1, 5, 100, base=2)
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_rg.txt'))
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_rg_band_limited_noise.txt'))
 
         return x, y
 
@@ -597,7 +640,7 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
 
 class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
         
         channel = 'YV'
         frames = 1
@@ -611,14 +654,14 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_yv')
         self._preview_as = 'image'
 
     def get_csf_results(self):
         x = torch.logspace(-1, 5, 100, base=2)
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_yv.txt'))
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_yv_band_limited_noise.txt'))
 
         return x, y
 
@@ -647,7 +690,7 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
 
 class GaborPatchLuminanceAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
         
         channel = 'Ach'
         frames = 1
@@ -661,7 +704,7 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_ach')
         self._preview_as = 'image'
@@ -696,7 +739,7 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
 
 class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
         
         channel = 'Ach'
         frames = 1
@@ -710,7 +753,7 @@ class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_pu21_ach')
         self._preview_as = 'image'
@@ -745,7 +788,7 @@ class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
 
 class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
         
         channel = 'Ach'
         frames = 1
@@ -759,7 +802,7 @@ class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-PQ')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_pq_ach')
         self._preview_as = 'image'
@@ -794,7 +837,7 @@ class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
 
 class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
         
         channel = 'Ach'
         frames = 1
@@ -808,7 +851,7 @@ class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-HLG')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'luminances_hlg_ach')
         self._preview_as = 'image'
@@ -843,7 +886,7 @@ class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
 
 class GaborPatchSizeAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_size=20, device=None):
+    def __init__(self, width=1920, height=1080, N_contrasts=20, N_size=20, is_alignmenet_score=False, device=None):
         channel = 'Ach'
         frames = 1
         fps = 1
@@ -856,7 +899,7 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, stimuli_type=stimuli_type, device=device)
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, sizes=sizes, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
         self._preview_folder = os.path.join(self._preview_folder, 'sizes_ach')
         self._preview_as = 'image'
@@ -887,6 +930,105 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Stimuli Size - Achromatic Gabor Patch'
+
+
+class GaborPatchSpatialFreqAchTransientTest(ContrastDetectionTest):
+
+    def __init__(self, width=256, height=256, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
+        channel = 'Ach'
+        frames = 60
+        fps = 60
+
+        stimuli_type = 'gabor_patch'
+
+        spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
+        temporal_frequency = 8
+
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies,
+                         temporal_frequencies=temporal_frequency, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'spatial_frequencies_ach_transient')
+        self._preview_as = 'video'
+
+    def get_csf_results(self):
+        x = torch.logspace(-1, 5, 100, base=2)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'spatial_freq_ach_transient.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.logspace(-1, 5, 7, base=2)
+        y = [0.001, 0.01, 0.1, 1]
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Spatial Frequency']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.spatial_frequencies[self.s_freq_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_s_freq
+
+    def units(self):
+        return ['log', 'log'], [None, 'cpd']
+
+    def short_name(self):
+        return 'Contrast Detection - Spatial Frequency - Achromatic Transient Gabor Patch'
+
+
+class DiskTemporalFreqAchTest(ContrastDetectionTest):
+
+    def __init__(self, width=256, height=256, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
+        channel = 'Ach'
+        frames = 120
+        fps = 120
+
+        stimuli_type = 'disk'
+
+        temporal_frequencies = torch.linspace(0, 120, N_freq)
+        contrasts = torch.logspace(-3, 0, N_contrasts)
+
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=60, ppd=60)
+
+        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, temporal_frequencies=temporal_frequencies,
+                         stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
+
+        self._preview_folder = os.path.join(self._preview_folder, 'temporal_freq_ach')
+        self._preview_as = 'video'
+
+    def get_csf_results(self):
+        x = torch.linspace(0, 120, 100)
+        y = np.loadtxt(os.path.join(self.csf_data_folder, 'temporal_freq_ach_disk.txt'))
+
+        return x, y
+
+    def get_ticks(self):
+        x = torch.linspace(0, 120, 7)
+        y = [0.001, 0.01, 0.1, 1]
+
+        return x, y
+
+    def get_row_header(self):
+        return ['Contrast', 'Temporal Frequency']
+
+    def get_rows_conditions(self):
+        return [self.contrasts[self.contrast_indices], self.temporal_frequencies[self.t_freq_indices]]
+
+    def size(self):
+        return self.N_contrasts, self.N_t_freq
+
+    def units(self):
+        return ['log', 'linear'], [None, 'Hz']
+
+    def short_name(self):
+        return 'Contrast Detection - Temporal Frequency - Achromatic Disk'
 
 
 # class GaborPatchTempFreqAchTest(GaborPatchTest):

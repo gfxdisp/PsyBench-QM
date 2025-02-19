@@ -108,8 +108,8 @@ def generate_band_limited_noise(width, height, ppd, contrast, s_freq, band_width
 
     rho = create_cycdeg_image(height, width, ppd, device=device)
 
-    freq_edge_low = torch.pow(2, torch.log2(s_freq) - (band_width/2))
-    freq_edge_high = torch.pow(2, torch.log2(s_freq) + (band_width/2))
+    freq_edge_low = torch.pow(2, torch.log2(s_freq) - 0.5)
+    freq_edge_high = torch.pow(2, torch.log2(s_freq) + 0.5)
 
     noise_f[(rho<freq_edge_low) | (rho>freq_edge_high)] = 0
 
@@ -197,6 +197,57 @@ def generate_sinusoidal_grating(width, height, frames, ppd, fps, contrast, s_fre
 
     XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1))) # FROM HWCF to CFHW
     XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
+
+    return XYZ_test, XYZ_reference
+
+
+def generate_sine_wave(width, height, frames, ppd, fps, contrast, s_freq, luminance, dkl_col_direction, phase=0, device=None):
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
+
+    sine_wave = torch.sin(torch.linspace(0, 2*pi*s_freq*height/ppd, height)).to(device)
+    sine_wave = (sine_wave>0).to(sine_wave.dtype)*2-1
+    test_stimuli = sine_wave.view(height, 1, 1, 1) * luminance * contrast
+
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
+
+    DKL_reference = torch.ones(height, width, 3, frames).to(device) * DKL_gray
+    DKL_test = DKL_reference + test_stimuli * dkl_col_direction.view(1, 1, 3, 1)
+
+    XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1)))  # FROM HWCF to CFHW
+    XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
+
+    return XYZ_test, XYZ_reference
+
+
+def generate_disk(width, height, frames, ppd, fps, contrast, s_freq, t_freq, orientation, luminance,
+                         dkl_col_direction, ge_sigma, eccentricity, phase=0, device=None):
+
+    wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
+
+    width_deg = width / ppd
+    height_deg = height / ppd
+
+    xx, yy = torch.meshgrid(torch.linspace(-width_deg / 2, width_deg / 2, width).to(device) - eccentricity,
+                            torch.linspace(-height_deg / 2, height_deg / 2, height).to(device), indexing='xy')
+
+    disk = xx**2 + yy**2 - ge_sigma**2
+    disk = (disk <=0 ).to(disk.dtype) * luminance * contrast
+    disk = disk.view(height, width, 1, 1)
+
+    t = torch.linspace(0, frames / fps, frames).to(device)
+    temporal_sine = torch.cos(2 * pi * t * t_freq).view(1, 1, 1, frames)  # This is giving us H,W,C,F maybe we will want to change that
+
+    test_stimuli = disk * temporal_sine
+
+    DKL_gray = LMS2DKL_D65(XYZ2LMS2006(wp_d65 * luminance)).view(1, 1, 3, 1)
+
+    DKL_reference = torch.ones(height, width, 3, frames).to(device) * DKL_gray
+    DKL_test = DKL_reference + test_stimuli * dkl_col_direction.view(1, 1, 3, 1)
+
+    XYZ_reference = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_reference.permute(2, 3, 0, 1)))  # FROM HWCF to CFHW
+    del DKL_reference
+    XYZ_test = LMS20062XYZ_nd(DKL2LMS_D65_nd(DKL_test.permute(2, 3, 0, 1)))
+    del DKL_test
 
     return XYZ_test, XYZ_reference
 

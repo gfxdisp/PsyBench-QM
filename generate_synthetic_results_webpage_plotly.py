@@ -20,14 +20,15 @@ if __name__ == '__main__':
 
     tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchSizeAchTest, 
              ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
+             GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
              GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest,
              GaborPatchLuminanceAchTest]
 
-    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, hdr_flip_metric, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
+    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, hdr_flip_metric, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric]
 
-    tests = [ContrastConstancySpatialFreqAchTest]
-    metrics = [cvvdp_met, psnry_metric]
+    # tests = [DiskTemporalFreqAchTest]
+    # metrics = [cvvdp_met]
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
@@ -65,6 +66,14 @@ if __name__ == '__main__':
 
         preview_folder = os.path.join(output_folder, 'previews', Test.get_preview_folder())
         results_folder = os.path.join('results', Test.get_preview_folder())
+
+        # Get alignment scores data for this test and all metrics !
+        try:
+            alignment_scores_filepath = os.path.join('alignment_scores', Test.get_preview_folder()+'.csv')
+            alignment_scores_df = pd.read_csv(alignment_scores_filepath)
+        except:
+            logging.error(f'No Alignment scores for {test_name}')
+
         if not os.path.exists(preview_folder):
                     os.makedirs(preview_folder)
 
@@ -167,13 +176,17 @@ if __name__ == '__main__':
                 metric_id = test_name.lower().replace(' ', '_').replace('(', '').replace(')', '')+'_'+metric_name.lower().replace(' ', '_')
 
                 metric_predictions_file = os.path.join(results_folder, metric_name+'.csv')
-
                 metric_predictions_df = pd.read_csv(metric_predictions_file)
 
                 predictions = metric_predictions_df['Prediction'].to_numpy()
+                try:
+                    alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
+                    title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
+                except:
+                    title = metric_name + ' Metric'
 
                 if generate_metrics_results:
-                    js_command = Test.plotly(predictions, reverse_color_order=M.is_lower_better(), title=metric_name+' Metric', fig_id=metric_id)
+                    js_command = Test.plotly(predictions, reverse_color_order=M.is_lower_better(), title=title, fig_id=metric_id)
 
                 # Similarly to the main html file we need to create a JS file!
 

@@ -16,25 +16,31 @@ if __name__ == '__main__':
 
     """ We will need at some point to add arguments, you simply call this with all tests and metrics for those tests, so we can parallalize it easily or run it with ssh"""
 
-    test_index = sys.args[1]
+    test_index = int(sys.argv[1])
 
     if test_index == 0:
         tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
         metrics = [cvvdp_met, fvvdp_met, funque_met, ldr_flip_metric, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
-        # tests = [ContrastConstancySpatialFreqAchTest]
-        # metrics =[cvvdp_met]
-    
+
     elif test_index == 1:
         tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest]
         metrics = [cvvdp_met, ldr_flip_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
 
+        tests = [ContrastConstancyColorTest]
+        metrics = [cvvdp_met, ldr_flip_metric]
+
     elif test_index == 2:
         tests = [GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
-        metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, pieapp_metric]
+        metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
 
     elif test_index == 3:
         tests = [GaborPatchLuminanceAchTest]
         metrics = [cvvdp_met, fvvdp_met, hdr_flip_metric]
+
+    elif test_index == 4:
+        tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
+        metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
+
 
     output_folder = 'results'
 
@@ -93,10 +99,6 @@ if __name__ == '__main__':
                     scores[i, j] = np.nan
                     pass
 
-            # Maybe update the progress? with the some terminal messages?
-            # Like showing which test is happening
-            # And then a bar of progress, until it gets to 100%
-
         # Here, we need to take the header of the class, which will give us information of what does the metric provide to us
         # Then, we want to get these information
 
@@ -106,7 +108,10 @@ if __name__ == '__main__':
         df = pd.DataFrame()
         df.index.name = 'Index'
         for i in range(len(header)):
-            df[header[i]] = conditions[i].cpu().numpy()
+            try:
+                df[header[i]] = conditions[i].cpu().numpy()
+            except:
+                df[header[i]] = conditions[i]
 
 
         for j in range(len(metrics)):

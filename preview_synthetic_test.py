@@ -15,7 +15,7 @@ output_folder = 'previews'
 #Tests = [ContrastMakingAchTest]
 #Tests = [GaborPatchLuminanceHLGAchTest]
 
-Tests = [ContrastConstancyColorTest]
+Tests = [ContrastConstancySpatialFreqAchTest]
 
 for T in Tests:
     Test = T()

@@ -41,8 +41,9 @@ if __name__ == '__main__':
         metrics = [cvvdp_met, fvvdp_met, hdr_flip_metric]
 
     elif test_index == 4:
-        tests = [GaborPatchSpatialFreqAchTransientTest]
+        tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
         metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
+        tests = [DiskTemporalFreqAchTest]
 
     output_folder = 'results_alignment_score'
 

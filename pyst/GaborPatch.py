@@ -1004,7 +1004,7 @@ class DiskTemporalFreqAchTest(ContrastDetectionTest):
         self._preview_as = 'video'
 
     def get_csf_results(self):
-        x = torch.linspace(0, 120, 100)
+        x = torch.linspace(0, 120, 120)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'temporal_freq_ach_disk.txt'))
 
         return x, y

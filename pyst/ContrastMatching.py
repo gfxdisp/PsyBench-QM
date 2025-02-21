@@ -9,6 +9,7 @@ import torch
 from pycvvdp import video_source
 from pycvvdp.display_model import vvdp_display_photo_eotf, vvdp_display_geometry
 import json
+from scipy.optimize import minimize, root_scalar, minimize_scalar
 
 
 class ContrastConstancySpatialFreqAchTest(SyntheticTest):
@@ -16,9 +17,9 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
     The test of contrast constancy across spatial frequencies
     """
 
-    # For now we may not need these informations! It is not as important
+    # We are only varying the frequencies, as the ref contrasts are pre-defined!
 
-    def __init__(self, width=512, height=512, N_contrasts=20, N_freq=20, device=None):
+    def __init__(self, width=256, height=256, N_freq=20, device=None):
 
 
         super().__init__(device)
@@ -32,70 +33,123 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
 
         self.bkg_luminance = 10
         self.display_photometry = vvdp_display_photo_eotf(Y_peak=46.72, contrast=1000, source_colorspace='sRGB')
-        self.display_geometry = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        self.display_geometry = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=60)
 
+        self.ref_spatial_freq = 5
         self.ppd = self.display_geometry.get_ppd()
         self.frames = 1
         self.fps = 1
 
-        df = json.load(open(os.path.join(self.data_folder, 'contrast_constancy_sin_5_cpd.json')))
-        ref_contrasts = torch.tensor(df['average_reference_contrast'], device=self.device)
-        self.ref_contrasts = torch.cat((torch.tensor([1.], device=self.device), ref_contrasts))
+        # Get reference data
+        ref_contrasts, spatial_freq, _ = self.get_gt_results()
+        self.contrasts = torch.tensor(ref_contrasts, device = self.device)
 
-        self.test_contrasts = torch.logspace(-3, 0, N_contrasts).to(self.device)
+        # Test data
+        #self.spatial_frequencies = torch.logspace(-2, log2(25), N_freq, base=2).to(self.device)
+        self.spatial_frequencies = torch.tensor(spatial_freq, device=self.device)
 
-        self.ref_spatial_freq = 5
-        self.test_spatial_frequencies = torch.logspace(-2, log2(25), N_freq, base=2).to(self.device)
-        self.ref_spatial_frequencies = torch.tensor([0.25, 0.5, 1, 2, 5, 10, 15, 20, 25], device=self.device)
+        # We will follow the format of previous tests
+        self.N_contrast = len(self.contrasts)
+        self.N_s_freq = len(self.spatial_frequencies)
 
-    
-        self.N_test_contrasts = len(self.test_contrasts)
-        self.N_test_s_freq = len(self.test_spatial_frequencies)
+        self.contrast_indices, self.s_freq_indices = torch.meshgrid(torch.arange(self.N_contrast), torch.arange(self.N_s_freq), indexing='ij')
 
-        self.N_ref_contrasts = len(self.ref_contrasts)
-        self.N_ref_s_freq = len(self.ref_spatial_frequencies)
+        self.contrast_indices = self.contrast_indices.flatten()
+        self.s_freq_indices = self.s_freq_indices.flatten()
 
-        self.test_contrast_indices, self.test_s_freq_indices = torch.meshgrid(torch.arange(self.N_test_contrasts), torch.arange(self.N_test_s_freq), indexing='ij')
-
-        self.test_contrast_indices = self.test_contrast_indices.flatten()
-        self.test_s_freq_indices = self.test_s_freq_indices.flatten()
-
-        self._preview_folder = os.path.join('color_matching', 'spatial_frequencies')
+        self._preview_folder = os.path.join('contrast_matching', 'spatial_frequencies')
         self._preview_as = 'image'
 
 
     def __len__(self):
-        return self.N_test_contrasts*self.N_test_s_freq + self.N_ref_contrasts
+        return self.N_contrast*self.N_s_freq
 
     def get_test_condition_parameters(self, index):
 
-        if index < self.N_ref_contrasts:
-            contrast = self.ref_contrasts[index]
-            s_freq = self.ref_spatial_freq
-        
-        else:
-            new_index = index - self.N_ref_contrasts
-            contrast = self.test_contrasts[self.test_contrast_indices[new_index]]
-            s_freq = self.test_spatial_frequencies[self.test_s_freq_indices[new_index]]
+        ref_contrast = self.contrasts[self.contrast_indices[index]]
+        s_freq = self.spatial_frequencies[self.s_freq_indices[index]]
 
-        return contrast, s_freq
+        return ref_contrast, s_freq
     
     def get_test_condition(self, index):
 
-        contrast, s_freq= self.get_test_condition_parameters(index)
-        L = self.bkg_luminance
+        # Here we are simply generating the reference and test conditions to which we are matching, this is used for
+        # preview, but not for the optimization! This is not similar to the other tests!
+
+        ref_contrast, s_freq = self.get_test_condition_parameters(index)
+        ref_s_freq = self.ref_spatial_freq
         Lmax = self.display_photometry.get_peak_luminance()
 
-        XYZ_test, XYZ_reference = generate_sinusoidal_grating(self.width, self.height, self.frames, self.ppd, self.fps, contrast, s_freq, L, self.dkl_col_direction, device=self.device)
+        XYZ_test, _ = generate_sinusoidal_grating(self.width, self.height, self.frames, self.ppd, self.fps,
+                                                              ref_contrast, s_freq, self.bkg_luminance,
+                                                              self.dkl_col_direction,
+                                                              device=self.device)
+
+        XYZ_reference, _ = generate_sinusoidal_grating(self.width, self.height, self.frames, self.ppd, self.fps,
+                                                  ref_contrast, ref_s_freq, self.bkg_luminance,
+                                                  self.dkl_col_direction,
+                                                  device=self.device)
 
         test_condition = lin2srgb(XYZ2RGB709_nd(XYZ_test / Lmax).unsqueeze(0))
         reference_condition = lin2srgb(XYZ2RGB709_nd(XYZ_reference / Lmax).unsqueeze(0))
 
-        return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
+        return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW",
+                                               display_photometry=self.display_photometry)
 
 
     def get_condition(self, index):
         return self.get_test_condition(index), self.display_photometry, self.display_geometry
+
+    def generate_grating(self, contrast, s_freq):
+        Lmax = self.display_photometry.get_peak_luminance()
+        XYZ_test, XYZ_reference = generate_sinusoidal_grating(self.width, self.height, self.frames, self.ppd, self.fps,
+                                                              contrast, s_freq, self.bkg_luminance, self.dkl_col_direction,
+                                                              device=self.device)
+        test_condition = lin2srgb(XYZ2RGB709_nd(XYZ_test / Lmax).unsqueeze(0))
+        reference_condition = lin2srgb(XYZ2RGB709_nd(XYZ_reference / Lmax).unsqueeze(0))
+
+        return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW",
+                                               display_photometry=self.display_photometry)
+
+    def optimization_fct(self, test_contrast, s_freq, metric_fct, ref_score_normalized, test_score_contrast_1):
+        test_video_source = self.generate_grating(torch.tensor(test_contrast, device=self.device), s_freq)
+        with torch.no_grad():
+            test_score, _ = metric_fct.predict_video_source(test_video_source)
+        test_score_normalized = test_score/test_score_contrast_1   # here to change
+
+        objective = (ref_score_normalized - test_score_normalized)**2
+
+        return objective.item()
+
+    def run_on_test_condition(self, index, metric_fct):
+        ref_contrast, s_freq = self.get_test_condition_parameters(index)
+        ref_s_freq = self.ref_spatial_freq
+
+        # Generate reference grating
+        ref_video_source = self.generate_grating(ref_contrast, ref_s_freq)
+        with torch.no_grad():
+            ref_score, _ = metric_fct.predict_video_source(ref_video_source)   # change as well
+
+        ref_video_source = self.generate_grating(1, ref_s_freq)
+        with torch.no_grad():
+            ref_score_contrast_1, _ = metric_fct.predict_video_source(ref_video_source)   # change as well
+
+        ref_score_normalized = ref_score / ref_score_contrast_1
+
+        # Generate test grating
+        test_video_source = self.generate_grating(1, s_freq)
+        with torch.no_grad():
+            test_score_contrast_1, _ = metric_fct.predict_video_source(test_video_source)  # change as well!
+
+
+        # Start optimization
+        # res = minimize(self.optimization_fct, ref_contrast.item(), args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bounds=[(0.001, 1)])
+        # res = root_scalar(self.optimization_fct, x0=ref_contrast.item(),args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bracket=[0.001, 1])
+        res = minimize_scalar(self.optimization_fct,
+                              args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bounds=[0.001, 1])
+        test_contrast = res.x
+
+        return test_contrast
 
     def get_preview_folder(self):
         return self._preview_folder
@@ -104,7 +158,8 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         return self._preview_as
     
     def get_ticks(self):
-        x = torch.logspace(-2, 4, 7, base=2)
+        #x = torch.logspace(-2, 4, 7, base=2)
+        x = [0.25, 0.5, 1, 2, 5, 10, 15, 20, 25]
         y = [0.001, 0.01, 0.1, 1]
 
         return x, y
@@ -113,12 +168,10 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         return ['Contrast', 'Spatial Frequency']
 
     def get_rows_conditions(self):
-        contrasts = torch.cat((self.ref_contrasts, self.test_contrasts[self.test_contrast_indices]))
-        frequencies = torch.cat((torch.ones_like(self.ref_contrasts)*self.ref_spatial_freq, self.test_spatial_frequencies[self.test_s_freq_indices]))
-        return [contrasts, frequencies]
+        return [self.contrasts[self.contrast_indices], self.spatial_frequencies[self.s_freq_indices]]
 
     def size(self):
-        return self.N_test_contrasts, self.N_test_s_freq 
+        return self.N_contrast, self.N_s_freq
 
     def units(self):
         return ['log', 'log'], [None, 'cpd']
@@ -396,7 +449,7 @@ class ContrastConstancyColorTest(SyntheticTest):
 
         self.bkg_luminance = 21.4
         self.display_photometry = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        self.display_geometry = vvdp_display_geometry([256, 256], diagonal_size_inches=30, ppd=60)
+        self.display_geometry = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=60)
 
         self.s_freq = 1
         self.ppd = self.display_geometry.get_ppd()

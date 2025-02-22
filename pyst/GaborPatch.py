@@ -374,7 +374,16 @@ class ContrastDetectionTest(SyntheticTest):
             y += str(el)
         y += "]"
 
-        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
+        if units_scales[1] == 'log':
+            axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, "
+        else:
+            axes_info = "xaxis: {range: ["+str(np.min(x_condition))+","+str(np.max(x_condition))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, "
+        
+        if units_scales[0] == 'log':
+            axes_info += "yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
+        else:
+            axes_info += "yaxis: {range:["+str(np.min(y_condition))+","+str(np.max(y_condition))+"], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
+
         edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
         margin_info = r"margin: {l:50, r:40, t:50, b:40}"
 
@@ -445,6 +454,8 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Achromatic Gabor Patch'
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - Ach. Gabor'
 
 class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
@@ -493,6 +504,9 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Red-Green Gabor Patch'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - RG Gabor'
 
 class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
@@ -541,6 +555,9 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Yellow-Violet Gabor Patch'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - YV Gabor'
 
 class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
 
@@ -589,6 +606,9 @@ class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Achromatic Band Limited Noise'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - Ach. Noise'
 
 class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
 
@@ -637,6 +657,9 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Red-Green Band Limited Noise'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - RG Noise'
 
 class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
 
@@ -685,6 +708,9 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Yellow-Violet Band Limited Noise'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - YV Noise'
 
 
 
@@ -735,6 +761,9 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Luminance Masking'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Luminance'
     
 
 class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
@@ -930,6 +959,9 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Stimuli Size - Achromatic Gabor Patch'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Area'
 
 
 class GaborPatchSpatialFreqAchTransientTest(ContrastDetectionTest):
@@ -946,7 +978,7 @@ class GaborPatchSpatialFreqAchTransientTest(ContrastDetectionTest):
         temporal_frequency = 8
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies,
                          temporal_frequencies=temporal_frequency, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
@@ -980,22 +1012,25 @@ class GaborPatchSpatialFreqAchTransientTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Spatial Frequency - Achromatic Transient Gabor Patch'
+    
+    def latex_name(self):
+        return 'Contrast - Detection - Spatial Freq. - Transient'
 
 
 class DiskTemporalFreqAchTest(ContrastDetectionTest):
 
-    def __init__(self, width=256, height=256, N_contrasts=20, N_freq=20, is_alignmenet_score=False, device=None):
+    def __init__(self, width=256, height=256, N_contrasts=20, N_freq=21, is_alignmenet_score=False, device=None):
         channel = 'Ach'
         frames = 120
         fps = 120
 
         stimuli_type = 'disk'
 
-        temporal_frequencies = torch.linspace(0, 120, N_freq)
+        temporal_frequencies = torch.linspace(0, 60, N_freq)
         contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=60, ppd=60)
+        gm = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, temporal_frequencies=temporal_frequencies,
                          stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
@@ -1004,13 +1039,13 @@ class DiskTemporalFreqAchTest(ContrastDetectionTest):
         self._preview_as = 'video'
 
     def get_csf_results(self):
-        x = torch.linspace(0, 120, 120)
+        x = torch.linspace(0, 60, 61)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'temporal_freq_ach_disk.txt'))
 
         return x, y
 
     def get_ticks(self):
-        x = torch.linspace(0, 120, 7)
+        x = torch.linspace(0, 60, 7)
         y = [0.001, 0.01, 0.1, 1]
 
         return x, y
@@ -1029,6 +1064,9 @@ class DiskTemporalFreqAchTest(ContrastDetectionTest):
 
     def short_name(self):
         return 'Contrast Detection - Temporal Frequency - Achromatic Disk'
+    
+    def latex_name(self):
+        return 'Flicker - Detection'
 
 
 # class GaborPatchTempFreqAchTest(GaborPatchTest):

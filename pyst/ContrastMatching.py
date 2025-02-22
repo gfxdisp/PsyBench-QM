@@ -188,78 +188,10 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
     
 
     def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
-
-        conditions = self.get_rows_conditions()
-        condition_names = self.get_row_header()
-
-        y_condition = conditions[0].reshape(self.size()).cpu().numpy()
-        y_condition_name = condition_names[0]
-
-        x_condition = conditions[1].reshape(self.size()).cpu().numpy()
-        x_condition_name = condition_names[1]
-
-        predictions = predictions.reshape(self.size())
-
-        cmap = 'viridis'
-
-        if reverse_color_order:
-            cmap = 'viridis_r'
-
-        fig = plt.figure(figsize=(5, 4))
-        contour = plt.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
-
-        #plt.clabel(contour, inline=True, fontsize=8)
-
-        colorbar = fig.colorbar(contour)
-        if reverse_color_order:
-            colorbar.ax.invert_yaxis()
-
-        plt.grid(alpha=0.4, axis='x')
-
-        scales, units = self.units()
-
-        plt.xscale(scales[1])
-        plt.yscale(scales[0])
-
-        if units[1]:
-            plt.xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
-        else:
-            plt.xlabel(x_condition_name, fontsize=12)
-
-        if units[0]:
-            plt.ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
-        else:
-            plt.ylabel(y_condition_name, fontsize=12)
-        
-        x_ticks, y_ticks = self.get_ticks()
-        x_ticks = x_ticks.cpu().numpy()
-        y_ticks = y_ticks.cpu().numpy()
-
-        formatted_xticks = [f'{tick:g}' for tick in x_ticks]
-        formatted_yticks = [f'{tick:.2g}' for tick in y_ticks]
-
-        plt.xticks(x_ticks, formatted_xticks, fontsize=10)
-        plt.yticks(y_ticks, formatted_yticks, fontsize=10)
-
-        # Plot the csf results
-
-        x_csf, y_csf = self.get_csf_results()
-
-        #plt.plot(x_csf, y_csf+0.01, marker='o', color='red', linewidth=1, markerfacecolor='none', markeredgecolor='red')
-        plt.plot(x_csf, y_csf, color='red', linewidth=1)
-
-        plt.xlim([np.min(x_condition), np.max(x_condition)])
-        plt.ylim([np.min(y_condition), np.max(y_condition)])
-
-        if title is not None:
-            plt.title(title, fontsize=14)
-
-        plt.tight_layout()
-
-        if output_filename is not None:
-            fig.savefig(output_filename)
-
-        plt.close(fig)
+        """ I will need to redo all plots, as they are incredibly wrong here! """
+        """ Maybe instead of output filename, we can have like a figure and the axis in where we show the plot """
+        """ This should make it more straightforward to make complex """
+        pass
     
     def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
         # The code will return the JS script that should work with plotly
@@ -270,134 +202,80 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         condition_names = self.get_row_header()
         units_scales, units_names = self.units()
 
-        # Do the matching!
-
-        ref_contrasts = conditions[0][1:self.N_ref_contrasts].cpu().numpy()
-        ref_contrasts_predictions = predictions[1:self.N_ref_contrasts] / predictions[0]
-
-        test_contrasts = conditions[0][self.N_ref_contrasts:].cpu().numpy()
-        test_frequencies = conditions[1][self.N_ref_contrasts:].cpu().numpy()
-        predictions = predictions[self.N_ref_contrasts:]
-
-        matched_test_contrasts = []
-
-        for i, ref_contrast in enumerate(ref_contrasts):
-            ref_prediction = ref_contrasts_predictions[i]
-            indices = []
-            for test_freq in np.unique(test_frequencies):
-                test_freq_contrasts = test_contrasts[test_frequencies == test_freq]
-
-                test_freq_predictions = predictions[test_frequencies == test_freq]
-                test_freq_predictions = test_freq_predictions / test_freq_predictions[-1]
-
-                index = np.argmin((ref_prediction - test_freq_predictions)**2)
-                indices.append(test_freq_contrasts[index])
-            
-            matched_test_contrasts.append(indices)
-
-        matched_test_contrasts = np.array(matched_test_contrasts)
-        test_frequencies = np.unique(test_frequencies)
-
-
         # Get Ground Truth
 
-        _, _, matched_ref_contrasts = self.get_gt_results()
-        matched_ref_contrasts = np.array(matched_ref_contrasts)
+        y_condition, x_condition, gt_contrasts = self.get_gt_results()
+        gt_contrasts = np.array(gt_contrasts)
 
         # Now Making the figure!
-        
 
-        y_condition = np.unique(conditions[0].cpu().numpy())
         y_condition_name = condition_names[0]
         if units_names[0] is not None:
             y_condition_name += " ["+units_names[0]+"]"
 
-
-        x_condition = np.unique(conditions[1].cpu().numpy())
         x_condition_name = condition_names[1]
         if units_names[1] is not None:
             x_condition_name += " ["+units_names[1]+"]"
 
-        z_condition_name = "Metric Prediction"
-
         predictions = predictions.reshape(self.size())
 
         x_tick_vals, y_tick_vals = self.get_ticks()
-        x_tick_vals = x_tick_vals.cpu().numpy()
 
-        z = "["
+        # Create the necessary variables now - Just lines basically
+        traces = ''
+        for i in range(len(predictions)):
+            # We will start by drawing the reference 
+            trace = 'var trace_ref_'+str(i)+' = { '
+            x = 'x: ['
+            for j, val in enumerate(x_condition):
+                if j>0:
+                    x += ', '
+                x += str(val)
+            x += ']'
+            ref_contrast = gt_contrasts[i]
+            y = 'y: ['
+            for j, val in enumerate(ref_contrast):
+                if j>0:
+                    y += ', '
+                y += str(val)
+            y += ']'
+            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: 'red', size:8}, line: {dash:'dot', color: 'red', width:2},\n"
+            trace += "name: 'Human Results for Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
+            trace += '};'
 
-        for i, row in enumerate(predictions):
+            traces += trace +'\n'
+
+            # Now we will do that of the metrics!
+            trace = 'var trace_prediction_'+str(i)+' = { '
+            x = 'x: ['
+            for j, val in enumerate(x_condition):
+                if j>0:
+                    x += ', '
+                x += str(val)
+            x += ']'
+            prediction = predictions[i]
+            y = 'y: ['
+            for j, val in enumerate(prediction):
+                if j>0:
+                    y += ', '
+                y += str(val)
+            y += ']'
+
+            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: 'black', size:8}, line: {color: 'black', width:2},\n"
+            trace += "name: 'Metric Prediction for Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
+            trace += '};'
+
+            traces += trace +'\n'
+
+        traces += 'var data = ['
+        for i in range(len(predictions)):
             if i>0:
-                z += ", "
-            z += "["
-            for j, el in enumerate(row):
-                if j > 0:
-                    z += ", "
-                z += str(el)
-            z += "]"
+                traces += ', '
+            traces += 'trace_ref_'+str(i)
+            traces += ', trace_prediction_'+str(i)
+        traces += ']\n'
 
-        z += "]"
-
-        x = "["
-        for i, el in enumerate(x_condition):
-            if i>0:
-                x += ", "
-            x += str(el)
-        x += "]"
-
-        y = "["
-        for i, el in enumerate(y_condition):
-            if i>0:
-                y += ", "
-            y += str(el)
-        y += "]"
-
-        # Contour plot data
-
-        js_command += "var Contourdata = {\n"
-        js_command += "z: " + z + ",\nx: " + x + ",\ny: " + y
-
-        extra_params = "type: 'contour',\ncolorscale: 'Viridis',\nncontours: 30,\nline:{width:2},\n"
-        if reverse_color_order:
-            extra_params+= "reversescale: true,\n"
-
-        extra_params += "hovertemplate: '"+x_condition_name+": %"+r"{x:.2f}"+"<br>"+y_condition_name+": %"+r"{y:.2f}"+"<br>"+z_condition_name+": %"+r"{z:.2f}"+"<extra></extra>',\n"
-        
-        extra_params += r"contours:{coloring:'lines'}"
-
-        js_command += ",\n" + extra_params
-
-        js_command += "\n};"
-
-        # Ground Truth Data 
-
-        x_gt, y_gt = self.get_csf_results()
-
-        x = "["
-        for i, el in enumerate(x_gt):
-            if i>0:
-                x += ", "
-            x += str(el.cpu().numpy())
-        x += "]"
-
-        y = "["
-        for i, el in enumerate(y_gt):
-            if i>0:
-                y += ", "
-            y += str(el)
-        y += "]"
-
-        js_command += "\nvar Linedata = {\n"
-        js_command += "x: " + x + ",\ny: " + y
-
-        extra_params = "mode: 'lines',\ntype: 'scatter',\nline:{color: 'red', width:2},marker:{symbol:'circle-open', size:8},\nname: 'CastleCSF'"
-
-        js_command += ",\n" + extra_params
-
-        js_command += "\n};"
-
-        js_command += "\nvar data = [Contourdata, Linedata]"
+        js_command = traces
 
         # Layout of the Figure
 
@@ -415,7 +293,7 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
             y += str(el)
         y += "]"
 
-        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, yaxis: {type:'log', range:["+str(log10(np.min(y_condition)))+","+str(log10(np.max(y_condition)))+"], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
+        axes_info = "xaxis: {type:'log', range: ["+str(log10(np.min(x_condition)))+","+str(log10(np.max(x_condition)))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, yaxis: {type:'log', range:[-3, 0], tickvals: "+y+", ticktext: "+y+", title:'"+y_condition_name+"'}"
         edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
         margin_info = r"margin: {l:50, r:40, t:50, b:40}"
 
@@ -428,6 +306,9 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
 
     def short_name(self):
         return 'Contrast Matching - Across Spatial Frequencies'
+    
+    def latex_name(self):
+        return 'Contrast - Matching - Spatial - Freq.'
 
 
 
@@ -438,7 +319,7 @@ class ContrastConstancyColorTest(SyntheticTest):
 
     # In this test the number of elements in the x-axis is defined as 3, for the 3 color directions Ach - RedGreen - Yellow Violet
 
-    def __init__(self, width=256, height=256, N_contrasts=20, device=None):
+    def __init__(self, width=256, height=256, N_contrasts=10, device=None):
 
         super().__init__(device)
 
@@ -529,77 +410,7 @@ class ContrastConstancyColorTest(SyntheticTest):
 
     def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
 
-        conditions = self.get_rows_conditions()
-        condition_names = self.get_row_header()
-
-        y_condition = conditions[0].reshape(self.size()).cpu().numpy()
-        y_condition_name = condition_names[0]
-
-        x_condition = conditions[1].reshape(self.size()).cpu().numpy()
-        x_condition_name = condition_names[1]
-
-        predictions = predictions.reshape(self.size())
-
-        cmap = 'viridis'
-
-        if reverse_color_order:
-            cmap = 'viridis_r'
-
-        fig = plt.figure(figsize=(5, 4))
-        contour = plt.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
-
-        # plt.clabel(contour, inline=True, fontsize=8)
-
-        colorbar = fig.colorbar(contour)
-        if reverse_color_order:
-            colorbar.ax.invert_yaxis()
-
-        plt.grid(alpha=0.4, axis='x')
-
-        scales, units = self.units()
-
-        plt.xscale(scales[1])
-        plt.yscale(scales[0])
-
-        if units[1]:
-            plt.xlabel(x_condition_name + ' [' + units[1] + ']', fontsize=12)
-        else:
-            plt.xlabel(x_condition_name, fontsize=12)
-
-        if units[0]:
-            plt.ylabel(y_condition_name + ' [' + units[1] + ']', fontsize=12)
-        else:
-            plt.ylabel(y_condition_name, fontsize=12)
-
-        x_ticks, y_ticks = self.get_ticks()
-        x_ticks = x_ticks.cpu().numpy()
-        y_ticks = y_ticks.cpu().numpy()
-
-        formatted_xticks = [f'{tick:g}' for tick in x_ticks]
-        formatted_yticks = [f'{tick:.2g}' for tick in y_ticks]
-
-        plt.xticks(x_ticks, formatted_xticks, fontsize=10)
-        plt.yticks(y_ticks, formatted_yticks, fontsize=10)
-
-        # Plot the csf results
-
-        x_csf, y_csf = self.get_csf_results()
-
-        # plt.plot(x_csf, y_csf+0.01, marker='o', color='red', linewidth=1, markerfacecolor='none', markeredgecolor='red')
-        plt.plot(x_csf, y_csf, color='red', linewidth=1)
-
-        plt.xlim([np.min(x_condition), np.max(x_condition)])
-        plt.ylim([np.min(y_condition), np.max(y_condition)])
-
-        if title is not None:
-            plt.title(title, fontsize=14)
-
-        plt.tight_layout()
-
-        if output_filename is not None:
-            fig.savefig(output_filename)
-
-        plt.close(fig)
+        pass
 
     def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
         # The code will return the JS script that should work with plotly
@@ -690,3 +501,6 @@ class ContrastConstancyColorTest(SyntheticTest):
 
     def short_name(self):
         return 'Contrast Matching - Across Cardinal Color Directions'
+    
+    def latex_name(self):
+        return 'Contrast - Matching - Color - Directions'

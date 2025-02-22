@@ -56,6 +56,10 @@ class SyntheticTest:
     def short_name(self):
         pass
 
+    @abc.abstractmethod
+    def latex_name(self):
+        pass
+
     def preview(self, index):
         vid_source = self.get_test_condition(index)
 

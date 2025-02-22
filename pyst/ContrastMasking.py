@@ -418,6 +418,9 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
     def short_name(self):
         return 'Contrast Masking - Phase Coherent Masking'
+    
+    def latex_name(self):
+        return 'Contrast - Masking - Phase - Coherent'
 
 
 class ContrastMakingIncoherentAchTest(ContrastMakingTest):
@@ -472,3 +475,6 @@ class ContrastMakingIncoherentAchTest(ContrastMakingTest):
 
     def short_name(self):
         return 'Contrast Masking - Phase Incoherent Masking'
+    
+    def latex_name(self):
+        return 'Contrast - Masking - Phase - Incoherent'

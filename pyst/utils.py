@@ -235,7 +235,7 @@ def generate_disk(width, height, frames, ppd, fps, contrast, s_freq, t_freq, ori
     disk = disk.view(height, width, 1, 1)
 
     t = torch.linspace(0, frames / fps, frames).to(device)
-    temporal_sine = torch.cos(2 * pi * t * t_freq).view(1, 1, 1, frames)  # This is giving us H,W,C,F maybe we will want to change that
+    temporal_sine = torch.sin(2 * pi * t * t_freq).view(1, 1, 1, frames)  # This is giving us H,W,C,F maybe we will want to change that
 
     test_stimuli = disk * temporal_sine
 

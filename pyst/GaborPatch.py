@@ -32,9 +32,9 @@ class ContrastDetectionTest(SyntheticTest):
         if channel == 'Ach':
             self.dkl_col_direction = torch.tensor([1., 0, 0], device=self.device)
         elif channel == 'RG':
-            self.dkl_col_direction = torch.tensor([0, 0.610649, 0], device=self.device)
+            self.dkl_col_direction = torch.tensor([0, 1, 0], device=self.device)
         elif channel == 'YV':
-            self.dkl_col_direction = torch.tensor([0, 0, 4.203636], device=self.device)
+            self.dkl_col_direction = torch.tensor([0, 0, 1], device=self.device)
         
         self.display_photometry = display_photometry
         self.display_geometry = display_geometry
@@ -468,7 +468,7 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-3, log10(0.12), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
@@ -519,7 +519,7 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
         stimuli_type='gabor_patch'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-2, log10(0.8), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
@@ -621,7 +621,7 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
         stimuli_type='band_limited_noise'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-3, log10(0.12), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
@@ -672,7 +672,7 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
         stimuli_type='band_limited_noise'
 
         spatial_frequencies = torch.logspace(-1, 5, N_freq, base=2)
-        contrasts = torch.logspace(-3, log10(0.2), N_contrasts)
+        contrasts = torch.logspace(-2, log10(0.8), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
@@ -724,10 +724,11 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
 
         stimuli_type='gabor_patch'
 
-        bkg_luminances = torch.logspace(-2, 4, N_L)
+        #bkg_luminances = torch.logspace(-2, 4, N_L)
+        bkg_luminances = torch.logspace(-1, log10(90), N_L)
         contrasts = torch.logspace(-3, 0, N_contrasts)
 
-        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
+        dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
@@ -736,13 +737,14 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
         self._preview_as = 'image'
     
     def get_csf_results(self):
-        x = torch.logspace(-2, 4, 100)
+        #x = torch.logspace(-2, 4, 100)
+        x = torch.logspace(-1, log10(90), 100)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
 
         return x, y
     
     def get_ticks(self):
-        x = torch.logspace(-2, 4, 7)
+        x = torch.logspace(-1, 2, 4)
         y = [0.001, 0.01, 0.1, 1]
 
         return x, y
@@ -764,153 +766,6 @@ class GaborPatchLuminanceAchTest(ContrastDetectionTest):
     
     def latex_name(self):
         return 'Contrast - Detection - Luminance'
-    
-
-class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
-
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
-        
-        channel = 'Ach'
-        frames = 1
-        fps = 1
-
-        stimuli_type='gabor_patch'
-
-        bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(-3, 0, N_contrasts)
-
-        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
-
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
-
-        self._preview_folder = os.path.join(self._preview_folder, 'luminances_pu21_ach')
-        self._preview_as = 'image'
-    
-    def get_csf_results(self):
-        x = torch.logspace(-2, 4, 100)
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
-
-        return x, y
-    
-    def get_ticks(self):
-        x = torch.logspace(-2, 4, 7)
-        y = [0.001, 0.01, 0.1, 1]
-
-        return x, y
-
-    def get_row_header(self):
-        return ['Contrast', 'Luminance']
-
-    def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
-
-    def size(self):
-        return self.N_contrasts, self.N_L
-
-    def units(self):
-        return ['log', 'log'], [None, 'cd/m²']
-
-    def short_name(self):
-        return 'Luminance Masking - PU21 Encoding'
-
-
-class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
-
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
-        
-        channel = 'Ach'
-        frames = 1
-        fps = 1
-
-        stimuli_type='gabor_patch'
-
-        bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(-3, 0, N_contrasts)
-
-        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-PQ')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
-
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
-
-        self._preview_folder = os.path.join(self._preview_folder, 'luminances_pq_ach')
-        self._preview_as = 'image'
-    
-    def get_csf_results(self):
-        x = torch.logspace(-2, 4, 100)
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
-
-        return x, y
-    
-    def get_ticks(self):
-        x = torch.logspace(-2, 4, 7)
-        y = [0.001, 0.01, 0.1, 1]
-
-        return x, y
-
-    def get_row_header(self):
-        return ['Contrast', 'Luminance']
-
-    def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
-
-    def size(self):
-        return self.N_contrasts, self.N_L
-
-    def units(self):
-        return ['log', 'log'], [None, 'cd/m²']
-
-    def short_name(self):
-        return 'Luminance Masking - PQ Encoding'
-
-
-class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
-
-    def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
-        
-        channel = 'Ach'
-        frames = 1
-        fps = 1
-
-        stimuli_type='gabor_patch'
-
-        bkg_luminances = torch.logspace(-2, 4, N_L)
-        contrasts = torch.logspace(-3, 0, N_contrasts)
-
-        dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-HLG')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
-
-        super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
-
-        self._preview_folder = os.path.join(self._preview_folder, 'luminances_hlg_ach')
-        self._preview_as = 'image'
-    
-    def get_csf_results(self):
-        x = torch.logspace(-2, 4, 100)
-        y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
-
-        return x, y
-    
-    def get_ticks(self):
-        x = torch.logspace(-2, 4, 7)
-        y = [0.001, 0.01, 0.1, 1]
-
-        return x, y
-
-    def get_row_header(self):
-        return ['Contrast', 'Luminance']
-
-    def get_rows_conditions(self):
-        return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
-
-    def size(self):
-        return self.N_contrasts, self.N_L
-
-    def units(self):
-        return ['log', 'log'], [None, 'cd/m²']
-
-    def short_name(self):
-        return 'Luminance Masking - HLG Encoding'
 
 
 class GaborPatchSizeAchTest(ContrastDetectionTest):
@@ -1114,3 +969,150 @@ class DiskTemporalFreqAchTest(ContrastDetectionTest):
 
 #     def short_name(self):
 #         return 'Gabor Patch Temporal Frequency Achromatic Test'
+
+
+# class GaborPatchLuminancePU21AchTest(ContrastDetectionTest):
+
+#     def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
+        
+#         channel = 'Ach'
+#         frames = 1
+#         fps = 1
+
+#         stimuli_type='gabor_patch'
+
+#         bkg_luminances = torch.logspace(-2, 4, N_L)
+#         contrasts = torch.logspace(-3, 0, N_contrasts)
+
+#         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-linear')
+#         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
+
+#         self._preview_folder = os.path.join(self._preview_folder, 'luminances_pu21_ach')
+#         self._preview_as = 'image'
+    
+#     def get_csf_results(self):
+#         x = torch.logspace(-2, 4, 100)
+#         y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+#         return x, y
+    
+#     def get_ticks(self):
+#         x = torch.logspace(-2, 4, 7)
+#         y = [0.001, 0.01, 0.1, 1]
+
+#         return x, y
+
+#     def get_row_header(self):
+#         return ['Contrast', 'Luminance']
+
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
+
+#     def size(self):
+#         return self.N_contrasts, self.N_L
+
+#     def units(self):
+#         return ['log', 'log'], [None, 'cd/m²']
+
+#     def short_name(self):
+#         return 'Luminance Masking - PU21 Encoding'
+
+
+# class GaborPatchLuminancePQAchTest(ContrastDetectionTest):
+
+#     def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
+        
+#         channel = 'Ach'
+#         frames = 1
+#         fps = 1
+
+#         stimuli_type='gabor_patch'
+
+#         bkg_luminances = torch.logspace(-2, 4, N_L)
+#         contrasts = torch.logspace(-3, 0, N_contrasts)
+
+#         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-PQ')
+#         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
+
+#         self._preview_folder = os.path.join(self._preview_folder, 'luminances_pq_ach')
+#         self._preview_as = 'image'
+    
+#     def get_csf_results(self):
+#         x = torch.logspace(-2, 4, 100)
+#         y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+#         return x, y
+    
+#     def get_ticks(self):
+#         x = torch.logspace(-2, 4, 7)
+#         y = [0.001, 0.01, 0.1, 1]
+
+#         return x, y
+
+#     def get_row_header(self):
+#         return ['Contrast', 'Luminance']
+
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
+
+#     def size(self):
+#         return self.N_contrasts, self.N_L
+
+#     def units(self):
+#         return ['log', 'log'], [None, 'cd/m²']
+
+#     def short_name(self):
+#         return 'Luminance Masking - PQ Encoding'
+
+
+# class GaborPatchLuminanceHLGAchTest(ContrastDetectionTest):
+
+#     def __init__(self, width=1920, height=1080, N_contrasts=20, N_L=20, is_alignmenet_score=False, device=None):
+        
+#         channel = 'Ach'
+#         frames = 1
+#         fps = 1
+
+#         stimuli_type='gabor_patch'
+
+#         bkg_luminances = torch.logspace(-2, 4, N_L)
+#         contrasts = torch.logspace(-3, 0, N_contrasts)
+
+#         dm = vvdp_display_photo_eotf(Y_peak=10000, contrast=1000000, source_colorspace='BT.2020-HLG')
+#         gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+
+#         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, bkg_luminances=bkg_luminances, spatial_frequencies=2, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
+
+#         self._preview_folder = os.path.join(self._preview_folder, 'luminances_hlg_ach')
+#         self._preview_as = 'image'
+    
+#     def get_csf_results(self):
+#         x = torch.logspace(-2, 4, 100)
+#         y = np.loadtxt(os.path.join(self.csf_data_folder, 'luminance_ach.txt'))
+
+#         return x, y
+    
+#     def get_ticks(self):
+#         x = torch.logspace(-2, 4, 7)
+#         y = [0.001, 0.01, 0.1, 1]
+
+#         return x, y
+
+#     def get_row_header(self):
+#         return ['Contrast', 'Luminance']
+
+#     def get_rows_conditions(self):
+#         return [self.contrasts[self.contrast_indices], self.bkg_luminances[self.L_indices]]
+
+#     def size(self):
+#         return self.N_contrasts, self.N_L
+
+#     def units(self):
+#         return ['log', 'log'], [None, 'cd/m²']
+
+#     def short_name(self):
+#         return 'Luminance Masking - HLG Encoding'

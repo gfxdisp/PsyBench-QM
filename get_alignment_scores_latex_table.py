@@ -9,20 +9,20 @@ from metrics import *
 tab_caption = 'First attempt of the table'
 tab_label = 'results'
 
-latex_text = '\\begin{table*}[]\n\centering\n\caption{'+tab_caption+'}\n\label{tab:'+tab_label+'}\n\\resizebox{\\textwidth}{!}{%\n\\begin{tabular}{l'
+latex_text = '\\begin{table*}[]\n\centering\n\caption{'+tab_caption+'}\n\label{tab:'+tab_label+'}\n\\resizebox{\\textwidth}{!}{%\n\\begin{tabular}{|l'
 
 tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, GaborPatchSpatialFreqAchTransientTest, 
-         GaborPatchSizeAchTest, GaborPatchLuminanceAchTest, 
+         GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, 
          ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest, 
-         ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest, 
-         DiskTemporalFreqAchTest]
+         DiskTemporalFreqAchTest,
+         ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
 metrics = [None, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, ldr_flip_metric, vmaf_met, funque_met, fvvdp_met, cvvdp_met]
 
 for i in range(len(tests)):
     latex_text += 'c'
 
-latex_text += '}'
+latex_text += '|}'
 for metric in metrics:
     if metric is None:
         latex_text += '\n\hline\n'

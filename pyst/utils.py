@@ -131,6 +131,9 @@ def generate_flat_noise_mask(width, height, ppd, test_contrast, masker_contrast,
     
     wp_d65 = torch.tensor([0.95047, 1.0, 1.08883], device=device)
 
+    # Fix Seed
+    torch.manual_seed(2)
+
     # Create the masker! 
 
     noise = torch.randn((height, width)).to(device)

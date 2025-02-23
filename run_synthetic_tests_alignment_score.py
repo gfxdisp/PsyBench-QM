@@ -19,11 +19,12 @@ if __name__ == '__main__':
     test_index = int(sys.argv[1])
 
     if test_index == 0:
-        tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
+        tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
         metrics = [cvvdp_met, fvvdp_met, funque_met, ldr_flip_metric, vmaf_met, psnry_metric, ssim_metric,
                    ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric,
                    dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric,
                    dists_metric, ahiq_metric, topiq_metric]
+        tests = [GaborPatchLuminanceAchTest, ContrastMakingIncoherentAchTest]
 
     elif test_index == 1:
         tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest]
@@ -31,17 +32,7 @@ if __name__ == '__main__':
                    lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
 
     elif test_index == 2:
-        tests = [GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest]
-        metrics = [funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric,
-                   vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric,
-                   nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
-
-    elif test_index == 3:
-        tests = [GaborPatchLuminanceAchTest]
-        metrics = [cvvdp_met, fvvdp_met, hdr_flip_metric]
-
-    elif test_index == 4:
-        tests = [GaborPatchSpatialFreqAchTransientTest]
+        tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
         metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
 
     output_folder = 'results_alignment_score'

@@ -18,12 +18,10 @@ if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
 
-    tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchSizeAchTest, 
+    tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, 
              ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
              GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
-             GaborPatchLuminancePU21AchTest, GaborPatchLuminancePQAchTest, GaborPatchLuminanceHLGAchTest,
-             GaborPatchLuminanceAchTest,
              ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
     metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, hdr_flip_metric, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric]

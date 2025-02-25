@@ -108,5 +108,5 @@ class vmaf_met(vq_metric):
     
     @staticmethod
     def predictions_range():
-        return [0, 100]
+        return 0, 100
 

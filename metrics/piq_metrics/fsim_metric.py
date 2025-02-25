@@ -50,4 +50,4 @@ class fsim_metric(vq_metric):
 
     @staticmethod
     def predictions_range():
-        return [0, 1]
+        return 0, 1

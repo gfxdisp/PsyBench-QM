@@ -48,4 +48,8 @@ class hdr_flip_metric(VQM):
 
     @staticmethod
     def is_lower_better():
-        return False
+        return True
+
+    @staticmethod
+    def predictions_range():
+        return 0, 1

@@ -24,7 +24,7 @@ if __name__ == '__main__':
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
              ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
-    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, hdr_flip_metric, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric]
+    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric]
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
@@ -40,10 +40,12 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(output_folder, 'previews'))
         os.makedirs(os.path.join(output_folder, 'plots'))
         os.makedirs(os.path.join(output_folder, 'css_files'))
+        os.makedirs(os.path.join(output_folder, 'html_preview_files'))
 
     shutil.copyfile(os.path.join('test_reports_utils', 'style.css'), os.path.join(output_folder, 'css_files', 'style.css'))
 
     header_file = os.path.join('test_reports_utils', "header_plotly.html")
+    header_file_preview = os.path.join('test_reports_utils', "header_plotly_preview.html")
     hr_main = html_report(os.path.join(output_folder, 'index.html'), header_file=header_file )
 
     hr_main.insert_file(os.path.join('test_reports_utils', "nav.html"))
@@ -79,7 +81,8 @@ if __name__ == '__main__':
         hr_test = html_report(os.path.join(output_folder, test_html_filename), header_file=header_file)
 
         test_preview_html_filename = test_name.lower().replace(' - ', '_').replace(' (', '_').replace(')', '').replace(' ', '_').replace('-', '_')+'_preview.html'
-        hr_test_preview = html_report(os.path.join(output_folder, test_preview_html_filename), header_file=header_file)
+        test_preview_html_filename = os.path.join('html_preview_files', test_preview_html_filename)
+        hr_test_preview = html_report(os.path.join(output_folder, test_preview_html_filename), header_file=header_file_preview)
 
         js_filename = 'script_'+test_name.lower().replace(' - ', '_').replace(' (', '_').replace(')', '').replace(' ', '_').replace('-', '_')+'.js'
         js_main = js_report(os.path.join(output_folder, 'js_files', js_filename))
@@ -128,7 +131,7 @@ if __name__ == '__main__':
                     ref_filename = os.path.join(*ref_filename)
 
                     hr_test_preview.beg_div(class_tag='cell-content')
-                    hr_test_preview.insert_image(test_filename, mousedown_image=ref_filename, class_tag="toggle-image")
+                    hr_test_preview.insert_image(os.path.join('..' ,test_filename), mousedown_image=ref_filename, class_tag="toggle-image")
                     if test_name != 'Contrast Matching - Across Cardinal Color Directions':
                         hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]:.2g}")
                     else:
@@ -150,7 +153,7 @@ if __name__ == '__main__':
                     ref_filename = os.path.join(*ref_filename)
 
                     hr_test_preview.beg_div(class_tag='cell-content')
-                    hr_test_preview.insert_video(test_filename, mousedown_video=ref_filename, class_tag="toggle-video")
+                    hr_test_preview.insert_video(os.path.join('..' ,test_filename), mousedown_video=ref_filename, class_tag="toggle-video")
                     hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]:.2g}")
                     hr_test_preview.close_div()
                     
@@ -158,6 +161,7 @@ if __name__ == '__main__':
                 hr_test_preview.end_table_cell()
             hr_test_preview.end_table_row()
         hr_test_preview.end_table()
+        hr_test_preview.close(js_filename)
 
         # Now, we want to add all metric results to this test webpage
 

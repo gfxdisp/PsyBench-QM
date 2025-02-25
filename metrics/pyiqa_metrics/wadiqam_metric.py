@@ -47,3 +47,7 @@ class wadiqam_metric(vq_metric):
     @staticmethod
     def is_lower_better():
         return False
+
+    @staticmethod
+    def predictions_range():
+        return -1, 1

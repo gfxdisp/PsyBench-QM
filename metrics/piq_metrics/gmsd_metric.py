@@ -51,3 +51,7 @@ class gmsd_metric(vq_metric):
     @staticmethod
     def name():
         return "GMSD"
+
+    @staticmethod
+    def predictions_range():
+        return 0, 1

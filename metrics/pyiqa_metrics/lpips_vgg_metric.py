@@ -47,3 +47,7 @@ class lpips_vgg_metric(vq_metric):
     @staticmethod
     def is_lower_better():
         return True
+
+    @staticmethod
+    def predictions_range():
+        return 0, 1

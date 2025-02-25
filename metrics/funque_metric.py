@@ -110,5 +110,5 @@ class funque_met(vq_metric):
 
     @staticmethod
     def predictions_range():
-        return [100, 0]
+        return 0, 100
 

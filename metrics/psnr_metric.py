@@ -55,4 +55,4 @@ class psnry_metric(vq_metric):
 
     @staticmethod
     def predictions_range():
-        return [20, 80]
+        return 0, 100

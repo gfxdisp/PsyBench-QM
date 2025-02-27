@@ -19,9 +19,9 @@ tests = [[GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchS
          [DiskTemporalFreqAchTest],
          [ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]]
 
-higher_better_scale = [[True, True, True, True, True, True], [True, True], [True], [False, True] ]
+higher_better_scale = [[True, True, True, True, True, True], [True, True], [True], [False, False] ]
 
-metrics = [None, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, ldr_flip_metric, vmaf_met, funque_met, fvvdp_met, cvvdp_met]
+metrics = [None, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric, msswd_metric, ldr_flip_metric, de2000, hyab, ictcp, scielab_metric, hdrvdp3_metric, strred_metric, vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met]
 
 # Centering
 for i in range(len(tests_cat)):
@@ -99,7 +99,7 @@ for metric in metrics:
                         if score <= np.quantile(scores, 0.25):
                             bck_color = 'cbe1cd'
                         elif score <= np.quantile(scores, 0.5):
-                            bck_color = 'f5edc0'
+                            bck_color = 'fff8d6'
                         elif score <= np.quantile(scores, 0.75):
                             bck_color = 'ffd8b8'
                         else:

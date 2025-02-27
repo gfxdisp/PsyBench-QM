@@ -19,21 +19,23 @@ if __name__ == '__main__':
     test_index = int(sys.argv[1])
 
     if test_index == 0:
-        tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
+        tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
         metrics = [cvvdp_met, fvvdp_met, funque_met, ldr_flip_metric, vmaf_met, psnry_metric, ssim_metric,
                    ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric,
                    dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric,
-                   dists_metric, ahiq_metric, topiq_metric]
-        tests = [GaborPatchLuminanceAchTest, ContrastMakingIncoherentAchTest]
+                   dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric, scielab_metric, hdrvdp3_metric]
+        
+        metrics = [speedqa_metric]
 
     elif test_index == 1:
-        tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest]
+        tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
         metrics = [cvvdp_met, ldr_flip_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric,
-                   lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric]
+                   lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric, scielab_metric]
 
     elif test_index == 2:
-        tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
+        tests = [DiskTemporalFreqAchTest, GaborPatchSpatialFreqAchTransientTest]
         metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
+        metrics = [speedqa_metric]
 
     output_folder = 'results_alignment_score'
 

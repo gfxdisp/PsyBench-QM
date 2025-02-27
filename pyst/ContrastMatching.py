@@ -60,6 +60,8 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         self._preview_folder = os.path.join('contrast_matching', 'spatial_frequencies')
         self._preview_as = 'image'
 
+        self.colors = ['#C1121F', '#FB8500', '#FFB703', '#00B0A2', '#22577A', '#560BAD', '#B5179E', '#DA627D']
+
 
     def __len__(self):
         return self.N_contrast*self.N_s_freq
@@ -144,8 +146,6 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         reverse = not metric_fct.is_lower_better()
         metric_min, metric_max = metric_fct.predictions_range()
 
-        #s_freq = torch.tensor(25.0, device=self.device)
-
         # Generate reference grating
         ref_video_source = self.generate_grating(ref_contrast, ref_s_freq)
         with torch.no_grad():
@@ -227,11 +227,80 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         return ref_contrasts, spatial_frequencies, gt_contrasts
     
 
-    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
-        """ I will need to redo all plots, as they are incredibly wrong here! """
-        """ Maybe instead of output filename, we can have like a figure and the axis in where we show the plot """
-        """ This should make it more straightforward to make complex """
-        pass
+    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False):
+
+        conditions = self.get_rows_conditions()
+        condition_names = self.get_row_header()
+
+        y_condition = conditions[0].reshape(self.size()).cpu().numpy()
+        y_condition_name = condition_names[0]
+
+        x_condition = conditions[1].reshape(self.size()).cpu().numpy()
+        x_condition_name = condition_names[1]
+
+        predictions = predictions.reshape(self.size())
+
+        _, _, gt_contrasts = self.get_gt_results()
+        gt_contrasts = np.array(gt_contrasts)
+
+        if axis is None:
+            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
+
+        # Plot the results
+        for i in range(len(predictions)):
+            #GT
+            axis.plot(x_condition[i], gt_contrasts[i], linewidth=2, linestyle='--', marker='o', color=self.colors[i])
+            #Prediction
+            axis.plot(x_condition[i], predictions[i], linewidth=2, marker='x', color=self.colors[i])
+
+        axis.grid(alpha=0.4, axis='x')
+
+        scales, units = self.units()
+
+        if units[1]:
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+        else:
+            axis.set_xlabel(x_condition_name, fontsize=12)
+
+        if is_first_column:
+            if units[0]:
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+            else:
+                axis.set_ylabel(y_condition_name, fontsize=12)
+
+            label = ' '.join(self.latex_name().split(' - ')[:2])
+            label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
+
+            axis.text(-0.28, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+        
+        axis.set_xscale(scales[1])
+        axis.set_yscale(scales[0])
+        
+        x_ticks, y_ticks = self.get_ticks()
+
+        formatted_xticks = [f'{tick:g}' for tick in x_ticks]
+
+        axis.set_xticks(x_ticks, formatted_xticks, fontsize=10)
+
+        if is_first_column:
+            axis.set_yticks(y_ticks, y_ticks, fontsize=10)
+        else:
+            axis.set_yticks([])
+
+        axis.set_xlim([np.min(x_ticks), np.max(x_ticks)])
+        axis.set_ylim([np.min(y_ticks), np.max(y_ticks)])
+
+        if title is not None:
+            axis.set_title(title, fontsize=14)
+
+        if axis is None:
+            plt.tight_layout()
+
+        if output_filename is not None:
+            fig.savefig(output_filename)
+        
+        if axis is None:
+            plt.close(fig)
     
     def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
         # The code will return the JS script that should work with plotly
@@ -279,8 +348,9 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
                     y += ', '
                 y += str(val)
             y += ']'
-            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: 'red', size:8}, line: {dash:'dot', color: 'red', width:2},\n"
-            trace += "name: 'Human Results for Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
+            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: '"+self.colors[i]+"', size:8}, line: {dash:'dot', color: '"+self.colors[i]+"', width:2},\n"
+            trace += "hovertemplate: 'gt test contrast: %" + r"{y:.3f}" + "',\n"
+            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
             trace += '};'
 
             traces += trace +'\n'
@@ -301,8 +371,9 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
                 y += str(val)
             y += ']'
 
-            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: 'black', size:8}, line: {color: 'black', width:2},\n"
-            trace += "name: 'Metric Prediction for Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
+            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {symbol: 'x', color: '"+self.colors[i]+"', size:8}, line: {color: '"+self.colors[i]+"', width:2},\n"
+            trace += "hovertemplate: 'metric test contrast: %" + r"{y:.3f}" + "',\n"
+            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
             trace += '};'
 
             traces += trace +'\n'
@@ -395,6 +466,9 @@ class ContrastConstancyColorTest(SyntheticTest):
         self._preview_folder = os.path.join('contrast_matching', 'color_directions')
         self._preview_as = 'image'
 
+        self.colors = ['#DA627D', '#B5179E', '#560BAD', '#22577A', '#00B0A2',
+                      '#386641', '#FFB703', '#FB8500', '#C1121F', '#780000']
+
     def __len__(self):
         return self.N_contrasts * self.N_col_directions
 
@@ -448,9 +522,69 @@ class ContrastConstancyColorTest(SyntheticTest):
         return ['log', 'lin'], [None, None]
 
 
-    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
+    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False):
 
-        pass
+
+        y_condition_name = 'Metric Prediction'
+        x_condition_name = 'Color Direction'
+
+        predictions = predictions.reshape(self.size())
+
+        if axis is None:
+            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
+
+        # Plot the results
+        for i in range(len(predictions)):
+            #Prediction
+            axis.plot([1, 2, 3], predictions[i], linewidth=2, marker='o', color=self.colors[i])
+
+        axis.grid(alpha=0.4, axis='x')
+
+        scales, units = self.units()
+
+        if units[1]:
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+        else:
+            axis.set_xlabel(x_condition_name, fontsize=12)
+
+        if is_first_column:
+            if units[0]:
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+            else:
+                axis.set_ylabel(y_condition_name, fontsize=12)
+
+            label = ' '.join(self.latex_name().split(' - ')[:2])
+            label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
+
+            axis.text(-0.28, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+        
+        #axis.set_xscale(scales[1])
+        #axis.set_yscale(scales[0])
+        
+        x_ticks, y_ticks = self.get_ticks()
+
+        formatted_yticks = [f'{tick:g}' for tick in y_ticks]
+
+        axis.set_xticks([1, 2, 3], x_ticks, fontsize=10)
+        #axis.set_yticks(y_ticks, formatted_yticks, fontsize=10)
+
+        #axis.set_xlim([np.min(x_ticks), np.max(x_ticks)])
+        #axis.set_ylim([np.min(y_ticks), np.max(y_ticks)])
+
+        if not reverse_color_order:
+            axis.invert_yaxis()
+
+        if title is not None:
+            axis.set_title(title, fontsize=14)
+
+        if axis is None:
+            plt.tight_layout()
+
+        if output_filename is not None:
+            fig.savefig(output_filename)
+        
+        if axis is None:
+            plt.close(fig)
 
     def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
         # The code will return the JS script that should work with plotly
@@ -462,7 +596,8 @@ class ContrastConstancyColorTest(SyntheticTest):
         units_scales, units_names = self.units()
 
         y_condition = np.unique(conditions[0].cpu().numpy())
-        y_condition_name = condition_names[0]
+        #y_condition_name = condition_names[0]
+        y_condition_name = 'Metric Prediction'
         if units_names[0] is not None:
             y_condition_name += " [" + units_names[0] + "]"
 
@@ -490,9 +625,9 @@ class ContrastConstancyColorTest(SyntheticTest):
                 y += str(val)
             y += ']'
 
-            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: 'red', size:8}, line: {color: 'red', width:2},\n"
-            #trace += "hovertemplate: 'Prediction: %" + r"{y:.2f}" + "<extra></extra>',\n"
-            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"'"
+            trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: '"+self.colors[i]+"', size:8}, line: {color: '"+self.colors[i]+"', width:2},\n"
+            trace += "hovertemplate: 'Prediction: %" + r"{y:.2f}" + "',\n"
+            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
             trace += '};'
 
             traces += trace +'\n'
@@ -526,9 +661,11 @@ class ContrastConstancyColorTest(SyntheticTest):
             y += str(el)
         y += "]"
 
-        axes_info = "xaxis: {tickvals: [1, 2, 3], ticktext: " + x + ", title:'" + x_condition_name + "'}, yaxis: {type:'log', range:[" + str(
-            log10(np.min(predictions))) + "," + str(log10(
-            np.max(predictions))) + "], tickvals: " + y + ", ticktext: " + y + ", title:'" + y_condition_name + "'}"
+        axes_info = ("xaxis: {tickvals: [1, 2, 3], ticktext: " + x + ", title:'" + x_condition_name +
+                     "'}, yaxis: {" )
+        if not reverse_color_order:
+            axes_info += "autorange: 'reversed', "
+        axes_info += "title:'" + y_condition_name + "'}"
         edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
         margin_info = r"margin: {l:50, r:40, t:50, b:40}"
 

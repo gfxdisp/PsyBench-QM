@@ -152,7 +152,8 @@ class ContrastMakingTest(SyntheticTest):
 
         return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
 
-    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None):
+    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None, axis=None, is_first_column=False):
+
 
         conditions = self.get_rows_conditions()
         condition_names = self.get_row_header()
@@ -170,56 +171,70 @@ class ContrastMakingTest(SyntheticTest):
         if reverse_color_order:
             cmap = 'viridis_r'
 
-        fig = plt.figure(figsize=(5, 4))
-        contour = plt.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
+        if axis is None:
+            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
 
-        #plt.clabel(contour, inline=True, fontsize=8)
-
-        colorbar = fig.colorbar(contour)
-        if reverse_color_order:
-            colorbar.ax.invert_yaxis()
-
-        plt.grid(alpha=0.4, axis='x')
-
-        scales, units = self.units()
-
-        plt.xscale(scales[1])
-        plt.yscale(scales[0])
-
-        if units[1]:
-            plt.xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
-        else:
-            plt.xlabel(x_condition_name, fontsize=12)
-
-        if units[0]:
-            plt.ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
-        else:
-            plt.ylabel(y_condition_name, fontsize=12)
-
-        formatted_xticks = [f'{tick:.2g}' for tick in np.unique(x_condition)[::3]]
-        formatted_yticks = [f'{tick:.2g}' for tick in np.unique(y_condition)[::3]]
-
-        plt.xticks(np.unique(x_condition)[::3], formatted_xticks, fontsize=10)
-        plt.yticks(np.unique(y_condition)[::3], formatted_yticks, fontsize=10)
+        contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
 
         # Plot the csf results
 
         x_gt, y_gt = self.get_contrast_masking_results()
 
-        plt.plot(x_gt, y_gt, marker='o', color='red', linewidth=1, markerfacecolor='none', markeredgecolor='red')
+        axis.plot(x_gt, y_gt, color='red', linewidth=2, marker='o', mfc='none')
 
-        plt.xlim([np.min(x_condition), np.max(x_condition)])
-        plt.ylim([np.min(y_condition), np.max(y_condition)])
+        #Figure parameters
+
+        colorbar = plt.colorbar(contour, ax=axis)
+        if reverse_color_order:
+            colorbar.ax.invert_yaxis()
+
+        axis.grid(alpha=0.4, axis='x')
+
+        scales, units = self.units()
+
+        if units[1]:
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+        else:
+            axis.set_xlabel(x_condition_name, fontsize=12)
+
+        if is_first_column:
+            if units[0]:
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+            else:
+                axis.set_ylabel(y_condition_name, fontsize=12)
+
+            label = ' '.join(self.latex_name().split(' - ')[:2])
+            label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
+
+            axis.text(-0.35, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+        
+        axis.set_xscale(scales[1])
+        axis.set_yscale(scales[0])
+        
+        x_ticks, y_ticks = self.get_ticks()
+
+        formatted_xticks = [f'{tick:g}' for tick in x_ticks]
+
+        axis.set_xticks(x_ticks, formatted_xticks, fontsize=10)
+        if is_first_column:
+            axis.set_yticks(y_ticks, y_ticks, fontsize=10)
+        else:
+            axis.set_yticks([])
+
+        axis.set_xlim([np.min(x_condition), np.max(x_condition)])
+        axis.set_ylim([np.min(y_condition), np.max(y_condition)])
 
         if title is not None:
-            plt.title(title, fontsize=14)
+            axis.set_title(title, fontsize=14)
 
-        plt.tight_layout()
+        if axis is None:
+            plt.tight_layout()
 
         if output_filename is not None:
             fig.savefig(output_filename)
-
-        plt.close(fig)
+        
+        if axis is None:
+            plt.close(fig)
     
     def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
         # The code will return the JS script that should work with plotly

@@ -4,20 +4,22 @@
     <div class="menu-item" onclick="toggleMenu('contrast_detection')">Contrast Detection</div>
     <div id="contrast_detection" class="sub-menu">
 
-        <div class="sub-menu-item" onclick="toggleMenu('achromatic_contrast_detection')">Achromatic Stimuli</div>
-            <div id="achromatic_contrast_detection" class="sub-menu">
-                <a href="contrast_detection_spatial_frequency_achromatic_gabor_patch.html"><div class="sub-menu-item">Spatial Frequency - Gabor Patch</div></a>
-                <a href="contrast_detection_spatial_frequency_achromatic_band_limited_noise.html"><div class="sub-menu-item">Spatial Frequency - Band Limited Noise</div></a>
-                <a href="contrast_detection_stimuli_size_achromatic_gabor_patch.html"><div class="sub-menu-item">Stimuli Size</div></a>
+        <div class="sub-menu-item" onclick="toggleMenu('contrast_detection_spatial_frequency')">Spatial Frequency</div>
+            <div id="contrast_detection_spatial_frequency" class="sub-menu">
+                <a href="contrast_detection_spatial_frequency_achromatic_gabor_patch.html"><div class="sub-menu-item">Achromatic Gabor</div></a>
+                <a href="contrast_detection_spatial_frequency_red_green_gabor_patch.html"><div class="sub-menu-item">RG Gabor</div></a>
+                <a href="contrast_detection_spatial_frequency_yellow_violet_gabor_patch.html"><div class="sub-menu-item">YV Gabor</div></a>
+                <a href="contrast_detection_spatial_frequency_achromatic_transient_gabor_patch.html"><div class="sub-menu-item">Transient Gabor</div></a>
+
+                <a href="contrast_detection_spatial_frequency_achromatic_band_limited_noise.html"><div class="sub-menu-item">Achromatic Noise</div></a>
+                <a href="contrast_detection_spatial_frequency_red_green_band_limited_noise.html"><div class="sub-menu-item">RG Noise</div></a>
+                <a href="contrast_detection_spatial_frequency_yellow_violet_band_limited_noise.html"><div class="sub-menu-item">YV Noise</div></a>
             </div>
 
-        <div class="sub-menu-item" onclick="toggleMenu('chromatic_contrast_detection')">Chromatic Stimuli</div>
-            <div id="chromatic_contrast_detection" class="sub-menu">
-                <a href="contrast_detection_spatial_frequency_red_green_gabor_patch.html"><div class="sub-menu-item">Spatial Frequency - Red-Green Gabor Patch</div></a>
-                <a href="contrast_detection_spatial_frequency_yellow_violet_gabor_patch.html"><div class="sub-menu-item">Spatial Frequency - Yellow-Violet Gabor Patch</div></a>
-                <a href="contrast_detection_spatial_frequency_red_green_band_limited_noise.html"><div class="sub-menu-item">Spatial Frequency - Red-Green Band Limited Noise</div></a>
-                <a href="contrast_detection_spatial_frequency_yellow_violet_band_limited_noise.html"><div class="sub-menu-item">Spatial Frequency - Yellow-Violet Band Limited Noise</div></a>
-            </div>
+        <a href="luminance_masking.html"><div class="sub-menu-item">Luminance</div></a>
+        <a href="contrast_detection_stimuli_size_achromatic_gabor_patch.html"><div class="sub-menu-item">Stimulus Area</div></a>
+
+
 
     </div>
 
@@ -27,13 +29,14 @@
         <a href="contrast_masking_phase_incoherent_masking.html"><div class="sub-menu-item">Phase Incoherent Masking</div></a>
     </div>
 
-    <div class="menu-item" onclick="toggleMenu('luminance_masking')">Luminance Masking</div>
-    <div id="luminance_masking" class="sub-menu">
-        <a href="luminance_masking.html"><div class="sub-menu-item">No Encoding</div></a>
-        <a href="luminance_masking_pu21_encoding.html"><div class="sub-menu-item">PU21 Encoding</div></a>
-        <a href="luminance_masking_pq_encoding.html"><div class="sub-menu-item">PQ Encoding</div></a>
-        <a href="luminance_masking_hlg_encoding.html"><div class="sub-menu-item">HLG Encoding</div></a>
+    <a href="contrast_detection_temporal_frequency_achromatic_disk.html"><div class="sub-menu-item">Flicker Detection</div></a>
+
+    <div class="menu-item" onclick="toggleMenu('contrast_matching')">Contrast Matching</div>
+    <div id="contrast_matching" class="sub-menu">
+        <a href="contrast_matching_across_spatial_frequencies.html"><div class="sub-menu-item">Spatial Frequencies</div></a>
+        <a href="contrast_matching_across_cardinal_color_directions.html"><div class="sub-menu-item">Color Directions</div></a>
     </div>
+
 
     <!-- <a href="contrast_constancy_contrast_matching.html"><div class="menu-item" onclick="toggleMenu('menu3')">Contrast Constancy - Contrast Matching</div></a> -->
 </div>

@@ -24,7 +24,7 @@ if __name__ == '__main__':
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
              ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
-    metrics = [cvvdp_met, fvvdp_met, funque_met, vmaf_met, ldr_flip_metric, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric]
+    metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, strred_metric, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
@@ -181,7 +181,10 @@ if __name__ == '__main__':
                 predictions = metric_predictions_df['Prediction'].to_numpy()
                 try:
                     alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
-                    title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
+                    if test_name.split(' - ')[0] == 'Contrast Matching':
+                        title = metric_name + ' Metric<br>RMSE = ' + str(round(np.abs(alignment_score), 3))
+                    else:
+                        title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
                 except:
                     title = metric_name + ' Metric'
 

@@ -26,6 +26,10 @@ try:
     from metrics.pyiqa_metrics.wadiqam_metric import wadiqam_metric
     from metrics.pyiqa_metrics.lpips_vgg_metric import lpips_vgg_metric
     from metrics.pyiqa_metrics.lpips_alex_metric import lpips_metric
+    from metrics.pyiqa_metrics.stlpips_vgg_metric import stlpips_vgg_metric
+    from metrics.pyiqa_metrics.stlpips_alex_metric import stlpips_metric
+    from metrics.pyiqa_metrics.msswd_metric import msswd_metric
+    from metrics.pyiqa_metrics.deepdc_metric import deepdc_metric
 except ImportError as e:
     logging.warning( "Failed to import PYIQA metrics. Run `pip install pyiqa`.")
 
@@ -51,3 +55,12 @@ try:
     from metrics.fvvdp_metric import fvvdp_met
 except ImportError as e:
     logging.warning( "Failed to import pyfvvdp. Ensure that you have the full installation of FovVideoVDP.")
+
+from metrics.de2000 import de2000
+from metrics.dolby_ictcp import ictcp
+from metrics.hyab import hyab
+
+from metrics.matlab_metrics.hdr_vdp_3 import hdrvdp3_metric
+from metrics.matlab_metrics.scielab import scielab_metric
+from metrics.matlab_metrics.strred import strred_metric
+from metrics.matlab_metrics.speedqa import speedqa_metric

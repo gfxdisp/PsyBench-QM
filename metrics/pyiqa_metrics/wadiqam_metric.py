@@ -50,4 +50,4 @@ class wadiqam_metric(vq_metric):
 
     @staticmethod
     def predictions_range():
-        return -1, 1
+        return -1, 0.1

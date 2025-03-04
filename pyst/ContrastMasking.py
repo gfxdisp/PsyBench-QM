@@ -152,7 +152,7 @@ class ContrastMakingTest(SyntheticTest):
 
         return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
 
-    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None, axis=None, is_first_column=False):
+    def plot(self, predictions, reverse_color_order=False, output_filename=None, title=None, axis=None, is_first_column=False, fontsize=12):
 
 
         conditions = self.get_rows_conditions()
@@ -172,7 +172,7 @@ class ContrastMakingTest(SyntheticTest):
             cmap = 'viridis_r'
 
         if axis is None:
-            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
+            fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
         contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
 
@@ -180,7 +180,7 @@ class ContrastMakingTest(SyntheticTest):
 
         x_gt, y_gt = self.get_contrast_masking_results()
 
-        axis.plot(x_gt, y_gt, color='red', linewidth=2, marker='o', mfc='none')
+        axis.plot(x_gt, y_gt, color='red', linewidth=2, marker='o', mfc='none', label='Ground-truth')
 
         #Figure parameters
 
@@ -193,20 +193,21 @@ class ContrastMakingTest(SyntheticTest):
         scales, units = self.units()
 
         if units[1]:
-            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=fontsize)
         else:
-            axis.set_xlabel(x_condition_name, fontsize=12)
+            axis.set_xlabel(x_condition_name, fontsize=fontsize)
 
         if is_first_column:
             if units[0]:
-                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=fontsize)
             else:
-                axis.set_ylabel(y_condition_name, fontsize=12)
+                axis.set_ylabel(y_condition_name, fontsize=fontsize)
 
             label = ' '.join(self.latex_name().split(' - ')[:2])
             label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
 
-            axis.text(-0.35, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+            if output_filename is None:
+                axis.text(-0.35, 0.5, label, fontsize=fontsize+2, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
         
         axis.set_xscale(scales[1])
         axis.set_yscale(scales[0])
@@ -215,23 +216,22 @@ class ContrastMakingTest(SyntheticTest):
 
         formatted_xticks = [f'{tick:g}' for tick in x_ticks]
 
-        axis.set_xticks(x_ticks, formatted_xticks, fontsize=10)
+        axis.set_xticks(x_ticks, formatted_xticks, fontsize=fontsize-2)
         if is_first_column:
-            axis.set_yticks(y_ticks, y_ticks, fontsize=10)
+            axis.set_yticks(y_ticks, y_ticks, fontsize=fontsize-2)
         else:
             axis.set_yticks([])
 
         axis.set_xlim([np.min(x_condition), np.max(x_condition)])
         axis.set_ylim([np.min(y_condition), np.max(y_condition)])
 
-        if title is not None:
-            axis.set_title(title, fontsize=14)
+        axis.legend(loc=4, fontsize=fontsize-2)
 
-        if axis is None:
-            plt.tight_layout()
+        if title is not None:
+            axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
-            fig.savefig(output_filename)
+            fig.savefig(output_filename, dpi=200, bbox_inches='tight')
         
         if axis is None:
             plt.close(fig)
@@ -382,7 +382,7 @@ class ContrastMakingTest(SyntheticTest):
 
 class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
-    def __init__(self, width=512, height=400, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
+    def __init__(self, width=420, height=300, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -396,7 +396,7 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
         masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_masker_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=150, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([512, 400], diagonal_size_inches=9.9, ppd=73)
+        gm = vvdp_display_geometry([420, 300], diagonal_size_inches=9.6, ppd=60)
 
         super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, 
                          spatial_frequencies=2, bkg_luminances=32, test_sizes=0.5, phase_masking=phase_masking, is_alignmenet_score=is_alignmenet_score, device=device)
@@ -440,7 +440,7 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
 
 class ContrastMakingIncoherentAchTest(ContrastMakingTest):
 
-    def __init__(self, width=256, height=256, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
+    def __init__(self, width=300, height=300, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
         
         test_channel = 'Ach'
         masker_channel = 'Ach'
@@ -454,7 +454,7 @@ class ContrastMakingIncoherentAchTest(ContrastMakingTest):
         masker_contrasts = torch.logspace(np.log10(0.005), np.log10(0.5), N_masker_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=173, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([256, 256], diagonal_size_inches=7.8, ppd=51)
+        gm = vvdp_display_geometry([300, 300], diagonal_size_inches=7.8, ppd=60)
 
         super().__init__(width, height, test_channel, masker_channel, dm, gm, frames, fps, test_contrasts, masker_contrasts, 
                          spatial_frequencies=1.2, bkg_luminances=37, test_sizes=0.8, phase_masking=phase_masking, is_alignmenet_score=is_alignmenet_score, device=device)

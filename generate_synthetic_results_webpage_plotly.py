@@ -24,12 +24,14 @@ if __name__ == '__main__':
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
              ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
-    metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, strred_metric, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
+    metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
+
+    tests = [ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,]
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
 
-    generate_stimuli = False
+    generate_stimuli = True
     generate_metrics_results = True
 
 

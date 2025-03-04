@@ -21,7 +21,13 @@ tests = [[GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchS
 
 higher_better_scale = [[True, True, True, True, True, True], [True, True], [True], [False, False] ]
 
-metrics = [None, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric, msswd_metric, ldr_flip_metric, de2000, hyab, ictcp, scielab_metric, hdrvdp3_metric, strred_metric, vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met]
+metrics = [[None], [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric], [fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric], [de2000, hyab, ictcp, msswd_metric], [wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric], [scielab_metric, ldr_flip_metric, hdrvdp3_metric], [vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met]]
+citations = [[None], [None, 'wang2004image', 'wang2003multiscale', 'xue2013gradient', 'zhang2017gradient', 'sheikh2006image' ,'balanov2015image', None, 'laparra2016perceptual'],
+             ['zhang2011fsim', 'zhang2014vsi', 'nafchi2016mean', 'reisenhofer2018haar'],
+             ['CIE_2018', 'abasi2020distance', 'ITU-R_2124', 'he2024ms-swd'],
+             ['bosse2017deep', 'zhang2018perceptual', 'zhang2018perceptual', 'ghildyal2022shift', 'ding2020image', 'lao2022attentions', 'chen2024topiq', 'zhu2023DeepDC'],
+             ['zhang1996spatial', 'andersson2020flip', 'mantiuk2023hdr'],
+             ['li2018vmaf', 'bampis2017speed', 'venkataramanan2022funque', 'mantiuk2021fovvideovdp', 'cvvdp']]
 
 # Centering
 for i in range(len(tests_cat)):
@@ -57,63 +63,71 @@ for cline in clines:
     latex_text += ' \cline{'+str(cline[0]+1)+'-'+str(cline[1])+'}'
 
 # Results
-for metric in metrics:
-    if metric is not None:
-        latex_text += ' \\\ \n\hline\n'
-        metric_name = metric.name()
-        if metric_name == 'VMAF_v0.6.1':
-            latex_text += 'VMAF v0.6.1'
-        else:
-            latex_text += metric_name
-
-    for i in range(len(tests_cat)):
-        for test, scale in zip(tests[i], higher_better_scale[i]):
-            T = test()
-            test_name = r'\\'.join(T.latex_name().split(' - ')[2:])
-            #test_name = T.latex_name().replace(' - ', r'\\')
-            if metric is None:
-                if len(tests[i]) > 1:
-                    latex_text += ' & \multicolumn{1}{c|}{\\begin{tabular}[c]{@{}c@{}} '+test_name+ '\end{tabular}}'
-                else:
-                    latex_text += ' & '
+for cat_metric, cat_citation in zip(metrics, citations):
+    for index, (metric, citation) in enumerate(zip(cat_metric, cat_citation)):
+        if metric is not None:
+            if index == 0:
+                latex_text += ' \\\ \n\hline \hline\n'
             else:
-                scores_folder = os.path.join('alignment_scores', T.get_preview_folder()+'.csv')
-                try:
-                    df = pd.read_csv(scores_folder)
-                    df.fillna(0, inplace=True)
-                    scores = np.abs(df['Score'].to_numpy())
-                    """ Get the different quantiles """
-                    score = np.abs(df[df['Metric'] == metric_name]['Score'].to_numpy()[0])
+                latex_text += ' \\\ \n\hline\n'
+            metric_name = metric.name()
+            if metric_name == 'VMAF_v0.6.1':
+                latex_text += 'VMAF v0.6.1'
+            else:
+                latex_text += metric_name
+            if citation is not None:
+                latex_text += r' \cite{'+citation+'}'
 
-                    if scale:
-                        if score >= np.quantile(scores, 0.75):
-                            bck_color = 'cbe1cd'
-                        elif score >= np.quantile(scores, 0.5):
-                            bck_color = 'fff8d6'
-                        elif score >= np.quantile(scores, 0.25):
-                            bck_color = 'ffd8b8'
-                        else:
-                            bck_color = 'fdddd8'
-
+        for i in range(len(tests_cat)):
+            for test, scale in zip(tests[i], higher_better_scale[i]):
+                T = test()
+                if len(T.latex_name().split(' - ')[-1].split(' ')) == 3:
+                    test_name = ' '.join(T.latex_name().split(' - ')[-1].split(' ')[:2]) + r'\\' + T.latex_name().split(' - ')[-1].split(' ')[-1]
+                else:
+                    test_name = r'\\'.join(T.latex_name().split(' - ')[2:])
+                #test_name = T.latex_name().replace(' - ', r'\\')
+                if metric is None:
+                    if len(tests[i]) > 1:
+                        latex_text += ' & \multicolumn{1}{c|}{\\begin{tabular}[c]{@{}c@{}} '+test_name+ '\end{tabular}}'
                     else:
-                        if score <= np.quantile(scores, 0.25):
-                            bck_color = 'cbe1cd'
-                        elif score <= np.quantile(scores, 0.5):
-                            bck_color = 'fff8d6'
-                        elif score <= np.quantile(scores, 0.75):
-                            bck_color = 'ffd8b8'
+                        latex_text += ' & '
+                else:
+                    scores_folder = os.path.join('alignment_scores', T.get_preview_folder()+'.csv')
+                    try:
+                        df = pd.read_csv(scores_folder)
+                        df.fillna(0, inplace=True)
+                        scores = np.abs(df['Score'].to_numpy())
+                        """ Get the different quantiles """
+                        score = np.abs(df[df['Metric'] == metric_name]['Score'].to_numpy()[0])
+
+                        if scale:
+                            if score >= np.quantile(scores, 0.75):
+                                bck_color = 'cbe1cd'
+                            elif score >= np.quantile(scores, 0.5):
+                                bck_color = 'fff8d6'
+                            elif score >= np.quantile(scores, 0.25):
+                                bck_color = 'ffd8b8'
+                            else:
+                                bck_color = 'fdddd8'
+
                         else:
-                            bck_color = 'fdddd8'
+                            if score <= np.quantile(scores, 0.25):
+                                bck_color = 'cbe1cd'
+                            elif score <= np.quantile(scores, 0.5):
+                                bck_color = 'fff8d6'
+                            elif score <= np.quantile(scores, 0.75):
+                                bck_color = 'ffd8b8'
+                            else:
+                                bck_color = 'fdddd8'
 
-                    latex_text += ' & \multicolumn{1}{c|}{\cellcolor[HTML]{'+bck_color+'} '+ str(np.round(score, 3))
-                    if score == 0:
-                        latex_text += ' (*)'
+                        latex_text += ' & \multicolumn{1}{c|}{\cellcolor[HTML]{'+bck_color+'} '+ str(np.round(score, 3))
+                        if score == 0:
+                            latex_text += ' (*)'
 
-                except:
-                    latex_text += ' & \multicolumn{1}{c|}{\cellcolor[HTML]{f1f1f1} -'
+                    except:
+                        latex_text += ' & \multicolumn{1}{c|}{\cellcolor[HTML]{f1f1f1} -'
 
-                latex_text += '}'
-
+                    latex_text += '}'
 
 
 latex_text += '\\\ \n\hline\n'

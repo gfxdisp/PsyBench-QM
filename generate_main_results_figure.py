@@ -14,13 +14,13 @@ tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchLu
 
 # We will have to define different metrics for different tests
 metrics =[[psnry_metric, ssim_metric, dists_metric, ldr_flip_metric, cvvdp_met],
-          [fsim_metric, lpips_metric, dists_metric, ldr_flip_metric, cvvdp_met],
-          [psnry_metric, funque_met, lpips_metric, ldr_flip_metric, hdrvdp3_metric],
-          [psnry_metric, mad_metric, lpips_metric, topiq_metric, cvvdp_met],
-          [psnry_metric, vmaf_met, lpips_metric, fvvdp_met, cvvdp_met],
-          [psnry_metric, lpips_vgg_metric, dists_metric, hdrvdp3_metric, cvvdp_met],
+          [fsim_metric, lpips_metric, msswd_metric, ldr_flip_metric, cvvdp_met],
+          [psnry_metric, funque_met, lpips_metric, ictcp, hdrvdp3_metric],
+          [psnry_metric, ssim_metric, lpips_metric, dss_metric, cvvdp_met],
+          [psnry_metric, ssim_metric, funque_met, lpips_metric, fvvdp_met],
+          [psnry_metric, funque_met, dists_metric, lpips_metric, fvvdp_met],
           [vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met],
-          [psnry_metric, dss_metric, dists_metric, ldr_flip_metric, cvvdp_met],
+          [psnry_metric, dss_metric, funque_met, lpips_metric, cvvdp_met],
           [fsim_metric, de2000, dists_metric, ldr_flip_metric, cvvdp_met]]
 
 
@@ -53,24 +53,24 @@ for i, test in enumerate(tests):
         try:
             alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
             if test_name.split(' - ')[0] == 'Contrast Matching':
-                title = metric_name + ' Metric\nRMSE = ' + str(round(np.abs(alignment_score), 3))
+                title = metric_name + ' [RMSE=' + str(round(np.abs(alignment_score), 3)) +']'
             else:
-                title = metric_name + ' Metric\nAlignment Score = '+str(round(np.abs(alignment_score), 3))
+                title = metric_name + ' [AS='+str(round(np.abs(alignment_score), 3)) +']'
         except:
             title = metric_name + ' Metric'
 
         # call the plot function and save it for now
-        T.plot(predictions, reverse_color_order=metric.is_lower_better(), title=title, axis=axes[i, j], is_first_column=j==0)
+        T.plot(predictions, reverse_color_order=metric.is_lower_better(), title=title, axis=axes[i, j], is_first_column=j==0, fontsize=14)
     
     #axes[i, 0].set_ylabel('Test1', fontsize=16, fontweight='bold', labelpad=30)
     if test_name.split(' - ')[0] == 'Contrast Matching':
-        axes[i, 0].text(-0.38, 0.5, f"({chr(97 + i)})", fontweight='bold', fontsize=15, rotation=90, ha='center', va='center', transform=axes[i, 0].transAxes)
+        axes[i, 0].text(-0.38, 0.5, f"({chr(97 + i)})", fontweight='bold', fontsize=16, rotation=90, ha='center', va='center', transform=axes[i, 0].transAxes)
     else:
-        axes[i, 0].text(-0.48, 0.5, f"({chr(97 + i)})", fontweight='bold', fontsize=15, rotation=90, ha='center', va='center', transform=axes[i, 0].transAxes)
+        axes[i, 0].text(-0.48, 0.5, f"({chr(97 + i)})", fontweight='bold', fontsize=16, rotation=90, ha='center', va='center', transform=axes[i, 0].transAxes)
 
 
 # Save figure    
-filename = os.path.join(output_path, 'test.pdf')
+filename = os.path.join(output_path, 'metrics_results_main_fig.pdf')
 
 plt.subplots_adjust(left=0)
 plt.tight_layout()

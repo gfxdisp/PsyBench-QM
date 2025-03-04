@@ -179,7 +179,7 @@ class ContrastDetectionTest(SyntheticTest):
         return video_source.video_source_array(test_condition, reference_condition, self.fps, dim_order="BCFHW", display_photometry=self.display_photometry)
 
 
-    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False):
+    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=18):
 
         conditions = self.get_rows_conditions()
         condition_names = self.get_row_header()
@@ -198,7 +198,7 @@ class ContrastDetectionTest(SyntheticTest):
             cmap = 'viridis_r'
 
         if axis is None:
-            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
+            fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
         contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
 
@@ -206,7 +206,12 @@ class ContrastDetectionTest(SyntheticTest):
 
         x_csf, y_csf = self.get_csf_results()
 
-        axis.plot(x_csf, y_csf, color='red', linewidth=2)
+        if self.short_name().split(' - ')[0] == 'Flicker Detection':
+            label = 'elaTCSF'
+        else:
+            label = 'castleCSF'
+
+        axis.plot(x_csf, y_csf, color='red', linewidth=2, label=label)
 
         #Figure parameters
 
@@ -219,15 +224,15 @@ class ContrastDetectionTest(SyntheticTest):
         scales, units = self.units()
 
         if units[1]:
-            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=fontsize)
         else:
-            axis.set_xlabel(x_condition_name, fontsize=12)
+            axis.set_xlabel(x_condition_name, fontsize=fontsize)
 
         if is_first_column:
             if units[0]:
-                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=fontsize)
             else:
-                axis.set_ylabel(y_condition_name, fontsize=12)
+                axis.set_ylabel(y_condition_name, fontsize=fontsize)
 
             label = ' '.join(self.latex_name().split(' - ')[:2])
             label += '\n' + '\n'.join(self.latex_name().split(' - ')[2:])
@@ -235,7 +240,8 @@ class ContrastDetectionTest(SyntheticTest):
             if label == 'Flicker Detection\n':
                 label = 'Flicker\nDetection'
 
-            axis.text(-0.35, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+            if output_filename is None:
+                axis.text(-0.35, 0.5, label, fontsize=fontsize+2, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
         
         axis.set_xscale(scales[1])
         axis.set_yscale(scales[0])
@@ -245,23 +251,22 @@ class ContrastDetectionTest(SyntheticTest):
 
         formatted_xticks = [f'{tick:g}' for tick in x_ticks]
 
-        axis.set_xticks(x_ticks, formatted_xticks, fontsize=10)
+        axis.set_xticks(x_ticks, formatted_xticks, fontsize=fontsize-2)
         if is_first_column:
-            axis.set_yticks(y_ticks, y_ticks, fontsize=10)
+            axis.set_yticks(y_ticks, y_ticks, fontsize=fontsize-2)
         else:
             axis.set_yticks([])
 
         axis.set_xlim([np.min(x_condition), np.max(x_condition)])
         axis.set_ylim([np.min(y_condition), np.max(y_condition)])
 
-        if title is not None:
-            axis.set_title(title, fontsize=14)
+        axis.legend(loc=4, fontsize=fontsize-2)
 
-        if axis is None:
-            plt.tight_layout()
+        if title is not None:
+            axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
-            fig.savefig(output_filename)
+            fig.savefig(output_filename, dpi=200, bbox_inches='tight')
         
         if axis is None:
             plt.close(fig)
@@ -931,7 +936,7 @@ class DiskTemporalFreqAchTest(ContrastDetectionTest):
         return ['log', 'linear'], [None, 'Hz']
 
     def short_name(self):
-        return 'Contrast Detection - Temporal Frequency - Achromatic Disk'
+        return 'Flicker Detection - Achromatic Disk'
     
     def latex_name(self):
         return 'Flicker - Detection'

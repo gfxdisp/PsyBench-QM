@@ -10,6 +10,7 @@ from pycvvdp import video_source
 from pycvvdp.display_model import vvdp_display_photo_eotf, vvdp_display_geometry
 import json
 from scipy.optimize import minimize, root_scalar, minimize_scalar
+from matplotlib.lines import Line2D
 
 
 class ContrastConstancySpatialFreqAchTest(SyntheticTest):
@@ -186,8 +187,11 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
             res = root_scalar(self.optimization_fct, x0=ref_contrast.item(), args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse, metric_max), bracket=[0.001, 1])
             test_contrast = res.root
         except:
-            res = minimize_scalar(self.optimization_fct_squared, args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse, metric_max), bounds=[0.001, 1])
-            test_contrast = res.x
+            try:
+                res = minimize_scalar(self.optimization_fct_squared, args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse, metric_max), bounds=[0.001, 1])
+                test_contrast = res.x
+            except:
+                test_contrast = np.nan
 
         return test_contrast
 
@@ -227,7 +231,7 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         return ref_contrasts, spatial_frequencies, gt_contrasts
     
 
-    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False):
+    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):
 
         conditions = self.get_rows_conditions()
         condition_names = self.get_row_header()
@@ -244,7 +248,7 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         gt_contrasts = np.array(gt_contrasts)
 
         if axis is None:
-            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
+            fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
         # Plot the results
         for i in range(len(predictions)):
@@ -258,20 +262,21 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         scales, units = self.units()
 
         if units[1]:
-            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=fontsize)
         else:
-            axis.set_xlabel(x_condition_name, fontsize=12)
+            axis.set_xlabel(x_condition_name, fontsize=fontsize)
 
         if is_first_column:
             if units[0]:
-                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=fontsize)
             else:
-                axis.set_ylabel(y_condition_name, fontsize=12)
+                axis.set_ylabel(y_condition_name, fontsize=fontsize)
 
             label = ' '.join(self.latex_name().split(' - ')[:2])
             label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
 
-            axis.text(-0.28, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+            if output_filename is None:
+                axis.text(-0.28, 0.5, label, fontsize=fontsize+2, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
         
         axis.set_xscale(scales[1])
         axis.set_yscale(scales[0])
@@ -280,24 +285,28 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
 
         formatted_xticks = [f'{tick:g}' for tick in x_ticks]
 
-        axis.set_xticks(x_ticks, formatted_xticks, fontsize=10)
+        axis.set_xticks(x_ticks, formatted_xticks, fontsize=fontsize-2)
 
         if is_first_column:
-            axis.set_yticks(y_ticks, y_ticks, fontsize=10)
+            axis.set_yticks(y_ticks, y_ticks, fontsize=fontsize-2)
         else:
             axis.set_yticks([])
 
         axis.set_xlim([np.min(x_ticks), np.max(x_ticks)])
         axis.set_ylim([np.min(y_ticks), np.max(y_ticks)])
 
-        if title is not None:
-            axis.set_title(title, fontsize=14)
+        custom_legend = [
+            Line2D([0], [0], linestyle='-', marker='x', color='black', label='Metric Prediction'),
+            Line2D([0], [0], linestyle='--', marker='o', color='black', label='Ground-truth')
+        ]
 
-        if axis is None:
-            plt.tight_layout()
+        axis.legend(handles=custom_legend, loc=4, fontsize=fontsize-2)
+
+        if title is not None:
+            axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
-            fig.savefig(output_filename)
+            fig.savefig(output_filename, dpi=200, bbox_inches='tight')
         
         if axis is None:
             plt.close(fig)
@@ -522,7 +531,7 @@ class ContrastConstancyColorTest(SyntheticTest):
         return ['log', 'lin'], [None, None]
 
 
-    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False):
+    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):
 
 
         y_condition_name = 'Metric Prediction'
@@ -531,7 +540,7 @@ class ContrastConstancyColorTest(SyntheticTest):
         predictions = predictions.reshape(self.size())
 
         if axis is None:
-            fig, axis = plt.subplots(1, 1, figsize=(5, 4))
+            fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
         # Plot the results
         for i in range(len(predictions)):
@@ -543,20 +552,21 @@ class ContrastConstancyColorTest(SyntheticTest):
         scales, units = self.units()
 
         if units[1]:
-            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=12)
+            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=fontsize)
         else:
-            axis.set_xlabel(x_condition_name, fontsize=12)
+            axis.set_xlabel(x_condition_name, fontsize=fontsize)
 
         if is_first_column:
             if units[0]:
-                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=12)
+                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=fontsize)
             else:
-                axis.set_ylabel(y_condition_name, fontsize=12)
+                axis.set_ylabel(y_condition_name, fontsize=fontsize)
 
             label = ' '.join(self.latex_name().split(' - ')[:2])
             label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
 
-            axis.text(-0.28, 0.5, label, fontsize=15, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+            if output_filename is None:
+                axis.text(-0.28, 0.5, label, fontsize=fontsize+2, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
         
         #axis.set_xscale(scales[1])
         #axis.set_yscale(scales[0])
@@ -565,7 +575,9 @@ class ContrastConstancyColorTest(SyntheticTest):
 
         formatted_yticks = [f'{tick:g}' for tick in y_ticks]
 
-        axis.set_xticks([1, 2, 3], x_ticks, fontsize=10)
+        axis.set_xticks([1, 2, 3], x_ticks, fontsize=fontsize-2)
+        axis.tick_params(axis='y', which='major', labelsize=fontsize-2)
+
         #axis.set_yticks(y_ticks, formatted_yticks, fontsize=10)
 
         #axis.set_xlim([np.min(x_ticks), np.max(x_ticks)])
@@ -575,13 +587,10 @@ class ContrastConstancyColorTest(SyntheticTest):
             axis.invert_yaxis()
 
         if title is not None:
-            axis.set_title(title, fontsize=14)
-
-        if axis is None:
-            plt.tight_layout()
+            axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
-            fig.savefig(output_filename)
+            fig.savefig(output_filename, dpi=200, bbox_inches='tight')
         
         if axis is None:
             plt.close(fig)
@@ -680,4 +689,4 @@ class ContrastConstancyColorTest(SyntheticTest):
         return 'Contrast Matching - Across Cardinal Color Directions'
     
     def latex_name(self):
-        return 'Contrast - Matching - Color - Directions'
+        return 'Contrast - Matching - Color - Direction'

@@ -36,8 +36,8 @@ class dss_metric(vq_metric):
             R = vid_source.get_reference_frame(ff, device=self.device, colorspace=self.color_space).squeeze(2).clamp(min=0, max=1)
 
             """ The metric excepts a gray image """
-            T = RGB2Y(T, self.display_photometry)
-            R = RGB2Y(R, self.display_photometry)
+            T = RGB2Y(T, self.display_photometry).clamp(min=0, max=1)
+            R = RGB2Y(R, self.display_photometry).clamp(min=0, max=1)
 
             score += dss(T, R, data_range=1.) / N_frames
 

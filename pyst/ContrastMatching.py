@@ -34,7 +34,7 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
 
         self.bkg_luminance = 10
         self.display_photometry = vvdp_display_photo_eotf(Y_peak=46.72, contrast=1000, source_colorspace='sRGB')
-        self.display_geometry = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=60)
+        self.display_geometry = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=50)
 
         self.ref_spatial_freq = 5
         self.ppd = self.display_geometry.get_ppd()
@@ -118,8 +118,8 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         test_video_source = self.generate_grating(torch.tensor(test_contrast, device=self.device), s_freq)
         with torch.no_grad():
             test_score, _ = metric_fct.predict_video_source(test_video_source)
-        if reverse:
-            test_score = metric_max - test_score
+        # if reverse:
+        #     test_score = metric_max - test_score
 
         test_score_normalized = test_score/test_score_contrast_1   # here to change
 
@@ -131,8 +131,8 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         test_video_source = self.generate_grating(torch.tensor(test_contrast, device=self.device), s_freq)
         with torch.no_grad():
             test_score, _ = metric_fct.predict_video_source(test_video_source)
-        if reverse:
-            test_score = metric_max - test_score
+        # if reverse:
+        #     test_score = metric_max - test_score
 
         test_score_normalized = test_score/test_score_contrast_1   # here to change
 
@@ -144,30 +144,33 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         ref_contrast, s_freq = self.get_test_condition_parameters(index)
         ref_s_freq = self.ref_spatial_freq
 
-        reverse = not metric_fct.is_lower_better()
-        metric_min, metric_max = metric_fct.predictions_range()
+        # reverse = not metric_fct.is_lower_better()
 
         # Generate reference grating
         ref_video_source = self.generate_grating(ref_contrast, ref_s_freq)
         with torch.no_grad():
             ref_score, _ = metric_fct.predict_video_source(ref_video_source)   # change as well
-            if reverse:
-                ref_score = metric_max - ref_score
+            # if reverse:
+            #     ref_score = metric_max - ref_score
+        
+        ref_score_normalized = ref_score
 
-        ref_video_source = self.generate_grating(1, ref_s_freq)
-        with torch.no_grad():
-            ref_score_contrast_1, _ = metric_fct.predict_video_source(ref_video_source)   # change as well
-            if reverse:
-                ref_score_contrast_1 = metric_max - ref_score_contrast_1
+        # ref_video_source = self.generate_grating(1, ref_s_freq)
+        # with torch.no_grad():
+        #     ref_score_contrast_1, _ = metric_fct.predict_video_source(ref_video_source)   # change as well
+        #     if reverse:
+        #         ref_score_contrast_1 = metric_max - ref_score_contrast_1
 
-        ref_score_normalized = ref_score / ref_score_contrast_1
+        # ref_score_normalized = ref_score / ref_score_contrast_1
 
         # Generate test grating
-        test_video_source = self.generate_grating(1, s_freq)
-        with torch.no_grad():
-            test_score_contrast_1, _ = metric_fct.predict_video_source(test_video_source)  # change as well!
-            if reverse:
-                test_score_contrast_1 = metric_max - test_score_contrast_1
+        # test_video_source = self.generate_grating(1, s_freq)
+        # with torch.no_grad():
+        #     test_score_contrast_1, _ = metric_fct.predict_video_source(test_video_source)  # change as well!
+        #     if reverse:
+        #         test_score_contrast_1 = metric_max - test_score_contrast_1
+
+        test_score_contrast_1 = 1.0
 
         # # Visualization
         # differences = []
@@ -184,11 +187,11 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         # test_contrast = res.x
 
         try:
-            res = root_scalar(self.optimization_fct, x0=ref_contrast.item(), args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse, metric_max), bracket=[0.001, 1])
+            res = root_scalar(self.optimization_fct, x0=ref_contrast.item(), args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bracket=[0.001, 1])
             test_contrast = res.root
         except:
             try:
-                res = minimize_scalar(self.optimization_fct_squared, args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse, metric_max), bounds=[0.001, 1])
+                res = minimize_scalar(self.optimization_fct_squared, args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bounds=[0.001, 1])
                 test_contrast = res.x
             except:
                 test_contrast = np.nan

@@ -26,9 +26,6 @@ if __name__ == '__main__':
 
     metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
 
-    tests = [ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
-    tests = [ContrastConstancySpatialFreqAchTest]
-
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
 
@@ -134,7 +131,7 @@ if __name__ == '__main__':
                     ref_filename = os.path.join(*ref_filename)
 
                     hr_test_preview.beg_div(class_tag='cell-content')
-                    hr_test_preview.insert_image(os.path.join('..' ,test_filename), mousedown_image=ref_filename, class_tag="toggle-image")
+                    hr_test_preview.insert_image(os.path.join('..' ,test_filename), mousedown_image=os.path.join('..', ref_filename), class_tag="toggle-image")
                     if test_name != 'Contrast Matching - Across Cardinal Color Directions':
                         hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]:.2g}")
                     else:
@@ -156,7 +153,7 @@ if __name__ == '__main__':
                     ref_filename = os.path.join(*ref_filename)
 
                     hr_test_preview.beg_div(class_tag='cell-content')
-                    hr_test_preview.insert_video(os.path.join('..' ,test_filename), mousedown_video=ref_filename, class_tag="toggle-video")
+                    hr_test_preview.insert_video(os.path.join('..' ,test_filename), mousedown_video=os.path.join('..', ref_filename), class_tag="toggle-video")
                     hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]:.2g}")
                     hr_test_preview.close_div()
                     

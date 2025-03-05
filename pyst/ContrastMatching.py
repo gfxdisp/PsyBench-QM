@@ -115,11 +115,10 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
                                                display_photometry=self.display_photometry)
 
     def optimization_fct(self, test_contrast, s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse=False, metric_max=None):
+        test_contrast = 10**test_contrast
         test_video_source = self.generate_grating(torch.tensor(test_contrast, device=self.device), s_freq)
         with torch.no_grad():
             test_score, _ = metric_fct.predict_video_source(test_video_source)
-        # if reverse:
-        #     test_score = metric_max - test_score
 
         test_score_normalized = test_score/test_score_contrast_1   # here to change
 
@@ -127,22 +126,25 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
 
         return objective.item()
 
-    def optimization_fct_squared(self, test_contrast, s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse=False, metric_max=None):
-        test_video_source = self.generate_grating(torch.tensor(test_contrast, device=self.device), s_freq)
-        with torch.no_grad():
-            test_score, _ = metric_fct.predict_video_source(test_video_source)
-        # if reverse:
-        #     test_score = metric_max - test_score
+    # def optimization_fct_squared(self, test_contrast, s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse=False, metric_max=None):
+    #     test_video_source = self.generate_grating(torch.tensor(test_contrast, device=self.device), s_freq)
+    #     with torch.no_grad():
+    #         test_score, _ = metric_fct.predict_video_source(test_video_source)
+    #     # if reverse:
+    #     #     test_score = metric_max - test_score
 
-        test_score_normalized = test_score/test_score_contrast_1   # here to change
+    #     test_score_normalized = test_score/test_score_contrast_1   # here to change
 
-        objective = (ref_score_normalized - test_score_normalized)**2
+    #     objective = (ref_score_normalized - test_score_normalized)**2
 
-        return objective.item()
+    #     return objective.item()
 
     def run_on_test_condition(self, index, metric_fct):
         ref_contrast, s_freq = self.get_test_condition_parameters(index)
         ref_s_freq = self.ref_spatial_freq
+
+        if s_freq.item() == ref_s_freq:
+            return ref_contrast.item()
 
         # reverse = not metric_fct.is_lower_better()
 
@@ -175,7 +177,7 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         # # Visualization
         # differences = []
         # for test_contrast in torch.logspace(-3, 0, 10):
-        #     differences.append(self.optimization_fct(test_contrast.item(), s_freq, metric_fct, ref_score_normalized, test_score_contrast_1, reverse, metric_max))
+        #     differences.append(self.optimization_fct(test_contrast.item(), s_freq, metric_fct, ref_score_normalized, test_score_contrast_1))
         #
         # print(differences)
 
@@ -187,14 +189,15 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         # test_contrast = res.x
 
         try:
-            res = root_scalar(self.optimization_fct, x0=ref_contrast.item(), args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bracket=[0.001, 1])
-            test_contrast = res.root
+            res = root_scalar(self.optimization_fct, x0=ref_contrast.item(), args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bracket=[-3, 0])
+            test_contrast = 10**res.root
         except:
-            try:
-                res = minimize_scalar(self.optimization_fct_squared, args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bounds=[0.001, 1])
-                test_contrast = res.x
-            except:
-                test_contrast = np.nan
+            test_contrast = np.nan
+            # try:
+            #     res = minimize_scalar(self.optimization_fct_squared, args=(s_freq, metric_fct, ref_score_normalized, test_score_contrast_1), bounds=[0.001, 1])
+            #     test_contrast = res.x
+            # except:
+            #     test_contrast = np.nan
 
         return test_contrast
 
@@ -361,8 +364,8 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
                 y += str(val)
             y += ']'
             trace += x + ', ' + y + ", mode: 'lines+markers', marker: {color: '"+self.colors[i]+"', size:8}, line: {dash:'dot', color: '"+self.colors[i]+"', width:2},\n"
-            trace += "hovertemplate: 'gt test contrast: %" + r"{y:.3f}" + "',\n"
-            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
+            trace += "hovertemplate: 'gt test contrast: %" + r"{y:.4f}" + "',\n"
+            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 4))+"', showlegend: false"
             trace += '};'
 
             traces += trace +'\n'
@@ -380,12 +383,15 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
             for j, val in enumerate(prediction):
                 if j>0:
                     y += ', '
-                y += str(val)
+                if not np.isnan(val):
+                    y += str(val)
+                else:
+                    y+= 'null'
             y += ']'
 
             trace += x + ', ' + y + ", mode: 'lines+markers', marker: {symbol: 'x', color: '"+self.colors[i]+"', size:8}, line: {color: '"+self.colors[i]+"', width:2},\n"
-            trace += "hovertemplate: 'metric test contrast: %" + r"{y:.3f}" + "',\n"
-            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 2))+"', showlegend: false"
+            trace += "hovertemplate: 'metric test contrast: %" + r"{y:.4f}" + "',\n"
+            trace += "name: 'Contrast = "+str(np.round(y_condition[i], 4))+"', showlegend: false"
             trace += '};'
 
             traces += trace +'\n'

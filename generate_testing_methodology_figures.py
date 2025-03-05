@@ -14,9 +14,9 @@ which tests to consider:
 """
 
 # Contrast Detection
-T = GaborPatchSpatialFreqAchTest(width=512, height=512)
+T = GaborPatchSpatialFreqAchTest(width=512, height=512, device='cpu')
 y_indices = [0, 15, 19]
-x_indices = [0, 6, 18]
+x_indices = [0, 6, 17]
 
 i = 0
 for y_index in y_indices:
@@ -26,7 +26,7 @@ for y_index in y_indices:
         i += 1
 
 # Contrast masking
-T = ContrastMakingCoherentAchTest(width=512, height=512)
+T = ContrastMakingCoherentAchTest(width=512, height=512, device='cpu')
 x_indices = [0, 15, 19]
 y_indices = [0, 15, 19]
 
@@ -38,7 +38,7 @@ for y_index in y_indices:
         i += 1
 
 # Contrast Matching - Freq
-T = ContrastConstancySpatialFreqAchTest(width=512, height=512)
+T = ContrastConstancySpatialFreqAchTest(width=512, height=512, device='cpu')
 x_indices = [0, 4, 8]
 y_indices = [0, 2, 6]
 
@@ -50,7 +50,7 @@ for y_index in y_indices:
         i += 1
 
 # Contrast Matching - color
-T = ContrastConstancyColorTest(width=512, height=512)
+T = ContrastConstancyColorTest(width=512, height=512, device='cpu')
 x_indices = [0, 1, 2]
 y_indices = [0, 6, 9]
 
@@ -67,7 +67,7 @@ metric_name = metric.name()
 
 for test in [GaborPatchSpatialFreqAchTest, ContrastMakingCoherentAchTest, ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]:
 
-    T = test()
+    T = test(device='cpu')
     test_name = T.short_name()
 
     results_folder = os.path.join('results', T.get_preview_folder())

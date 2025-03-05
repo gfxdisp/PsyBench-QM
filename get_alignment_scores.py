@@ -99,20 +99,26 @@ print('contrast_matching', 'spatial_frequencies')
 
 # Get gt
 T = ContrastConstancySpatialFreqAchTest()
-ref_contrasts, spatial_frequencies, gt_contrasts = T.get_gt_results()
 
 metrics = []
 scores = []
 for metric_file in os.listdir(input_folder):
     try:
+        ref_contrasts, spatial_frequencies, gt_contrasts = T.get_gt_results()
+
         metric_name = metric_file.replace('.csv', '')
+        if metric_name == 'PSNR-Y':
+            stop = True
         filepath = os.path.join(input_folder, metric_file)
         df = pd.read_csv(filepath)
         predictions = df['Prediction'].to_numpy().reshape(T.size())
-        error = root_mean_squared_error(np.log10(np.array(gt_contrasts)), np.log10(predictions))
-
-        metrics.append(metric_name)
-        scores.append(error)
+        nan_indices = np.isnan(predictions)
+        if np.sum(nan_indices) <= T.size()[1]*2:
+            gt_contrasts = np.array(gt_contrasts)[~nan_indices]
+            predictions = predictions[~nan_indices]
+            error = root_mean_squared_error(np.log10(gt_contrasts), np.log10(predictions))
+            metrics.append(metric_name)
+            scores.append(error)
     except:
         print('failed on ' + metric_name)
 

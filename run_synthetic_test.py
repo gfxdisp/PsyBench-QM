@@ -20,21 +20,22 @@ if __name__ == '__main__':
     test_index = int(sys.argv[1])
 
     if test_index == 0:
-        tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
-        metrics = [cvvdp_met, fvvdp_met, ldr_flip_metric, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
-        # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric, funque_met]
-        tests = [ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
-        tests = [ContrastConstancySpatialFreqAchTest]
-        metrics = [scielab_metric]
+        #tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
+        metrics = [cvvdp_met, fvvdp_met, ldr_flip_metric, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
+        # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric]
+        tests = [GaborPatchSpatialFreqAchTest]
 
     elif test_index == 1:
         tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastConstancyColorTest]
-        metrics = [cvvdp_met, ldr_flip_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric, scielab_metric]
+        metrics = [cvvdp_met, ldr_flip_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
+        #metrics = [scielab_metric]
+        tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
 
     elif test_index == 2:
         tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
         metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
-        metrics = [speedqa_metric]
+        #metrics = [speedqa_metric]
+        tests = [GaborPatchSpatialFreqAchTransientTest]
 
 
 

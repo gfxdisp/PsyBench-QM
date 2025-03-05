@@ -9,7 +9,7 @@ from metrics import *
 tab_caption = 'First attempt of the table'
 tab_label = 'results'
 
-latex_text = '\\begin{table*}[]\n\centering\n\caption{'+tab_caption+'}\n\label{tab:'+tab_label+'}\n\\resizebox{\\textwidth}{!}{%\n\\begin{tabular}{|l'
+latex_text = '\\begin{table*}[]\n\centering\n\caption{'+tab_caption+'}\n\label{tab:'+tab_label+'}\n\\resizebox{\\textwidth}{!}{%\n\\begin{tabular}{|ll'
 
 tests_cat = ['Contrast Detection', 'Contrast Masking', r'\begin{tabular}[c]{@{}c@{}}Flicker \\ Detection\end{tabular}', 'Contrast Matching']
 
@@ -21,13 +21,22 @@ tests = [[GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchS
 
 higher_better_scale = [[True, True, True, True, True, True], [True, True], [True], [False, False] ]
 
-metrics = [[None], [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric], [fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric], [de2000, hyab, ictcp, msswd_metric], [wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric], [scielab_metric, ldr_flip_metric, hdrvdp3_metric], [vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met]]
+metrics = [[None], 
+           [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric], 
+           [fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric], 
+           [de2000, hyab, ictcp, msswd_metric], 
+           [wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric], 
+           [vmaf_met, speedqa_metric, funque_met],
+           [scielab_metric, ldr_flip_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]]
+
 citations = [[None], [None, 'wang2004image', 'wang2003multiscale', 'xue2013gradient', 'zhang2017gradient', 'sheikh2006image' ,'balanov2015image', None, 'laparra2016perceptual'],
              ['zhang2011fsim', 'zhang2014vsi', 'nafchi2016mean', 'reisenhofer2018haar'],
              ['CIE_2018', 'abasi2020distance', 'ITU-R_2124', 'he2024ms-swd'],
              ['bosse2017deep', 'zhang2018perceptual', 'zhang2018perceptual', 'ghildyal2022shift', 'ding2020image', 'lao2022attentions', 'chen2024topiq', 'zhu2023DeepDC'],
-             ['zhang1996spatial', 'andersson2020flip', 'mantiuk2023hdr'],
-             ['li2018vmaf', 'bampis2017speed', 'venkataramanan2022funque', 'mantiuk2021fovvideovdp', 'cvvdp']]
+             ['li2018vmaf', 'bampis2017speed', 'venkataramanan2022funque'],
+             ['zhang1996spatial', 'andersson2020flip', 'mantiuk2023hdr', 'mantiuk2021fovvideovdp', 'cvvdp']]
+
+categories = [None, 'Traditional metric', r'Traditional\\color\\metric', r'Color\\difference\\measure', r'Deep-learning\\based metric', r'Video\\metric', r'Visual\\difference\\predictor']
 
 # Centering
 for i in range(len(tests_cat)):
@@ -38,9 +47,10 @@ latex_text += '|}'
 
 # Header - First row
 latex_text += '\n\hline\n'
-latex_text += '\multirow{2}{*}{Metric}'
+#latex_text += ' & \multirow{2}{*}{Metric}'
+latex_text += '\multicolumn{2}{|l|}{\multirow{2}{*}{Metric}}'
 clines = []
-start = 1
+start = 2
 cline = 0
 for i in range(len(tests_cat)):
     if len(tests[i]) == 1:
@@ -63,13 +73,17 @@ for cline in clines:
     latex_text += ' \cline{'+str(cline[0]+1)+'-'+str(cline[1])+'}'
 
 # Results
-for cat_metric, cat_citation in zip(metrics, citations):
+row_num = 1
+for cat_metric, cat_citation, cat in zip(metrics, citations, categories):
     for index, (metric, citation) in enumerate(zip(cat_metric, cat_citation)):
         if metric is not None:
             if index == 0:
                 latex_text += ' \\\ \n\hline \hline\n'
+                latex_text += '\multicolumn{1}{|l|}{\multirow{'+str(len(cat_metric))+r'}{*}{ \rotatebox[origin=c]{90}{ \begin{tabular}[c]{@{}c@{}}' + cat + ' \end{tabular}}}} &'
             else:
-                latex_text += ' \\\ \n\hline\n'
+                latex_text += ' \\\ \n\cline{2-13}'
+                latex_text += ' \multicolumn{1}{|l|}{} &'
+
             metric_name = metric.name()
             if metric_name == 'VMAF_v0.6.1':
                 latex_text += 'VMAF v0.6.1'
@@ -77,6 +91,9 @@ for cat_metric, cat_citation in zip(metrics, citations):
                 latex_text += metric_name
             if citation is not None:
                 latex_text += r' \cite{'+citation+'}'
+        
+        else:
+            latex_text += ' &'
 
         for i in range(len(tests_cat)):
             for test, scale in zip(tests[i], higher_better_scale[i]):
@@ -128,6 +145,8 @@ for cat_metric, cat_citation in zip(metrics, citations):
                         latex_text += ' & \multicolumn{1}{c|}{\cellcolor[HTML]{f1f1f1} -'
 
                     latex_text += '}'
+
+        row_num += 1
 
 
 latex_text += '\\\ \n\hline\n'

@@ -61,7 +61,8 @@ def generate_gabor_mask(width, height, ppd, test_contrast, masker_contrast, s_fr
     
     rr = xx * torch.cos(torch.deg2rad(-test_orientation)) + yy * torch.sin(torch.deg2rad(-test_orientation))
 
-    grating = torch.cos(2*pi*rr*s_freq) * test_contrast * luminance
+    #grating = torch.cos(2*pi*rr*s_freq) * test_contrast * luminance
+    grating = torch.cos(2*pi*d*s_freq) * test_contrast * luminance
     sine_grating = grating.view(height, width, 1, 1)
 
     R2 = xx**2 + yy**2
@@ -151,12 +152,14 @@ def generate_flat_noise_mask(width, height, ppd, test_contrast, masker_contrast,
     width_deg = width / ppd
     height_deg = height / ppd
 
-    xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
-    
+    #xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
+    xx, yy = torch.meshgrid(torch.linspace(0, width_deg, width).to(device) , torch.linspace(0, height_deg, height).to(device), indexing='xy')
+
     rr = xx * torch.cos(torch.deg2rad(-test_orientation)) + yy * torch.sin(torch.deg2rad(-test_orientation))
     grating = torch.cos(2*pi*rr*s_freq) * test_contrast * luminance
     sine_grating = grating.view(height, width, 1, 1)
 
+    xx, yy = torch.meshgrid(torch.linspace(-width_deg/2, width_deg/2, width).to(device) , torch.linspace(-height_deg/2, height_deg/2, height).to(device), indexing='xy')
     R2 = xx**2 + yy**2
     ge =  torch.exp(-R2/(2*ge_sigma**2)).view(height, width, 1, 1)  # Create the gaussian envelope
 

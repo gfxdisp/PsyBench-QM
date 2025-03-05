@@ -439,7 +439,7 @@ class GaborPatchSpatialFreqAchTest(ContrastDetectionTest):
         contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
@@ -489,7 +489,7 @@ class GaborPatchSpatialFreqRGTest(ContrastDetectionTest):
         contrasts = torch.logspace(-3, log10(0.12), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
@@ -540,7 +540,7 @@ class GaborPatchSpatialFreqYVTest(ContrastDetectionTest):
         contrasts = torch.logspace(-2, log10(0.8), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
@@ -591,7 +591,7 @@ class BandLimitedNoiseSpatialFreqAchTest(ContrastDetectionTest):
         contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
@@ -642,7 +642,7 @@ class BandLimitedNoiseSpatialFreqRGTest(ContrastDetectionTest):
         contrasts = torch.logspace(-3, log10(0.12), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
@@ -693,7 +693,7 @@ class BandLimitedNoiseSpatialFreqYVTest(ContrastDetectionTest):
         contrasts = torch.logspace(-2, log10(0.8), N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=60)
+        gm = vvdp_display_geometry([1920, 1080], diagonal_size_inches=30, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)
 
@@ -851,7 +851,7 @@ class GaborPatchSpatialFreqAchTransientTest(ContrastDetectionTest):
         temporal_frequency = 8
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
-        gm = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=60)
+        gm = vvdp_display_geometry([256, 256], diagonal_size_inches=5, ppd=66)
 
         super().__init__(width, height, channel, dm, gm, frames, fps, contrasts, spatial_frequencies,
                          temporal_frequencies=temporal_frequency, stimuli_type=stimuli_type, is_alignmenet_score=is_alignmenet_score, device=device)

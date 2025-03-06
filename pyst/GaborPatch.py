@@ -795,7 +795,7 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
 
         stimuli_type='gabor_patch'
 
-        sizes = torch.logspace(-1, 5, N_size, base=2)
+        sizes = torch.logspace(-2, 3, N_size, base=2)
         contrasts = torch.logspace(-3, 0, N_contrasts)
 
         dm = vvdp_display_photo_eotf(Y_peak=100, contrast=1000, source_colorspace='sRGB')
@@ -807,13 +807,13 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
         self._preview_as = 'image'
     
     def get_csf_results(self):
-        x = torch.logspace(-1, 5, 100, base=2)
+        x = torch.logspace(-2, 3, 100, base=2)
         y = np.loadtxt(os.path.join(self.csf_data_folder, 'size_ach.txt'))
 
         return x, y
 
     def get_ticks(self):
-        x = torch.logspace(-1, 5, 7, base=2)
+        x = torch.logspace(-2, 3, 6, base=2)
         y = [0.001, 0.01, 0.1, 1]
 
         return x, y
@@ -831,7 +831,7 @@ class GaborPatchSizeAchTest(ContrastDetectionTest):
         return ['log', 'log'], [None, 'deg']
 
     def short_name(self):
-        return 'Contrast Detection - Stimuli Size - Achromatic Gabor Patch'
+        return 'Contrast Detection - Area - Achromatic Gabor Patch'
     
     def latex_name(self):
         return 'Contrast - Detection - Area'

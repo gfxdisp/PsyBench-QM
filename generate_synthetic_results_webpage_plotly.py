@@ -22,7 +22,7 @@ if __name__ == '__main__':
              ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
              GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
-             ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
+             ContrastConstancySpatialFreqAchTest, ContrastConstancySpatialFreqAchNoiseTest, ContrastConstancyColorTest]
 
     #metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
     metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric,
@@ -31,7 +31,7 @@ if __name__ == '__main__':
                wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric,
                vmaf_met, speedqa_metric, funque_met,
                scielab_metric, ldr_flip_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
-    
+        
     
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'

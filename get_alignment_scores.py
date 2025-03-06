@@ -133,3 +133,45 @@ if not os.path.exists(output):
 
 output_file = os.path.join(output, 'spatial_frequencies.csv')
 df.to_csv(output_file, index=False)
+
+# Contrast Matching Across spatial frequencies - Noise
+
+input_folder = os.path.join('results', 'contrast_matching', 'spatial_frequencies_noise')
+print('contrast_matching', 'spatial_frequencies_noise')
+
+# Get gt
+T = ContrastConstancySpatialFreqAchTest()
+
+metrics = []
+scores = []
+for metric_file in os.listdir(input_folder):
+    try:
+        ref_contrasts, spatial_frequencies, gt_contrasts = T.get_gt_results()
+
+        metric_name = metric_file.replace('.csv', '')
+        if metric_name == 'PSNR-Y':
+            stop = True
+        filepath = os.path.join(input_folder, metric_file)
+        df = pd.read_csv(filepath)
+        predictions = df['Prediction'].to_numpy().reshape(T.size())
+        nan_indices = np.isnan(predictions)
+        if np.sum(nan_indices) <= T.size()[1]*2:
+            gt_contrasts = np.array(gt_contrasts)[~nan_indices]
+            predictions = predictions[~nan_indices]
+            error = root_mean_squared_error(np.log10(gt_contrasts), np.log10(predictions))
+            metrics.append(metric_name)
+            scores.append(error)
+    except:
+        print('failed on ' + metric_name)
+
+df = pd.DataFrame({
+    'Metric': metrics,
+    'Score': scores
+})
+
+output = os.path.join(output_folder, 'contrast_matching')
+if not os.path.exists(output):
+    os.mkdir(output)
+
+output_file = os.path.join(output, 'spatial_frequencies_noise.csv')
+df.to_csv(output_file, index=False)

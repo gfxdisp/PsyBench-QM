@@ -23,20 +23,20 @@ higher_better_scale = [[True, True, True, True, True, True], [True, True], [True
 
 metrics = [[None], 
            [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric], 
-           [fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric], 
+           [fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, scielab_metric, ldr_flip_metric],
            [de2000, hyab, ictcp, msswd_metric], 
            [wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric], 
            [vmaf_met, speedqa_metric, funque_met],
-           [scielab_metric, ldr_flip_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]]
+           [hdrvdp3_metric, fvvdp_met, cvvdp_met]]
 
 citations = [[None], [None, 'wang2004image', 'wang2003multiscale', 'xue2013gradient', 'zhang2017gradient', 'sheikh2006image' ,'balanov2015image', None, 'laparra2016perceptual'],
-             ['zhang2011fsim', 'zhang2014vsi', 'nafchi2016mean', 'reisenhofer2018haar'],
+             ['zhang2011fsim', 'zhang2014vsi', 'nafchi2016mean', 'reisenhofer2018haar', 'zhang1996spatial', 'andersson2020flip'],
              ['CIE_2018', 'abasi2020distance', 'ITU-R_2124', 'he2024ms-swd'],
              ['bosse2017deep', 'zhang2018perceptual', 'zhang2018perceptual', 'ghildyal2022shift', 'ding2020image', 'lao2022attentions', 'chen2024topiq', 'zhu2023DeepDC'],
              ['li2018vmaf', 'bampis2017speed', 'venkataramanan2022funque'],
-             ['zhang1996spatial', 'andersson2020flip', 'mantiuk2023hdr', 'mantiuk2021fovvideovdp', 'cvvdp']]
+             ['mantiuk2023hdr', 'mantiuk2021fovvideovdp', 'cvvdp']]
 
-categories = [None, 'Traditional metric', r'Traditional\\color\\metric', r'Color\\difference\\measure', r'Deep-learning\\based metric', r'Video\\metric', r'Visual\\difference\\predictor']
+categories = [None, 'Traditional metrics', r'Traditional\\color metrics', r'Color\\difference\\measures', r'Deep-learning\\based metrics', r'Video\\metrics', r'VDP\\metrics']
 
 # Centering
 for i in range(len(tests_cat)):

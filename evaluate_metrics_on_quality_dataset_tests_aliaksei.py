@@ -59,6 +59,7 @@ if __name__ == '__main__':
         for comparable_test in comparable_tests:
             errors = []
             rmses = []
+            metric_names = []
             test2 = comparable_test()
             df_rmse = pd.read_csv(os.path.join('alignment_scores', test2.get_preview_folder()+'.csv'))
             for metric in metrics:
@@ -67,15 +68,24 @@ if __name__ == '__main__':
                 metric_file = metric_name+'.csv'
                 df = pd.read_csv(os.path.join(in_folder, metric_file))
                 predictions = df['Prediction'].to_numpy()
-                errors.append(np.abs(test.error(predictions, min_val, max_val)))
-                try:
-                    rmses.append(np.abs(df_rmse[df_rmse['Metric'] == metric_name]['Score'].to_numpy()[0]))
-                except:
-                    rmses.append(np.nan)
 
-            fig = plt.figure()
-            plt.scatter(rmses, errors)
-            fig.savefig(os.path.join('figs/aliaksei_3', test2.short_name()+'png'))
+                try:
+                    rmses.append(np.abs(df_rmse[df_rmse['Metric'] == metric_name]['Score'].to_numpy()[0]))#
+                    errors.append(np.abs(test.error(predictions, min_val, max_val)))
+                    metric_names.append(metric_name)
+                except:
+                    #rmses.append(np.nan)
+                    pass
+
+            fig = plt.figure(figsize=(8, 8))
+            plt.scatter(errors, rmses)
+            for val1, val2, val3 in zip(errors, rmses, metric_names):
+                plt.text(val1, val2, val3)
+            plt.xlabel('RMSE on VLIC')
+            plt.ylabel('Alignment Score')
+            plt.title(test2.short_name()+', Corr='+str(np.round(spearmanr(errors, rmses, nan_policy='omit').statistic, 3)))
+            fig.savefig(os.path.join('figs/aliaksei_3', test2.short_name()+'.png'))
+
             print(test2.short_name())
             print(spearmanr(errors, rmses, nan_policy='omit'))
 

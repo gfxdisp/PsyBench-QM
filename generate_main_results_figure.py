@@ -15,12 +15,12 @@ tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchLu
 # We will have to define different metrics for different tests
 metrics =[[psnry_metric, ssim_metric, dists_metric, ldr_flip_metric, cvvdp_met],
           [fsim_metric, lpips_metric, msswd_metric, ldr_flip_metric, cvvdp_met],
-          [psnry_metric, funque_met, lpips_metric, ictcp, hdrvdp3_metric],
+          [psnry_metric, funque_met, lpips_metric, ictcp, cvvdp_met],
           [psnry_metric, ssim_metric, lpips_metric, dss_metric, cvvdp_met],
-          [psnry_metric, ssim_metric, funque_met, lpips_metric, fvvdp_met],
-          [psnry_metric, funque_met, dists_metric, lpips_metric, fvvdp_met],
+          [psnry_metric, ssim_metric, lpips_vgg_metric, funque_met, cvvdp_met],
+          [psnry_metric, ssim_metric, lpips_vgg_metric, funque_met, cvvdp_met],
           [vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met],
-          [psnry_metric, dss_metric, funque_met, lpips_metric, cvvdp_met],
+          [psnry_metric, ldr_flip_metric, dss_metric, topiq_metric, cvvdp_met],
           [fsim_metric, de2000, dists_metric, ldr_flip_metric, cvvdp_met]]
 
 

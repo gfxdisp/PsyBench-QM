@@ -24,8 +24,15 @@ if __name__ == '__main__':
              GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
              ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
-    metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
-
+    #metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
+    metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric,
+               fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric,
+               de2000, hyab, ictcp, msswd_metric,
+               wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric,
+               vmaf_met, speedqa_metric, funque_met,
+               scielab_metric, ldr_flip_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
+    
+    
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
 
@@ -94,13 +101,17 @@ if __name__ == '__main__':
         hr_test.insert_header(test_name)
 
         hr_test.insert_text('The plots are generated with Plotly JS, please wait for few seconds for all the plots to be generated.')
-        hr_test.insert_text('The countour plots are dynamic, you can hover over them and read the results, or zoom in and zoom out.')
+        hr_test.insert_text('The plots are dynamic, you can hover over them and read the results, or zoom in and zoom out.')
         
-        if test_name != 'Contrast Constancy - Contrast Matching':
-            hr_test.insert_text('Each contour plot corresponds to the metric "quality" predictions for the "{the_test_name}" test, while the red line corresponds to the ground truth. The test stimuli examples can be found <a href={link}>here</a>.'.format(link=test_preview_html_filename, the_test_name=test_name))
+        if test_name == 'Contrast Matching - Across Spatial Frequencies':
+            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching across spatial frequencies" test, where different colors represent different contrast c<sub>r</sub> values. The dashed lines are human results, while the solid lines are model-predicted results. Metrics that align well with the psychophysical data should have the predicted test contrast (solid line) identical to the ground-truth test contrast (dashed line). The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename))
+        elif test_name == 'Contrast Matching - Across Cardinal Color Directions':
+            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching across cardinal color directions" test, where different colors represent different contrast c<sub>r</sub> values for the achromatic stimulus (and matched contrast for RG and YV stimuli). Metrics that align well with the pyschophysical data should predict the same quality across the same contrast (horizental line). The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename))
         else:
-            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching" experiment, where different colors represent different contrast C<sub>r</sub> values. The dashed lines are human results, while the solid lines are model-predicted results. The test stimuli examples can be found <a href={link}>here.'.format(link=test_preview_html_filename))
+            hr_test.insert_text('Each contour plot corresponds to the metric "quality" predictions for the "{the_test_name}" test, while the red line corresponds to the ground truth. Metrics that align well with the psychophysical data should follow the ground-truth (red-line) near the detection threshold. The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename, the_test_name=test_name))
 
+        if test_name == 'Flicker Detection - Achromatic Disk':
+            hr_test.insert_text('Warning!! The preview webpage contains a flickering disk, please do not view it if you have epilepsy.')
         # Create the preview webpage!
 
         hr_test_preview.beg_table()
@@ -108,7 +119,10 @@ if __name__ == '__main__':
         # Now, we want to go through each condition, get both test and ref figures, save them, and put them in the webpage!
         for i in np.linspace(0, test_rows-1, 5).astype(int):
             hr_test_preview.beg_table_row()
-            for j in np.linspace(0, test_columns-1, 5).astype(int):
+            num_columns = 5
+            if test_columns < 5:
+                num_columns = test_columns
+            for j in np.linspace(0, test_columns-1, num_columns).astype(int):
                 hr_test_preview.beg_table_cell()
 
                 condition_index = i*test_columns+j

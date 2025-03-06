@@ -26,6 +26,7 @@ if __name__ == '__main__':
                    dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
         # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric]
         tests = [GaborPatchSpatialFreqAchTest]
+        metrics = [hdrvdp3_metric]
         
 
     elif test_index == 1:

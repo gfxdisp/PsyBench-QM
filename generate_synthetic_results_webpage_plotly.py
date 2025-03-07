@@ -18,19 +18,18 @@ if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
 
-    tests = [GaborPatchSpatialFreqAchTest, BandLimitedNoiseSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, 
+    tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
              ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
              GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
-             GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, BandLimitedNoiseSpatialFreqRGTest, BandLimitedNoiseSpatialFreqYVTest,
-             ContrastConstancySpatialFreqAchTest, ContrastConstancySpatialFreqAchNoiseTest, ContrastConstancyColorTest]
+             GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest,
+             ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
-    #metrics = [cvvdp_met, fvvdp_met, hdrvdp3_metric, scielab_metric, funque_met, vmaf_met, speedqa_metric, ldr_flip_metric, ictcp, de2000, hyab, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, dists_metric, ahiq_metric, topiq_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, msswd_metric, deepdc_metric]
-    metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, mad_metric, nlpd_metric,
-               fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric,
+    metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, nlpd_metric,
+               fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, scielab_metric, ldr_flip_metric,
                de2000, hyab, ictcp, msswd_metric,
                wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric,
                vmaf_met, speedqa_metric, funque_met,
-               scielab_metric, ldr_flip_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
+               mad_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
         
     
     input_folder = 'results'
@@ -50,6 +49,7 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(output_folder, 'html_preview_files'))
 
     shutil.copyfile(os.path.join('test_reports_utils', 'style.css'), os.path.join(output_folder, 'css_files', 'style.css'))
+    shutil.copyfile(os.path.join('test_reports_utils', 'plotly-2.35.2.min.js'),os.path.join(output_folder, 'js_files', 'plotly-2.35.2.min.js'))
 
     header_file = os.path.join('test_reports_utils', "header_plotly.html")
     header_file_preview = os.path.join('test_reports_utils', "header_plotly_preview.html")

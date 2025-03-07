@@ -25,8 +25,7 @@ if __name__ == '__main__':
                    dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric,
                    dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
         # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric]
-        tests = [GaborPatchSizeAchTest]
-        metrics = [scielab_metric]
+        metrics = [speedqa_metric]
         
 
     elif test_index == 1:
@@ -38,7 +37,7 @@ if __name__ == '__main__':
     elif test_index == 2:
         tests = [DiskTemporalFreqAchTest, GaborPatchSpatialFreqAchTransientTest]
         metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
-        #metrics = [speedqa_metric]
+        metrics = [speedqa_metric]
         tests = [GaborPatchSpatialFreqAchTransientTest]
 
     output_folder = 'results_alignment_score'

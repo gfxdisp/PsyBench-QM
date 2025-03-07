@@ -16,9 +16,9 @@ pip install -r requirements.txt
 ```
 
 ## How to add a metric to be evaluated with PyST
-We provide some metrics in the **./metrics** folder. 
+We provide some metrics in the `./metrics` folder. 
 
-To include a new metric, you need to create a class for the metric that inherits **VQM**. Please find an example of TOPIQ metric below.
+To include a new metric, you need to create a class for the metric that inherits class `VQM`. Please find an example for the TOPIQ metric below.
 ```python
 import torch
 from pyiqa import create_metric
@@ -119,16 +119,17 @@ def predict_video_source(self, vid_source, frame_padding="replicate"):
     return (quality_score, None)
 ```
 
-## How to get the metric(s) results on the synthetic tests
-We provide three main python files: 
+## How to compute metric(s) results on the tests
+
+We provide three main python scripts: 
 ```commandline
 python run_synthetic_test.py
 python run_synthetic_test_alignment_score.py
 python get_alignment_scores.py
 ```
-The first is used to generate the data for the figures, while the subsequent codes are used to calculate the error in each test. 
+The first script is used to generate the data for the figures, while the subsequent scripts are used to calculate the error in each test. 
 
-In the first and second codes you will need to specify the metrics (as you've defined previously), and specify the tests to run. Here is an example:
+In the first and second script you will need to specify the metrics (as you've defined previously), and specify the tests to run. Here is an example:
 ```python
 from pyst.ContrastDetection import *
 from pyst.ContrastMasking import *
@@ -138,7 +139,7 @@ from metrics import *
 tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest]
 metrics = [topiq_metric]
 ```
-You can specify as many tests and metrics to run.
+You can specify multiple tests and metrics to run.
 ```python
 """ Achromatic tests"""
 tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
@@ -152,12 +153,12 @@ tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
 """ ContrastConstancySpatialFreqAchTest and ContrastConstancyColorTest cannot be run on run_synthetic_test_alignment_score.py """
 ```
 
-
-To generate the webpage with all the results. Please run the following code:
+To generate an HTML report with all the results. Please run the following script:
 ```commandline
 python generate_synthetic_test_webpage_plotly.py
 ```
-In this code, as previously mentioned you will also need to specify the metrics and the tests before running the code. 
+Similarly as above, you will also need to specify the metrics and the tests before running the code. 
 
-We provide an example of the metrics in our code from previous results we got that you can use to directly generate a webpage.
-The results of the webpage can be found in **./synthetic_test_webpage_plotly/index.html**, which is provided with the supplementary (but including more metrics).
+The repository includes the computed results for multiple metrics in `results_alignment_score` that can be used to generate an HTML report.
+
+The results of the webpage can be found in `./synthetic_test_webpage_plotly/index.html`, which is provided with the supplementary (but including more metrics).

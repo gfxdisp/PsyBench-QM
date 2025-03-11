@@ -76,11 +76,11 @@ class ictcp(vq_metric):
                                 (img1[...,2,:,:,:] - img2[...,2,:,:,:])**2).mean()
 
     def short_name(self):
-        return 'Dolby-ICTCP'
+        return 'ICtCp'
 
     @staticmethod
     def name():
-        return 'Dolby-ICTCP'
+        return 'ICtCp'
 
     @staticmethod
     def is_lower_better():

@@ -104,14 +104,35 @@ if __name__ == '__main__':
         hr_test.insert_text('The plots are dynamic, you can hover over them and read the results, or zoom in and zoom out.')
         
         if test_name == 'Contrast Matching - Across Spatial Frequencies':
-            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching across spatial frequencies" test, where different colors represent different contrast c<sub>r</sub> values. The dashed lines are human results, while the solid lines are model-predicted results. Metrics that align well with the psychophysical data should have the predicted test contrast (solid line) identical to the ground-truth test contrast (dashed line). The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename))
+            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching across spatial frequencies" test, where different colors represent different contrast c<sub>r</sub> values. The dashed lines are human results, while the solid lines are model-predicted results. Metrics that align well with the psychophysical data should have the predicted test contrast (solid line) identical to the ground-truth test contrast (dashed line). The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference.'.format(link=test_preview_html_filename))
+            hr_test.insert_text(
+                'For each metric, we report the RMSE between the metrics optimized matched contrast and the human results, with lower values denoting a better alignment with the human data. Missing data points represent the stimuli for which the metric could not converge.')
         elif test_name == 'Contrast Matching - Across Cardinal Color Directions':
-            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching across cardinal color directions" test, where different colors represent different contrast c<sub>r</sub> values for the achromatic stimulus (and matched contrast for RG and YV stimuli). Metrics that align well with the pyschophysical data should predict the same quality across the same contrast (horizental line). The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename))
+            hr_test.insert_text('Each plot corresponds to the results from the "Contrast Matching across cardinal color directions" test, where different colors represent different contrast c<sub>r</sub> values for the achromatic stimulus (and matched contrast for RG and YV stimuli). Metrics that align well with human psychophysical data should give the same predictions across color directions (we should see horizontal lines). The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference.'.format(link=test_preview_html_filename))
+            hr_test.insert_text(
+                'For each metric, we report the RMSE between the metrics predictions across the color directions, with lower values denoting a better alignment with the human data.')
+        elif test_name.split(' - ')[0] == 'Contrast Masking':
+            hr_test.insert_text(
+                'Each contour plot corresponds to the metric "quality" predictions for the "{the_test_name}" test, while the red line corresponds to the human data. Metrics that align well with the psychophysical data should follow the ground-truth (red-line) near the discrimination threshold. The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(
+                    link=test_preview_html_filename, the_test_name=test_name))
+            hr_test.insert_text('Alignment scores values are between 0 and 1, with higher values denoting a better alignment with the human data.')
+        elif test_name == 'Flicker Detection - Achromatic Disk':
+            hr_test.insert_text('Each contour plot corresponds to the metric "quality" predictions for the "{the_test_name}" test, while the red line corresponds to the ground truth. Metrics that align well with the psychophysical data should follow the elaTCSF model (red-line) near the detection threshold. The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(
+                    link=test_preview_html_filename, the_test_name=test_name))
+            hr_test.insert_text(
+                'Warning!! The preview webpage contains a flickering disk, please do not view it if you have epilepsy.')
+            hr_test.insert_text(
+                'The videos in the preview webpage are better visualized in Google Chrome.')
+            hr_test.insert_text(
+                'Alignment scores values are between 0 and 1, with higher values denoting a better alignment with the elaTCSF model.')
         else:
-            hr_test.insert_text('Each contour plot corresponds to the metric "quality" predictions for the "{the_test_name}" test, while the red line corresponds to the ground truth. Metrics that align well with the psychophysical data should follow the ground-truth (red-line) near the detection threshold. The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename, the_test_name=test_name))
+            hr_test.insert_text('Each contour plot corresponds to the metric "quality" predictions for the "{the_test_name}" test, while the red line corresponds to the ground truth. Metrics that align well with the psychophysical data should follow the castleCSF model (red-line) near the detection threshold. The test stimuli examples can be found <a href={link}>here</a>. You can click and hold the mouse on each test stimulus to view its reference image.'.format(link=test_preview_html_filename, the_test_name=test_name))
+            hr_test.insert_text(
+                'Alignment scores values are between 0 and 1, with higher values denoting a better alignment with the castleCSF model.')
 
-        if test_name == 'Flicker Detection - Achromatic Disk':
-            hr_test.insert_text('Warning!! The preview webpage contains a flickering disk, please do not view it if you have epilepsy.')
+        # if test_name == 'Flicker Detection - Achromatic Disk':
+        #     hr_test.insert_text('Warning!! The preview webpage contains a flickering disk, please do not view it if you have epilepsy.')
+
         # Create the preview webpage!
 
         hr_test_preview.beg_table()

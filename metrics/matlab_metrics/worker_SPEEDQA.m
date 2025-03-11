@@ -14,6 +14,7 @@ if ~exist( 'Single_Scale_SpEED', 'file' )
 end
 
 warning('off','MATLAB:singularMatrix');
+warning('off','all');
 
 %%%% SpEED parameters
 sigma_nsq = 0.1;

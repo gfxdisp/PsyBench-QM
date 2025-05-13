@@ -30,6 +30,13 @@ try:
     from metrics.pyiqa_metrics.stlpips_alex_metric import stlpips_metric
     from metrics.pyiqa_metrics.msswd_metric import msswd_metric
     from metrics.pyiqa_metrics.deepdc_metric import deepdc_metric
+    from metrics.pyiqa_metrics.brisque_metric import brisque_metric
+    from metrics.pyiqa_metrics.hyperiqa_metric import hyperiqa_metric
+    from metrics.pyiqa_metrics.arniqa_metric import arniqa_metric
+    from metrics.pyiqa_metrics.nima_metric import nima_metric
+    from metrics.pyiqa_metrics.paq2piq_metric import paq2piq_metric
+    from metrics.pyiqa_metrics.musiq_metric import musiq_metric
+    from metrics.pyiqa_metrics.tres_metric import tres_metric
 except ImportError as e:
     logging.warning( "Failed to import PYIQA metrics. Run `pip install pyiqa`.")
 

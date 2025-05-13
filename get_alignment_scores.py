@@ -175,3 +175,48 @@ if not os.path.exists(output):
 
 output_file = os.path.join(output, 'spatial_frequencies_noise.csv')
 df.to_csv(output_file, index=False)
+
+
+# JPEG Compression
+
+input_folder = os.path.join('results', 'jpeg_compression')
+print('jpeg_compression')
+
+metrics = []
+scores = []
+for metric_file in os.listdir(input_folder):
+    try:
+        metric_name = metric_file.replace('.csv', '')
+        filepath = os.path.join(input_folder, metric_file)
+        df = pd.read_csv(filepath)
+
+        n_levels = 101 
+        n_images = len(df) // n_levels
+
+        predictions = df['Prediction'].to_numpy().reshape((n_levels, n_images))
+        predictions = np.mean(predictions, axis=1)[:]
+        #predictions = (predictions - np.mean(predictions)) / np.std(predictions)
+        #predictions = (predictions - np.min(predictions)) / (np.max(predictions) - np.min(predictions))
+        predictions = np.diff(predictions)  
+        predictions = (predictions) / (np.max(predictions) - np.min(predictions))
+        #predictions = (predictions - np.mean(predictions)) / np.std(predictions)
+        score = np.sum(np.diff(predictions) ** 2)
+        #score = np.std(predictions)
+
+        metrics.append(metric_name)
+        scores.append(score)
+
+    except:
+        print('failed on ' + metric_name)
+
+df = pd.DataFrame({
+    'Metric': metrics,
+    'Score': scores
+})
+
+output = os.path.join(output_folder)
+if not os.path.exists(output):
+    os.mkdir(output)
+
+output_file = os.path.join(output, 'jpeg_compression.csv')
+df.to_csv(output_file, index=False)

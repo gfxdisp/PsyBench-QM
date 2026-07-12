@@ -6,9 +6,13 @@ from metrics.de2000 import de2000
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.ContrastMatching import *
+from pyst.JpegCompression import *
+from pyst.Glare import *
+from pyst.GaborAmbientLightTest import *
 from metrics import *
 
 import sys
+
 
 if __name__ == '__main__':
 
@@ -21,22 +25,40 @@ if __name__ == '__main__':
 
     if test_index == 0:
         tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
-        metrics = [cvvdp_met, fvvdp_met, ldr_flip_metric, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
+        metrics = [cvvdp_met, fvvdp_met, ldr_flip_metric, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
         # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric]
+
+        # tests = [JpegCompressionTest]
+        # metrics = [psnry_metric, ssim_metric]
 
     elif test_index == 1:
         tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastConstancyColorTest]
-        metrics = [cvvdp_met, ldr_flip_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
+        # metrics = [cvvdp_met, ldr_flip_metric, fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, deepdc_metric]
         #metrics = [scielab_metric]
-        tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest]
+        metrics = [cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
 
     elif test_index == 2:
         tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
-        metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
-        metrics = [speedqa_metric]
-        tests = [GaborPatchSpatialFreqAchTransientTest]
+        # metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
+        # metrics = [speedqa_metric]
 
+        metrics = [cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
 
+    apply_glare_options = [False]
+    glare_names = ['']
+    
+    if test_index == 3:
+        # tests = [GlareTest]
+        # tests = [GlareDiscTest]
+        tests = [GlareHalfRingLuminanceTest]
+        # metrics = [cvvdp_met, cvvdp_ncsf_mtf_trained_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric]
+        metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
+        metrics = [psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
+        apply_glare_options = [True]
+        glare_names = ['hdrvdp', 'cie99', 'deeley', 'ijspeert']
+
+        # apply_glare_options = [False]
+        # glare_names = ['']
 
     output_folder = 'results'
 
@@ -46,77 +68,85 @@ if __name__ == '__main__':
 
     
     for T in tests:
-        Test = T()
-        test_name = Test.short_name()
+        for apply_glare_model in apply_glare_options:
+            for glare_name in glare_names:
+                if apply_glare_model:
+                    Test = T(apply_glare_model=apply_glare_model, mtf_model=glare_name)
+                else:
+                    Test = T()
 
-        logging.info(f"Processing {test_name} - with {len(Test)} conditions")
+                test_name = Test.short_name()
 
-        full_output_folder = os.path.join(output_folder, Test.get_preview_folder())
+                logging.info(f"Processing {test_name} - with {len(Test)} conditions")
 
-        if not os.path.exists(full_output_folder):
-            os.makedirs(full_output_folder)
+                full_output_folder = os.path.join(output_folder, Test.get_preview_folder())
 
-        scores = np.zeros((len(Test), len(metrics)))
-        metric_names = []
+                if not os.path.exists(full_output_folder):
+                    os.makedirs(full_output_folder)
 
-        for i in trange(len(Test)):
-            # Get condition
-            vid_source, display_photometry, display_geometry = Test.get_condition(i)
+                scores = np.zeros((len(Test), len(metrics)))
+                metric_names = []
 
-            condition_scores = []
+                for i in trange(len(Test)):
+                    # Get condition
+                    vid_source, display_photometry, display_geometry = Test.get_condition(i)
 
-            for j, M in enumerate(metrics):
+                    condition_scores = []
 
-                try:
-                    #Metric = M()
-                    Metric = metric_classes[j]
-                    metric_name = M.name()
+                    for j, M in enumerate(metrics):
 
-                    if i==0:
-                        metric_names.append(metric_name)
+                        try:
+                            #Metric = M()
+                            Metric = metric_classes[j]
+                            metric_name = M.name()
 
-                    Metric.set_display_model(display_photometry=display_photometry, display_geometry=display_geometry)
+                            if i==0:
+                                if apply_glare_model:
+                                    metric_name += '_glare_'+glare_name
+                                metric_names.append(metric_name)
 
-                    if test_name in ['Contrast Matching - Across Spatial Frequencies', 'Contrast Matching - Across Spatial Frequencies - Band Limited Noise']:
-                        score = Test.run_on_test_condition(i, Metric)
-                    else:
-                        with torch.no_grad():  # Do not accumulate gradients
-                            score = Metric.predict_video_source(vid_source)
+                            Metric.set_display_model(display_photometry=display_photometry, display_geometry=display_geometry)
 
+                            if test_name in ['Contrast Matching - Across Spatial Frequencies', 'Contrast Matching - Across Spatial Frequencies - Band Limited Noise']:
+                                score = Test.run_on_test_condition(i, Metric)
+                            else:
+                                with torch.no_grad():  # Do not accumulate gradients
+                                    score = Metric.predict_video_source(vid_source)
+
+                            try:
+                                if len(score) == 2:
+                                    score, stats = score
+                            except:
+                                pass
+
+                            scores[i, j] = score
+
+                            
+
+                        except:
+                            logging.error(f'Failed on test {test_name}, condition {i}, and the {metric_name} metric')
+                            scores[i, j] = np.nan
+                            pass
+
+                # Here, we need to take the header of the class, which will give us information of what does the metric provide to us
+                # Then, we want to get these information
+
+                header = Test.get_row_header()
+                conditions = Test.get_rows_conditions()
+
+                df = pd.DataFrame()
+                df.index.name = 'Index'
+                for i in range(len(header)):
                     try:
-                        if len(score) == 2:
-                            score, stats = score
+                        df[header[i]] = conditions[i].cpu().numpy()
                     except:
-                        pass
-
-                    scores[i, j] = score
-
-                    
-
-                except:
-                    logging.error(f'Failed on test {test_name}, condition {i}, and the {metric_name} metric')
-                    scores[i, j] = np.nan
-                    pass
-
-        # Here, we need to take the header of the class, which will give us information of what does the metric provide to us
-        # Then, we want to get these information
-
-        header = Test.get_row_header()
-        conditions = Test.get_rows_conditions()
-
-        df = pd.DataFrame()
-        df.index.name = 'Index'
-        for i in range(len(header)):
-            try:
-                df[header[i]] = conditions[i].cpu().numpy()
-            except:
-                df[header[i]] = conditions[i]
+                        df[header[i]] = conditions[i]
 
 
-        for j in range(len(metrics)):
-            df['Prediction'] = scores[:, j]
+                for j in range(len(metrics)):
+                    df['Prediction'] = scores[:, j]
 
-            filename = os.path.join(full_output_folder, metric_names[j]+'.csv')
-            df.to_csv(filename)
+                    filename = os.path.join(full_output_folder, metric_names[j]+'.csv')
+                    df.to_csv(filename)
 
 

@@ -1,4 +1,4 @@
-from metrics import cvvdp_met
+from metrics import *
 from pyst.ContrastMatching import *
 from pyst.ContrastMasking import *
 from pyst.GaborPatch import *
@@ -13,59 +13,59 @@ which tests to consider:
 * Contrast Matching - Both tests 
 """
 
-# Contrast Detection
-T = GaborPatchSpatialFreqAchTest(width=512, height=512, device='cpu')
-y_indices = [0, 15, 19]
-x_indices = [0, 6, 17]
+# # Contrast Detection
+# T = GaborPatchSpatialFreqAchTest(width=512, height=512, device='cpu')
+# y_indices = [0, 15, 19]
+# x_indices = [0, 6, 17]
 
-i = 0
-for y_index in y_indices:
-    for x_index in x_indices:
-        index = y_index*20+x_index
-        T.save_as_png(index, 'figs/detection/test_'+str(i)+'.png', 'figs/detection/ref.png')
-        i += 1
+# i = 0
+# for y_index in y_indices:
+#     for x_index in x_indices:
+#         index = y_index*20+x_index
+#         T.save_as_png(index, 'figs/detection/test_'+str(i)+'.png', 'figs/detection/ref.png')
+#         i += 1
 
-# Contrast masking
-T = ContrastMakingCoherentAchTest(width=512, height=512, device='cpu')
-x_indices = [0, 15, 19]
-y_indices = [0, 15, 19]
+# # Contrast masking
+# T = ContrastMakingCoherentAchTest(width=512, height=512, device='cpu')
+# x_indices = [0, 15, 19]
+# y_indices = [0, 15, 19]
 
-i = 0
-for y_index in y_indices:
-    for x_index in x_indices:
-        index = y_index*20+x_index
-        T.save_as_png(index, 'figs/masking/test_'+str(i)+'.png', 'figs/masking/ref'+str(i)+'.png')
-        i += 1
+# i = 0
+# for y_index in y_indices:
+#     for x_index in x_indices:
+#         index = y_index*20+x_index
+#         T.save_as_png(index, 'figs/masking/test_'+str(i)+'.png', 'figs/masking/ref'+str(i)+'.png')
+#         i += 1
 
-# Contrast Matching - Freq
-T = ContrastConstancySpatialFreqAchTest(width=512, height=512, device='cpu')
-x_indices = [0, 4, 8]
-y_indices = [0, 2, 6]
+# # Contrast Matching - Freq
+# T = ContrastConstancySpatialFreqAchTest(width=512, height=512, device='cpu')
+# x_indices = [0, 4, 8]
+# y_indices = [0, 2, 6]
 
-i = 0
-for y_index in y_indices:
-    for x_index in x_indices:
-        index = y_index*9+x_index
-        T.save_as_png(index, 'figs/matching_freq/test_'+str(i)+'.png', 'figs/matching_freq/ref'+str(i)+'.png')
-        i += 1
+# i = 0
+# for y_index in y_indices:
+#     for x_index in x_indices:
+#         index = y_index*9+x_index
+#         T.save_as_png(index, 'figs/matching_freq/test_'+str(i)+'.png', 'figs/matching_freq/ref'+str(i)+'.png')
+#         i += 1
 
-# Contrast Matching - color
-T = ContrastConstancyColorTest(width=512, height=512, device='cpu')
-x_indices = [0, 1, 2]
-y_indices = [0, 6, 9]
+# # Contrast Matching - color
+# T = ContrastConstancyColorTest(width=512, height=512, device='cpu')
+# x_indices = [0, 1, 2]
+# y_indices = [0, 6, 9]
 
-i = 0
-for y_index in y_indices:
-    for x_index in x_indices:
-        index = y_index*3+x_index
-        T.save_as_png(index, 'figs/matching_color/test_'+str(i)+'.png', 'figs/matching_color/ref'+str(i)+'.png')
-        i += 1
+# i = 0
+# for y_index in y_indices:
+#     for x_index in x_indices:
+#         index = y_index*3+x_index
+#         T.save_as_png(index, 'figs/matching_color/test_'+str(i)+'.png', 'figs/matching_color/ref'+str(i)+'.png')
+#         i += 1
 
 """ Generate results for each test """
-metric = cvvdp_met
+metric = vmaf_met # Change this to the metric you want to generate results for
 metric_name = metric.name()
 
-for test in [GaborPatchSpatialFreqAchTest, ContrastMakingCoherentAchTest, ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]:
+for test in [  DiskTemporalFreqAchTest ]:
 
     T = test(device='cpu')
     test_name = T.short_name()
@@ -88,7 +88,7 @@ for test in [GaborPatchSpatialFreqAchTest, ContrastMakingCoherentAchTest, Contra
     except:
         title = metric_name + ' Metric'
 
-    filename = 'figs/'+metric_name+'_'+test_name.replace(' - ', '_')+'.png'
+    filename = 'figs/'+metric_name+'_'+test_name.replace(' - ', '_')+'.svg'
 
     T.plot(predictions, reverse_color_order=metric.is_lower_better(), title=title, output_filename=filename,is_first_column=True, fontsize=18)
 

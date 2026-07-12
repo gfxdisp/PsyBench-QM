@@ -200,7 +200,7 @@ class ContrastDetectionTest(SyntheticTest):
         if axis is None:
             fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
-        contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
+        # contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
 
         # Plot the csf results
 
@@ -215,9 +215,9 @@ class ContrastDetectionTest(SyntheticTest):
 
         #Figure parameters
 
-        colorbar = plt.colorbar(contour, ax=axis)
-        if reverse_color_order:
-            colorbar.ax.invert_yaxis()
+        # colorbar = plt.colorbar(contour, ax=axis)
+        # if reverse_color_order:
+        #     colorbar.ax.invert_yaxis()
 
         axis.grid(alpha=0.4, axis='x')
 
@@ -262,8 +262,8 @@ class ContrastDetectionTest(SyntheticTest):
 
         axis.legend(loc=4, fontsize=fontsize-2)
 
-        if title is not None:
-            axis.set_title(title, fontsize=fontsize+2)
+        # if title is not None:
+        #     axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
             fig.savefig(output_filename, dpi=200, bbox_inches='tight')

@@ -195,12 +195,7 @@ for metric_file in os.listdir(input_folder):
 
         predictions = df['Prediction'].to_numpy().reshape((n_levels, n_images))
         predictions = np.mean(predictions, axis=1)[:]
-        #predictions = (predictions - np.mean(predictions)) / np.std(predictions)
-        #predictions = (predictions - np.min(predictions)) / (np.max(predictions) - np.min(predictions))
-        predictions = np.diff(predictions)  
-        predictions = (predictions) / (np.max(predictions) - np.min(predictions))
-        #predictions = (predictions - np.mean(predictions)) / np.std(predictions)
-        score = np.sum(np.diff(predictions) ** 2)
+        score = np.sum(np.diff(predictions) < 0) if predictions[-1] > predictions[0] else np.sum(np.diff(predictions) > 0)
         #score = np.std(predictions)
 
         metrics.append(metric_name)

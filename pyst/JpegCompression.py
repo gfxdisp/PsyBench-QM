@@ -89,165 +89,163 @@ class JpegCompressionTest(SyntheticTest):
         return ['Ref Image', 'JPEG Compression Level']
 
     def units(self):
-        return ['lin', 'lin'], [None, None]
+        return ['linear', 'linear'], [None, None]
     
 
-    def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):
+    # def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):
 
-        conditions = self.get_rows_conditions()
-        condition_names = self.get_row_header()
+    #     conditions = self.get_rows_conditions()
+    #     condition_names = self.get_row_header()
 
-        y_condition = conditions[0].reshape(self.size()).cpu().numpy()
-        y_condition_name = condition_names[0]
+    #     y_condition = conditions[0].reshape(self.size()).cpu().numpy()
+    #     y_condition_name = condition_names[0]
 
-        x_condition = conditions[1].reshape(self.size()).cpu().numpy()
-        x_condition_name = condition_names[1]
+    #     x_condition = conditions[1].reshape(self.size()).cpu().numpy()
+    #     x_condition_name = condition_names[1]
 
-        predictions = predictions.reshape(self.size())
+    #     predictions = predictions.reshape(self.size())
 
-        _, _, gt_contrasts = self.get_gt_results()
-        gt_contrasts = np.array(gt_contrasts)
+    #     _, _, gt_contrasts = self.get_gt_results()
+    #     gt_contrasts = np.array(gt_contrasts)
 
-        if axis is None:
-            fig, axis = plt.subplots(1, 1, figsize=(8, 4))
+    #     if axis is None:
+    #         fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
-        # Plot the results
-        for i in range(len(predictions)):
-            #GT
-            axis.plot(x_condition[i], gt_contrasts[i], linewidth=2, linestyle='--', marker='o', color=self.colors[i])
-            #Prediction
-            axis.plot(x_condition[i], predictions[i], linewidth=2, marker='x', color=self.colors[i])
+    #     # Plot the results
+    #     for i in range(len(predictions)):
+    #         #GT
+    #         axis.plot(x_condition[i], gt_contrasts[i], linewidth=2, linestyle='--', marker='o', color=self.colors[i])
+    #         #Prediction
+    #         axis.plot(x_condition[i], predictions[i], linewidth=2, marker='x', color=self.colors[i])
 
-        axis.grid(alpha=0.4, axis='x')
+    #     axis.grid(alpha=0.4, axis='x')
 
-        scales, units = self.units()
+    #     scales, units = self.units()
 
-        if units[1]:
-            axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=fontsize)
-        else:
-            axis.set_xlabel(x_condition_name, fontsize=fontsize)
+    #     if units[1]:
+    #         axis.set_xlabel(x_condition_name+' ['+units[1]+']', fontsize=fontsize)
+    #     else:
+    #         axis.set_xlabel(x_condition_name, fontsize=fontsize)
 
-        if is_first_column:
-            if units[0]:
-                axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=fontsize)
-            else:
-                axis.set_ylabel(y_condition_name, fontsize=fontsize)
+    #     if is_first_column:
+    #         if units[0]:
+    #             axis.set_ylabel(y_condition_name+' ['+units[1]+']', fontsize=fontsize)
+    #         else:
+    #             axis.set_ylabel(y_condition_name, fontsize=fontsize)
 
-            label = ' '.join(self.latex_name().split(' - ')[:2])
-            label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
+    #         label = ' '.join(self.latex_name().split(' - ')[:2])
+    #         label += '\n' + ' '.join(self.latex_name().split(' - ')[2:])
 
-            if output_filename is None:
-                axis.text(-0.28, 0.5, label, fontsize=fontsize+2, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
+    #         if output_filename is None:
+    #             axis.text(-0.28, 0.5, label, fontsize=fontsize+2, fontweight='bold', transform=axis.transAxes, ha='center', va='center', rotation=90)
         
-        axis.set_xscale(scales[1])
-        axis.set_yscale(scales[0])
+    #     axis.set_xscale(scales[1])
+    #     axis.set_yscale(scales[0])
         
-        x_ticks, y_ticks = self.get_ticks()
+    #     x_ticks, y_ticks = self.get_ticks()
 
-        formatted_xticks = [f'{tick:g}' for tick in x_ticks]
+    #     formatted_xticks = [f'{tick:g}' for tick in x_ticks]
 
-        axis.set_xticks(x_ticks, formatted_xticks, fontsize=fontsize-2)
+    #     axis.set_xticks(x_ticks, formatted_xticks, fontsize=fontsize-2)
 
-        if is_first_column:
-            axis.set_yticks(y_ticks, y_ticks, fontsize=fontsize-2)
-        else:
-            axis.set_yticks([])
+    #     if is_first_column:
+    #         axis.set_yticks(y_ticks, y_ticks, fontsize=fontsize-2)
+    #     else:
+    #         axis.set_yticks([])
 
-        axis.set_xlim([np.min(x_ticks), np.max(x_ticks)])
-        axis.set_ylim([np.min(y_ticks), np.max(y_ticks)])
+    #     axis.set_xlim([np.min(x_ticks), np.max(x_ticks)])
+    #     axis.set_ylim([np.min(y_ticks), np.max(y_ticks)])
 
-        custom_legend = [
-            Line2D([0], [0], linestyle='-', marker='x', color='black', label='Metric Prediction'),
-            Line2D([0], [0], linestyle='--', marker='o', color='black', label='Ground-truth')
-        ]
+    #     custom_legend = [
+    #         Line2D([0], [0], linestyle='-', marker='x', color='black', label='Metric Prediction'),
+    #         Line2D([0], [0], linestyle='--', marker='o', color='black', label='Ground-truth')
+    #     ]
 
-        axis.legend(handles=custom_legend, loc=4, fontsize=fontsize-2)
+    #     axis.legend(handles=custom_legend, loc=4, fontsize=fontsize-2)
 
-        if title is not None:
-            axis.set_title(title, fontsize=fontsize+2)
+    #     if title is not None:
+    #         axis.set_title(title, fontsize=fontsize+2)
 
-        if output_filename is not None:
-            fig.savefig(output_filename, dpi=200, bbox_inches='tight')
+    #     if output_filename is not None:
+    #         fig.savefig(output_filename, dpi=200, bbox_inches='tight')
         
-        if axis is None:
-            plt.close(fig)
+    #     if axis is None:
+    #         plt.close(fig)
     
     def plotly(self, predictions, reverse_color_order=False, title='', fig_id=None):
         # The code will return the JS script that should work with plotly
+        js_command = ""
 
-        js_command = ""        
+        # Reshape and compute mean predictions across images
+        preds = predictions.reshape((self.N_levels, self.N_images))
+        preds = np.mean(preds, axis=1)  # length = N_levels (e.g. 0..100)
 
-        predictions = predictions.reshape((self.N_levels, self.N_images))
-        predictions = np.mean(predictions, axis=1)
-        #predictions = (predictions - np.mean(predictions)) / np.std(predictions)
-        predictions = np.diff(predictions) 
-        predictions = (predictions) / (np.max(predictions) - np.min(predictions))
+        # Compute derivative (difference between consecutive levels)
+        deriv = np.diff(preds)  # length = N_levels-1 (e.g. 1..100)
+        deriv2 = np.diff(deriv)  # length = N_levels-2 (e.g. 2..100)
 
+        # Apply reverse color ordering if requested (flip sign)
         if reverse_color_order:
-            predictions = -1 * predictions
-        
+            preds = -preds
+            deriv = -deriv
+            deriv2 = -deriv2
+
         condition_names = self.get_row_header()
         units_scales, units_names = self.units()
 
-
-        # Now Making the figure!
-
-        y_condition_name = 'Derivative of prediction (Normalized)'
+        # Axis / label names
+        y_pred_name = 'Prediction'
+        y_deriv_name = 'Derivative of prediction'
         if units_names[0] is not None:
-            y_condition_name += " ["+units_names[0]+"]"
+            y_pred_name += " [" + units_names[0] + "]"
+            y_deriv_name += " [" + units_names[0] + "]"
 
         x_condition_name = condition_names[1]
         if units_names[1] is not None:
-            x_condition_name += " ["+units_names[1]+"]"
+            x_condition_name += " [" + units_names[1] + "]"
 
+        # X values for prediction (full) and derivative (between levels)
+        x_pred = self.jpeg_levels.cpu().numpy()
+        x_deriv = self.jpeg_levels.cpu().numpy()[1:]
+        x_deriv2 = self.jpeg_levels.cpu().numpy()[2:]
+
+        # Build JS trace strings for prediction and derivative
+        def arr_to_js(a):
+            def to_js_value(x):
+                value = float(x)
+                return 'null' if not np.isfinite(value) else str(value)
+
+            return '[' + ', '.join(to_js_value(x) for x in a.tolist()) + ']'
+
+        trace_pred = "var trace_pred = { x: " + arr_to_js(x_pred) + ", y: " + arr_to_js(preds) + ", mode: 'lines', name: 'Prediction', line: {width:2} };\n"
+        # Use the same linestyle for derivative as for prediction (solid)
+        trace_deriv = "var trace_deriv = { x: " + arr_to_js(x_deriv) + ", y: " + arr_to_js(deriv) + ", mode: 'lines', name: 'Derivative', yaxis: 'y2', line: {width:2} };\n"
+        trace_deriv2 = "var trace_deriv2 = { x: " + arr_to_js(x_deriv2) + ", y: " + arr_to_js(deriv2) + ", mode: 'lines', name: 'Second derivative', yaxis: 'y2', line: {width:2, color: 'purple'} };\n"
+
+        js_command += trace_pred + trace_deriv + trace_deriv2
+
+        js_command += "var data = [trace_pred, trace_deriv, trace_deriv2];\n"
+        # js_command += "var data = [trace_pred];\n"
+
+        # Tick values for x-axis
         x_tick_vals = self.get_ticks()
+        x_ticks_js = '[' + ', '.join(str(int(v)) for v in x_tick_vals) + ']'
 
-        x_condition = self.jpeg_levels.cpu().numpy()[2:]
+        # Layout: two y-axes (left = prediction, right = derivative and second derivative)
+        axes_info = (
+            "xaxis: {type:'linear', range: [" + str(float(np.min(x_pred))) + "," + str(float(np.max(x_pred))) + "], "
+            "tickvals: " + x_ticks_js + ", ticktext: " + x_ticks_js + ", title:'" + x_condition_name + "'}, "
+            "yaxis: {type:'linear', title:'" + y_pred_name + "'}, "
+            "yaxis2: {type:'linear', title:'" + y_deriv_name + "', overlaying: 'y', side: 'right', showgrid: false}"
+        )
 
-        # Create the necessary variables now - Just lines basically
+        edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1}}]"
+        margin_info = r"margin: {l:50, r:60, t:50, b:40}"
 
-        trace = 'var trace = { '
+        js_command += "\nvar layout = {\ntitle: {text: '" + title + "', y: 0.95}, width:450, height:400, " + axes_info + ",\n" + edge_info + ",\n" + margin_info + "\n};"
 
-        x = 'x: ['
-        for j, val in enumerate(x_condition):
-            if j>0:
-                x += ', '
-            x += str(val)
-        x += ']'
-
-        y = 'y: ['
-        for j, val in enumerate(predictions):
-            if j>0:
-                y += ', '
-            y += str(val)
-        y += ']'
-
-        trace += x + ', ' + y + ", mode: 'lines', line: {width:2}"
-        trace += '};'
-
-        trace += '\n'
-
-        trace += 'var data = [trace];\n'
-
-        js_command = trace
-
-        # Layout of the Figure
-
-        x = "["
-        for i, el in enumerate(x_tick_vals):
-            if i>0:
-                x += ", "
-            x += str(el)
-        x += "]"
-
-        axes_info = "xaxis: {type:'lin', range: ["+str(np.min(x_condition))+","+str(np.max(x_condition))+"], tickvals: "+x+", ticktext: "+x+", title:'"+x_condition_name+"'}, yaxis: {type:'lin', title:'"+y_condition_name+"'}"
-        edge_info = "shapes: [{type:'rect', x0: 0, y0: 0, x1:1, y1:1, xref: 'paper', yref: 'paper', line: {color: 'black', width:1},}]"
-        margin_info = r"margin: {l:50, r:40, t:50, b:40}"
-
-        js_command += "\nvar layout = {\ntitle: {text: '"+title+"', y: 0.95}, width:450, height:400, "+axes_info+",\n"+edge_info+",\n"+margin_info+"\n};"
-        
         if fig_id:
-            js_command += "\nPlotly.newPlot('"+fig_id+"', data, layout);\n\n"
+            js_command += "\nPlotly.newPlot('" + fig_id + "', data, layout);\n\n"
 
         return js_command
 

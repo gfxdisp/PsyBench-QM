@@ -6,6 +6,9 @@ import shutil
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.ContrastMatching import *
+from pyst.JpegCompression import *
+from pyst.Glare import *
+from pyst.GaborAmbientLightTest import *
 from metrics import *
 
 from test_reports_utils.html_report import html_report
@@ -18,20 +21,32 @@ if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
 
-    tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
-             ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
-             GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
-             GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest,
-             ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
-
-    metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, nlpd_metric,
+    # tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
+    #          ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
+    #          GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
+    #          GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest,
+    #          ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest] #,GlareTest]
+    
+    metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric,
                fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, scielab_metric, ldr_flip_metric,
                de2000, hyab, ictcp, msswd_metric,
-               wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric,
-               vmaf_met, speedqa_metric, funque_met,
+               wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric,
+               vmaf_met,
                mad_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
-        
+               #, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met,
+               #cvvdp_ml_saliency_plus_met, cvvdp_ml_dino_fusion_met, cvvdp_ml_dino_fusion_finetuned_met, cvvdp_ml_saliency_plus_finetuned_met, dino_v1_cls_met, cvvdp_ml_dino_fusion_bandfreq_met]
+
+    # tests = [GaborAmbientLightTest]
+    # metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met]
+    # metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, vmaf_met, vmaf_neg_met, psnry_metric, ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, lpips_metric]
+
+    # tests = [JpegCompressionTest]
+    # metrics = [psnry_metric, ssim_metric, cvvdp_met, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
     
+    tests = [GlareHalfRingLuminanceTest]
+    # metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, vmaf_met, vmaf_neg_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, lpips_metric]
+    metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
+
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'
 
@@ -46,6 +61,7 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(output_folder, 'previews'))
         os.makedirs(os.path.join(output_folder, 'plots'))
         os.makedirs(os.path.join(output_folder, 'css_files'))
+        os.makedirs(os.path.join(output_folder, 'js_files'))
         os.makedirs(os.path.join(output_folder, 'html_preview_files'))
 
     shutil.copyfile(os.path.join('test_reports_utils', 'style.css'), os.path.join(output_folder, 'css_files', 'style.css'))
@@ -167,7 +183,9 @@ if __name__ == '__main__':
 
                     hr_test_preview.beg_div(class_tag='cell-content')
                     hr_test_preview.insert_image(os.path.join('..' ,test_filename), mousedown_image=os.path.join('..', ref_filename), class_tag="toggle-image")
-                    if test_name != 'Contrast Matching - Across Cardinal Color Directions':
+                    if test_name =='JPEG Compression Test':
+                        hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]}, {y_variable_name} = {y_variable[condition_index]:.2g}")
+                    elif test_name != 'Contrast Matching - Across Cardinal Color Directions':
                         hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]:.2g}")
                     else:
                         hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]}")
@@ -203,45 +221,54 @@ if __name__ == '__main__':
         hr_test.beg_div(class_tag='image-container')
 
         for j, M in enumerate(metrics):
+            for apply_glare_model in [False, True]:
+                for mtf_model in ['hdrvdp', 'cie99', 'deeley', 'ijspeert']:
 
-            try:
+                    try:
 
-                metric_name = M.name()
+                        # apply_glare_model = False
+                        # mtf_model = ''
 
-                metric_id = test_name.lower().replace(' ', '_').replace('(', '').replace(')', '')+'_'+metric_name.lower().replace(' ', '_')
+                        metric_name = M.name()
+                        if apply_glare_model:
+                            metric_name += '_glare_'+mtf_model
 
-                metric_predictions_file = os.path.join(results_folder, metric_name+'.csv')
-                metric_predictions_df = pd.read_csv(metric_predictions_file)
+                        metric_id = test_name.lower().replace(' ', '_').replace('(', '').replace(')', '')+'_'+metric_name.lower().replace(' ', '_')
 
-                predictions = metric_predictions_df['Prediction'].to_numpy()
-                try:
-                    alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
-                    if test_name.split(' - ')[0] == 'Contrast Matching':
-                        title = metric_name + ' Metric<br>RMSE = ' + str(round(np.abs(alignment_score), 3))
-                    else:
-                        title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
-                except:
-                    title = metric_name + ' Metric'
+                        metric_predictions_file = os.path.join(results_folder, metric_name+'.csv')
+                        metric_predictions_df = pd.read_csv(metric_predictions_file)
 
-                if generate_metrics_results:
-                    js_command = Test.plotly(predictions, reverse_color_order=M.is_lower_better(), title=title, fig_id=metric_id)
+                        predictions = metric_predictions_df['Prediction'].to_numpy()
+                        try:
+                            alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
+                            if test_name.split(' - ')[0] == 'Contrast Matching':
+                                title = metric_name + ' Metric<br>RMSE = ' + str(round(np.abs(alignment_score), 3))
+                            elif test_name == 'JPEG Compression Test':
+                                title = metric_name + ' Metric<br>Non monotonicity score = ' + str(round(np.abs(alignment_score)))
+                            else:
+                                title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
+                        except:
+                            title = metric_name + ' Metric'
 
-                # Similarly to the main html file we need to create a JS file!
+                        if generate_metrics_results:
+                            js_command = Test.plotly(predictions, reverse_color_order=M.is_lower_better(), title=title, fig_id=metric_id)
+                        
+                        # Similarly to the main html file we need to create a JS file!
 
-                js_main.println(js_command)
+                        js_main.println(js_command)
 
-                hr_test.beg_div(id_tag = metric_id)
-                hr_test.close_div()
+                        hr_test.beg_div(id_tag = metric_id)
+                        hr_test.close_div()
 
-            except:
-                logging.error(f'Failed on test {test_name} and the {metric_name} metric')
+                    except:
+                        logging.error(f'Failed on test {test_name} and the {metric_name} metric')
 
         hr_test.close_div()
         hr_test.close_div()
 
         hr_test.close(js_filename)
         js_main.close()
-    
+        
     hr_main.close()
 
 

@@ -7,23 +7,22 @@ from pyst.ContrastMatching import *
 from metrics import *
 
 
-tests = [GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
+tests = [GaborPatchSpatialFreqAchTest,
          ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
          DiskTemporalFreqAchTest,
          ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
 
 # We will have to define different metrics for different tests
-metrics =[[psnry_metric, ssim_metric, dists_metric, ldr_flip_metric, cvvdp_met],
-          [fsim_metric, lpips_metric, msswd_metric, ldr_flip_metric, cvvdp_met],
-          [psnry_metric, funque_met, lpips_metric, ictcp, cvvdp_met],
-          [psnry_metric, funque_met, fsim_metric, scielab_metric, cvvdp_met],
-          [psnry_metric, ssim_metric, lpips_vgg_metric, funque_met, cvvdp_met],
-          [psnry_metric, ssim_metric, lpips_vgg_metric, funque_met, cvvdp_met],
+metrics =[[psnry_metric, ssim_metric, lpips_vgg_metric, ldr_flip_metric, cvvdp_met],
+          [psnry_metric, lpips_vgg_metric, vmaf_met, funque_met, cvvdp_met],
+          [psnry_metric, lpips_vgg_metric, topiq_metric, funque_met, cvvdp_met],
           [vmaf_met, speedqa_metric, funque_met, fvvdp_met, cvvdp_met],
           [psnry_metric, ldr_flip_metric, dss_metric, topiq_metric, cvvdp_met],
           [fsim_metric, de2000, dists_metric, ldr_flip_metric, cvvdp_met]]
 
+tests = [GaborPatchSpatialFreqAchTest]
 
+metrics = [[psnry_metric]]
 
 output_path = 'figs'
 
@@ -52,6 +51,8 @@ for i, test in enumerate(tests):
         # Get Alignment Score
         try:
             alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
+            if metric_name == 'VMAF_v0.6.1':
+                metric_name = 'VMAF v0.6.1'
             if test_name.split(' - ')[0] == 'Contrast Matching':
                 title = metric_name + ' [RMSE=' + str(round(np.abs(alignment_score), 3)) +']'
             else:

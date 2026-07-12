@@ -9,32 +9,31 @@ from metrics import *
 tab_caption = 'First attempt of the table'
 tab_label = 'results'
 
-latex_text = '\\begin{table*}[]\n\centering\n\caption{'+tab_caption+'}\n\label{tab:'+tab_label+'}\n\\resizebox{\\textwidth}{!}{%\n\\begin{tabular}{|ll'
+latex_text = '\\begin{table}[]\n\centering\n\caption{'+tab_caption+'}\n\label{tab:'+tab_label+'}\n\\resizebox{\\linewidth}{!}{%\n\\begin{tabular}{|ll'
 
-tests_cat = ['Contrast Detection', 'Contrast Masking', r'\begin{tabular}[c]{@{}c@{}}Flicker \\ Detection\end{tabular}', 'Contrast Matching']
+tests_cat = [r'\begin{tabular}[c]{@{}c@{}}Contrast \\ Detection\end{tabular}', 'Contrast Masking', r'\begin{tabular}[c]{@{}c@{}}Flicker \\ Detection\end{tabular}', 'Contrast Matching']
 
-tests = [[GaborPatchSpatialFreqAchTest, GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, GaborPatchSpatialFreqAchTransientTest,
-         GaborPatchLuminanceAchTest, GaborPatchSizeAchTest],
+tests = [[GaborPatchSpatialFreqAchTest],
          [ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest],
          [DiskTemporalFreqAchTest],
          [ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]]
 
-higher_better_scale = [[True, True, True, True, True, True], [True, True], [True], [False, False] ]
+higher_better_scale = [[True], [True, True], [True], [False, False] ]
 
 metrics = [[None], 
            [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric, nlpd_metric],
            [fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, scielab_metric, ldr_flip_metric],
            [de2000, hyab, ictcp, msswd_metric], 
-           [wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric, deepdc_metric], 
+           [wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric], 
            [vmaf_met, speedqa_metric, funque_met],
-           [mad_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]]
+           [mad_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]]
 
 citations = [[None], [None, 'wang2004image', 'wang2003multiscale', 'xue2013gradient', 'zhang2017gradient', 'sheikh2006image' ,'balanov2015image', 'laparra2016perceptual'],
              ['zhang2011fsim', 'zhang2014vsi', 'nafchi2016mean', 'reisenhofer2018haar', 'zhang1996spatial', 'andersson2020flip'],
              ['CIE_2018', 'abasi2020distance', 'ITU-R_2124', 'he2024ms-swd'],
-             ['bosse2017deep', 'zhang2018perceptual', 'zhang2018perceptual', 'ghildyal2022shift', 'ding2020image', 'lao2022attentions', 'chen2024topiq', 'zhu2023DeepDC'],
+             ['bosse2017deep', 'zhang2018perceptual', 'zhang2018perceptual', 'ghildyal2022shift', 'ding2020image', 'lao2022attentions', 'chen2024topiq'],
              ['li2018vmaf', 'bampis2017speed', 'venkataramanan2022funque'],
-             ['larson2010most', 'mantiuk2023hdr', 'mantiuk2021fovvideovdp', 'cvvdp']]
+             ['larson2010most', 'mantiuk2023hdr', 'mantiuk2021fovvideovdp', 'cvvdp', 'hammou2025colorvideovdp', 'hammou2025colorvideovdp']]
 
 categories = [None, 'Traditional metrics', r'Traditional\\color metrics', r'Color\\difference\\measures', r'Deep-learning\\based metrics', r'Video\\metrics', r'Visual\\difference\\predictors']
 
@@ -64,7 +63,7 @@ for i in range(len(tests_cat)):
         latex_text += ' & \multicolumn{'+str(len(tests[i]))+'}{c|}{'+tests_cat[i]+'}'
         cline += len(tests[i])
 
-if start is not None:
+if start is not None and cline+start > start:
     clines.append([start, cline+start])
 
 # cline information
@@ -81,7 +80,7 @@ for cat_metric, cat_citation, cat in zip(metrics, citations, categories):
                 latex_text += ' \\\ \n\hline \hline\n'
                 latex_text += '\multicolumn{1}{|l|}{\multirow{'+str(len(cat_metric))+r'}{*}{ \rotatebox[origin=c]{90}{ \begin{tabular}[c]{@{}c@{}}' + cat + ' \end{tabular}}}} &'
             else:
-                latex_text += ' \\\ \n\cline{2-13}'
+                latex_text += ' \\\ \n\cline{2-8}'
                 latex_text += ' \multicolumn{1}{|l|}{} &'
 
             metric_name = metric.name()
@@ -150,7 +149,7 @@ for cat_metric, cat_citation, cat in zip(metrics, citations, categories):
 
 
 latex_text += '\\\ \n\hline\n'
-latex_text += '\end{tabular}%\n}\n\end{table*}'
+latex_text += '\end{tabular}%\n}\n\end{table}'
 
 print(latex_text)
 

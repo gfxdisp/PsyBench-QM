@@ -29,7 +29,7 @@ try:
     from metrics.pyiqa_metrics.stlpips_vgg_metric import stlpips_vgg_metric
     from metrics.pyiqa_metrics.stlpips_alex_metric import stlpips_metric
     from metrics.pyiqa_metrics.msswd_metric import msswd_metric
-    from metrics.pyiqa_metrics.deepdc_metric import deepdc_metric
+    # from metrics.pyiqa_metrics.deepdc_metric import deepdc_metric
     from metrics.pyiqa_metrics.brisque_metric import brisque_metric
     from metrics.pyiqa_metrics.hyperiqa_metric import hyperiqa_metric
     from metrics.pyiqa_metrics.arniqa_metric import arniqa_metric
@@ -52,9 +52,18 @@ except ImportError as e:
 from metrics.vmaf_metric import vmaf_met
 from metrics.vmaf_neg_metric import vmaf_neg_met
 from metrics.funque_metric import funque_met
+# from metrics.vmaf_v1_metric import vmaf_v1_met
 
 try:
-    from metrics.cvvdp_metric import cvvdp_met
+    from metrics.cvvdp_metric import cvvdp_met , cvvdp_ml_saliency_met, cvvdp_ml_transformer_met #, cvvdp_ml_dino_fusion_met, cvvdp_ml_dino_fusion_finetuned_met, cvvdp_ml_saliency_plus_met, cvvdp_ml_saliency_plus_finetuned_met
+    # from metrics.cvvdp_metric import cvvdp_ml_dino_fusion_bandfreq_met
+    # from metrics.cvvdp_metric import dino_v1_cls_met
+    from metrics.cvvdp_ncsf_metric import cvvdp_ncsf_mtf_met
+    from metrics.cvvdp_ncsf_metric import cvvdp_ncsf_mtf_cie99_met
+    from metrics.cvvdp_ncsf_metric import cvvdp_ncsf_mtf_deeley_met
+    from metrics.cvvdp_ncsf_metric import cvvdp_ncsf_mtf_ijspeert_met
+    # from metrics.cvvdp_ncsf_metric import cvvdp_ncsf_mtf_trained_met
+    # from metrics.cvvdp_ncsf_metric import cvvdp_ncsf_mtf_sensitivity_10_met
 except ImportError as e:
     logging.warning( "Failed to import pycvvdp. Ensure that you have the full installation of ColorVideoVDP.")
 

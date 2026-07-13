@@ -19,4 +19,3 @@ scipy
 tensorboard
 tqdm
 scikit-learn
-DeepDC-PyTorch

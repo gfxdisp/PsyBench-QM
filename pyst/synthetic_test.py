@@ -60,6 +60,28 @@ class SyntheticTest:
     def latex_name(self):
         pass
 
+    def compute_alignment_score(self, predictions):
+        """
+        Default alignment score: Spearman correlation between the swept
+        multiplier axis (the first row-header condition) and a metric's
+        predictions. Only meaningful when the test was run in alignment-score
+        mode (see is_alignmenet_score); returns None otherwise. Test families
+        with a different notion of alignment score (e.g. contrast matching)
+        override this.
+        """
+        if not getattr(self, 'is_alignmenet_score', False):
+            return None
+
+        from scipy.stats import spearmanr
+
+        multipliers = self.get_rows_conditions()[0]
+        try:
+            multipliers = multipliers.cpu().numpy()
+        except AttributeError:
+            pass
+
+        return spearmanr(multipliers, predictions, nan_policy='omit').statistic
+
     def preview(self, index):
         vid_source = self.get_test_condition(index)
 

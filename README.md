@@ -145,12 +145,9 @@ For larger or repeatable runs, put the same options in a JSON config file instea
 python run_and_plot.py --config my_run.json
 ```
 
-Pass `--alignment-score` to run the tests in alignment-score mode, which produces the error metrics consumed by `get_alignment_scores.py`. Not every test supports this - `ContrastConstancySpatialFreqAchTest` and `ContrastConstancyColorTest` don't - unsupported tests are skipped with a clear error message rather than failing the whole run.
+Pass `--alignment-score` to run tests in alignment-score mode (near-threshold condition sampling). Not every test supports this - `ContrastConstancySpatialFreqAchTest` and `ContrastConstancyColorTest` don't - unsupported tests are skipped with a clear error message rather than failing the whole run.
 
-Once you have alignment-score results, compute the error metrics from them with:
-```commandline
-python get_alignment_scores.py
-```
+Whichever mode a test is run in, `run_and_plot.py` also computes its alignment score automatically for every metric - there's no separate scoring script to run. Most tests score by Spearman correlation between the swept condition and the metric's predictions (only meaningful in alignment-score mode); the Contrast Matching tests use their own RMSE/error-based score instead (meaningful in their normal run mode). Scores are shown in the plot title and merged into `alignment_scores/<test>.csv`, accumulating across separate runs rather than being overwritten. See `compute_alignment_score()` in `pyst/synthetic_test.py` (default) and `pyst/ContrastMatching.py` (overrides) if you're adding a new test and want to define its own alignment score.
 
 ## How to generate the results webpage
 

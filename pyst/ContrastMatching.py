@@ -11,6 +11,7 @@ from pycvvdp.display_model import vvdp_display_photo_eotf, vvdp_display_geometry
 import json
 from scipy.optimize import minimize, root_scalar, minimize_scalar
 from matplotlib.lines import Line2D
+from sklearn.metrics import root_mean_squared_error
 
 
 class ContrastConstancySpatialFreqAchTest(SyntheticTest):
@@ -235,6 +236,21 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
             gt_contrasts.append(df['ref_contrast_index_'+str(i)]['y_test_contrast_average'])
 
         return ref_contrasts, spatial_frequencies, gt_contrasts
+
+    def compute_alignment_score(self, predictions):
+        _, _, gt_contrasts = self.get_gt_results()
+
+        predictions = np.asarray(predictions).reshape(self.size())
+        gt_contrasts = np.array(gt_contrasts)
+
+        nan_indices = np.isnan(predictions)
+        if np.sum(nan_indices) > self.size()[1] * 2:
+            return None
+
+        gt_contrasts = gt_contrasts[~nan_indices]
+        predictions = predictions[~nan_indices]
+
+        return root_mean_squared_error(np.log10(gt_contrasts), np.log10(predictions))
     
 
     def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):
@@ -539,6 +555,16 @@ class ContrastConstancyColorTest(SyntheticTest):
     def units(self):
         return ['log', 'lin'], [None, None]
 
+    def compute_alignment_score(self, predictions):
+        predictions = np.asarray(predictions).reshape(self.size())
+
+        squared_error = (predictions[:, 0] - predictions[:, 1])**2 + \
+                         (predictions[:, 0] - predictions[:, 2])**2 + \
+                         (predictions[:, 1] - predictions[:, 2])**2
+        mean_predictions = (np.max(predictions) - np.min(predictions))**2
+        normalized_squared_error = squared_error / mean_predictions
+
+        return float(np.sqrt(np.abs(np.mean(normalized_squared_error))))
 
     def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):
 
@@ -899,6 +925,21 @@ class ContrastConstancySpatialFreqAchNoiseTest(SyntheticTest):
             gt_contrasts.append(df['ref_contrast_index_'+str(i)]['y_test_contrast_average'])
 
         return ref_contrasts, spatial_frequencies, gt_contrasts
+
+    def compute_alignment_score(self, predictions):
+        _, _, gt_contrasts = self.get_gt_results()
+
+        predictions = np.asarray(predictions).reshape(self.size())
+        gt_contrasts = np.array(gt_contrasts)
+
+        nan_indices = np.isnan(predictions)
+        if np.sum(nan_indices) > self.size()[1] * 2:
+            return None
+
+        gt_contrasts = gt_contrasts[~nan_indices]
+        predictions = predictions[~nan_indices]
+
+        return root_mean_squared_error(np.log10(gt_contrasts), np.log10(predictions))
     
 
     def plot(self, predictions, reverse_color_order=False, title=None, output_filename=None, axis=None, is_first_column=False, fontsize=12):

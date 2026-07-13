@@ -6,6 +6,12 @@ Tests and metrics are looked up by name in pyst.registry / metrics.registry,
 which auto-discover every test/metric class in the pyst/ and metrics/
 packages - no manual registration needed.
 
+Each test's alignment score is computed automatically (via the test's own
+compute_alignment_score(), see pyst/synthetic_test.py and the overrides in
+pyst/ContrastMatching.py) and merged into alignment_scores/<test's preview
+folder>.csv, shown in the plot title where available. There's no separate
+scoring step to run.
+
 Examples:
     python run_and_plot.py --list-tests
     python run_and_plot.py --list-metrics
@@ -31,6 +37,30 @@ from tqdm import trange
 from metrics.registry import get_metrics_registry
 from pyst.registry import get_tests_registry
 
+ALIGNMENT_SCORES_DIR = 'alignment_scores'
+
+
+def _update_alignment_scores_csv(preview_folder, metric_scores):
+    """
+    Merge metric_scores ({metric_name: score}) into
+    alignment_scores/<preview_folder>.csv, keeping any existing rows for
+    metrics not in this run (so results from separate runs accumulate,
+    rather than each run wiping out the others').
+    """
+    csv_path = os.path.join(ALIGNMENT_SCORES_DIR, preview_folder + '.csv')
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+
+    if os.path.exists(csv_path):
+        existing = pd.read_csv(csv_path).set_index('Metric')['Score'].to_dict()
+    else:
+        existing = {}
+
+    existing.update(metric_scores)
+
+    df = pd.DataFrame({'Metric': list(existing.keys()), 'Score': list(existing.values())})
+    df.to_csv(csv_path, index=False)
+    logging.info(f"Saved alignment scores: {csv_path}")
+
 
 def run_and_plot(tests, metrics, output_dir, alignment_score=False):
     """
@@ -41,9 +71,10 @@ def run_and_plot(tests, metrics, output_dir, alignment_score=False):
 
     Writes <output_dir>/<test.get_preview_folder()>/<metric_name>.csv (condition
     columns + a 'Prediction' column) and, where the test supports it, a matching
-    <metric_name>.png plot in the same folder. This is the same layout the old
-    per-test scripts produced, so results here are readable by
-    generate_webpage.py and get_alignment_scores.py.
+    <metric_name>.png plot in the same folder, plus an updated
+    alignment_scores/<test.get_preview_folder()>.csv. This is the same layout the
+    old per-test scripts produced, so results here are readable by
+    generate_webpage.py.
     """
     os.makedirs(output_dir, exist_ok=True)
 
@@ -104,24 +135,41 @@ def run_and_plot(tests, metrics, output_dir, alignment_score=False):
                 f"interactive plotly version instead."
             )
 
+        alignment_scores = {}
+
         for j, Metric in enumerate(metric_instances):
             results_df['Prediction'] = scores[:, j]
             csv_path = os.path.join(test_output_dir, f"{metric_names[j]}.csv")
             results_df.to_csv(csv_path)
             logging.info(f"Saved scores: {csv_path}")
 
+            align_score = None
+            try:
+                align_score = Test.compute_alignment_score(scores[:, j])
+            except Exception:
+                logging.exception(f"Failed to compute alignment score for '{test_name}' / {metric_names[j]}")
+            if align_score is not None:
+                alignment_scores[metric_names[j]] = align_score
+
             if can_plot:
+                title = f"{metric_names[j]} — {test_name}"
+                if align_score is not None:
+                    title += f"\nAlignment Score = {align_score:.3f}"
+
                 plot_path = os.path.join(test_output_dir, f"{metric_names[j]}.png")
                 try:
                     Test.plot(
                         predictions=scores[:, j],
                         reverse_color_order=Metric.is_lower_better(),
-                        title=f"{metric_names[j]} — {test_name}",
+                        title=title,
                         output_filename=plot_path,
                     )
                     logging.info(f"Saved plot: {plot_path}")
                 except Exception:
                     logging.exception(f"Failed to plot '{test_name}' / {metric_names[j]}")
+
+        if alignment_scores:
+            _update_alignment_scores_csv(Test.get_preview_folder(), alignment_scores)
 
 
 def _load_config(path):

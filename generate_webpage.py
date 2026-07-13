@@ -1,15 +1,31 @@
+import argparse
+import os
+
+import numpy as np
 import pandas as pd
 import logging
 from tqdm import trange
 import shutil
 
-from pyst.GaborPatch import *
-from pyst.ContrastMasking import *
-from pyst.ContrastMatching import *
-from metrics import *
+from metrics.registry import get_metrics_registry
+from pyst.registry import get_tests_registry
 
 from test_reports_utils.html_report import html_report
 from test_reports_utils.js_report import js_report
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate the interactive (Plotly) results webpage for one or more tests/metrics. "
+                     "Tests and metrics are looked up by name - see --list-tests / --list-metrics.")
+    parser.add_argument('--tests', nargs='+', metavar='TEST', help="Test class name(s) to include. See --list-tests.")
+    parser.add_argument('--metrics', nargs='+', metavar='METRIC', help="Metric name(s) to include. See --list-metrics.")
+    parser.add_argument('--input-dir', default='results', help="Directory containing the per-test/metric score CSVs (default: results).")
+    parser.add_argument('--output-dir', default='synthetic_test_webpage_plotly', help="Directory to write the webpage into (default: synthetic_test_webpage_plotly).")
+    parser.add_argument('--generate-stimuli', action='store_true', help="Also (re)generate the preview stimulus images/videos.")
+    parser.add_argument('--list-tests', action='store_true', help="Print all available test names and exit.")
+    parser.add_argument('--list-metrics', action='store_true', help="Print all available metric names and exit.")
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
@@ -17,26 +33,36 @@ if __name__ == '__main__':
     level = logging.INFO
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
+    args = _parse_args()
 
-    tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
-             ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest,
-             GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
-             GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest,
-             ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
+    tests_registry = get_tests_registry()
+    metrics_registry = get_metrics_registry()
 
-    metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric,
-               fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, scielab_metric, ldr_flip_metric,
-               de2000, hyab, ictcp, msswd_metric,
-               wadiqam_metric, lpips_metric, lpips_vgg_metric, stlpips_metric, dists_metric, ahiq_metric, topiq_metric,
-               vmaf_met,
-               mad_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
-               #, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met,
-               #cvvdp_ml_saliency_plus_met, cvvdp_ml_dino_fusion_met, cvvdp_ml_dino_fusion_finetuned_met, cvvdp_ml_saliency_plus_finetuned_met, dino_v1_cls_met, cvvdp_ml_dino_fusion_bandfreq_met]
+    if args.list_tests:
+        print('\n'.join(sorted(tests_registry)))
+        raise SystemExit(0)
 
-    input_folder = 'results'
-    output_folder = 'synthetic_test_webpage_plotly'
+    if args.list_metrics:
+        print('\n'.join(sorted(metrics_registry)))
+        raise SystemExit(0)
 
-    generate_stimuli = False
+    if not args.tests or not args.metrics:
+        raise SystemExit("--tests and --metrics are required (or use --list-tests / --list-metrics to see options).")
+
+    try:
+        tests = [tests_registry[name] for name in args.tests]
+    except KeyError as e:
+        raise SystemExit(f"Unknown test {e}. Use --list-tests to see available tests.")
+
+    try:
+        metrics = [metrics_registry[name] for name in args.metrics]
+    except KeyError as e:
+        raise SystemExit(f"Unknown metric {e}. Use --list-metrics to see available metrics.")
+
+    input_folder = args.input_dir
+    output_folder = args.output_dir
+
+    generate_stimuli = args.generate_stimuli
     generate_metrics_results = True
 
 
@@ -207,47 +233,38 @@ if __name__ == '__main__':
         hr_test.beg_div(class_tag='image-container')
 
         for j, M in enumerate(metrics):
-            for apply_glare_model in [False, True]:
-                for mtf_model in ['hdrvdp', 'cie99', 'deeley', 'ijspeert']:
+            try:
+                metric_name = M.name()
 
-                    try:
+                metric_id = test_name.lower().replace(' ', '_').replace('(', '').replace(')', '')+'_'+metric_name.lower().replace(' ', '_')
 
-                        # apply_glare_model = False
-                        # mtf_model = ''
+                metric_predictions_file = os.path.join(results_folder, metric_name+'.csv')
+                metric_predictions_df = pd.read_csv(metric_predictions_file)
 
-                        metric_name = M.name()
-                        if apply_glare_model:
-                            metric_name += '_glare_'+mtf_model
+                predictions = metric_predictions_df['Prediction'].to_numpy()
+                try:
+                    alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
+                    if test_name.split(' - ')[0] == 'Contrast Matching':
+                        title = metric_name + ' Metric<br>RMSE = ' + str(round(np.abs(alignment_score), 3))
+                    elif test_name == 'JPEG Compression Test':
+                        title = metric_name + ' Metric<br>Non monotonicity score = ' + str(round(np.abs(alignment_score)))
+                    else:
+                        title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
+                except:
+                    title = metric_name + ' Metric'
 
-                        metric_id = test_name.lower().replace(' ', '_').replace('(', '').replace(')', '')+'_'+metric_name.lower().replace(' ', '_')
+                if generate_metrics_results:
+                    js_command = Test.plotly(predictions, reverse_color_order=M.is_lower_better(), title=title, fig_id=metric_id)
 
-                        metric_predictions_file = os.path.join(results_folder, metric_name+'.csv')
-                        metric_predictions_df = pd.read_csv(metric_predictions_file)
+                # Similarly to the main html file we need to create a JS file!
 
-                        predictions = metric_predictions_df['Prediction'].to_numpy()
-                        try:
-                            alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
-                            if test_name.split(' - ')[0] == 'Contrast Matching':
-                                title = metric_name + ' Metric<br>RMSE = ' + str(round(np.abs(alignment_score), 3))
-                            elif test_name == 'JPEG Compression Test':
-                                title = metric_name + ' Metric<br>Non monotonicity score = ' + str(round(np.abs(alignment_score)))
-                            else:
-                                title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
-                        except:
-                            title = metric_name + ' Metric'
+                js_main.println(js_command)
 
-                        if generate_metrics_results:
-                            js_command = Test.plotly(predictions, reverse_color_order=M.is_lower_better(), title=title, fig_id=metric_id)
-                        
-                        # Similarly to the main html file we need to create a JS file!
+                hr_test.beg_div(id_tag = metric_id)
+                hr_test.close_div()
 
-                        js_main.println(js_command)
-
-                        hr_test.beg_div(id_tag = metric_id)
-                        hr_test.close_div()
-
-                    except:
-                        logging.error(f'Failed on test {test_name} and the {metric_name} metric')
+            except:
+                logging.error(f'Failed on test {test_name} and the {metric_name} metric')
 
         hr_test.close_div()
         hr_test.close_div()

@@ -75,10 +75,8 @@ class topiq_metric(VQM):
     def predictions_range():
         return 0, 1
 ```
-Insure to add your new metric class in the __init__ file. Here is an example:
-```python
-from metrics.topiq_metric import topiq_metric
-```
+Your new metric is picked up automatically - there's no registration step. Any class defined anywhere under `./metrics` (in a subfolder if you like) that inherits from `VQM` (or `vq_metric` directly) is discovered by name (the string returned by `name()`) and immediately available to `run_and_plot.py` and `generate_webpage.py`. If your metric file fails to import (e.g. a missing optional dependency), only that one metric is skipped - a warning is logged and every other metric still works.
+
 If your metric requires a YUV file, we also offer function to convert the video source to a YUV file. 
 ```python
 from pyst.yuv_utils import YUVWriter
@@ -121,43 +119,50 @@ def predict_video_source(self, vid_source, frame_padding="replicate"):
 
 ## How to compute metric(s) results on the tests
 
-We provide three main python scripts: 
+Tests and metrics are both auto-discovered and selected by name on the command line - no Python editing needed. To see what's available:
 ```commandline
-python run_synthetic_test.py
-python run_synthetic_test_alignment_score.py
+python run_and_plot.py --list-tests
+python run_and_plot.py --list-metrics
+```
+
+`run_and_plot.py` runs one or more metrics on one or more tests, and for each test/metric pair saves both a scores CSV and a plot into an output directory (created automatically if it doesn't exist):
+```commandline
+python run_and_plot.py \
+    --tests GaborPatchSpatialFreqAchTest GaborPatchLuminanceAchTest GaborPatchSizeAchTest ContrastMaskingCoherentAchTest ContrastMaskingIncoherentAchTest \
+    --metrics topiq_metric \
+    --output-dir results/achromatic_tests
+```
+
+For larger or repeatable runs, put the same options in a JSON config file instead:
+```json
+{
+  "tests": ["GaborPatchSpatialFreqRGTest", "GaborPatchSpatialFreqYVTest", "ContrastConstancyColorTest"],
+  "metrics": ["topiq_metric"],
+  "output_dir": "results/color_tests"
+}
+```
+```commandline
+python run_and_plot.py --config my_run.json
+```
+
+Pass `--alignment-score` to run the tests in alignment-score mode, which produces the error metrics consumed by `get_alignment_scores.py`. Not every test supports this - `ContrastConstancySpatialFreqAchTest` and `ContrastConstancyColorTest` don't - unsupported tests are skipped with a clear error message rather than failing the whole run.
+
+Once you have alignment-score results, compute the error metrics from them with:
+```commandline
 python get_alignment_scores.py
 ```
-The first script is used to generate the data for the figures, while the subsequent scripts are used to calculate the error in each test. 
 
-In the first and second script you will need to specify the metrics (as you've defined previously), and specify the tests to run. Here is an example:
-```python
-from pyst.ContrastDetection import *
-from pyst.ContrastMasking import *
-from pyst.ContrastMatching import *
-from metrics import *
+## How to generate the results webpage
 
-tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest]
-metrics = [topiq_metric]
-```
-You can specify multiple tests and metrics to run.
-```python
-""" Achromatic tests"""
-tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
-
-""" Color tests"""
-tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastConstancyColorTest]
-
-""" Temporal tests"""
-tests = [GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest]
-
-""" ContrastConstancySpatialFreqAchTest and ContrastConstancyColorTest cannot be run on run_synthetic_test_alignment_score.py """
-```
-
-To generate an HTML report with all the results. Please run the following script:
+To generate an interactive (Plotly) HTML report from results produced by `run_and_plot.py`:
 ```commandline
-python generate_synthetic_test_webpage_plotly.py
+python generate_webpage.py \
+    --tests GaborPatchSpatialFreqAchTest GaborPatchLuminanceAchTest GaborPatchSizeAchTest \
+    --metrics topiq_metric \
+    --input-dir results/achromatic_tests \
+    --output-dir synthetic_test_webpage_plotly
 ```
-Similarly as above, you will also need to specify the metrics and the tests before running the code. 
+As with `run_and_plot.py`, use `--list-tests` / `--list-metrics` to see the available names.
 
 The repository includes the computed results for multiple metrics in `results_alignment_score` that can be used to generate an HTML report.
 

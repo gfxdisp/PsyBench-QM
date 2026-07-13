@@ -1,0 +1,22 @@
+-e git+https://github.com/gfxdisp/ColorVideoVDP.git#egg=cvvdp
+ffmpeg
+ffmpeg-python
+imageio
+imutils
+matplotlib
+numpy
+opencv-python
+OpenEXR
+pandas
+pillow
+piq
+psutil
+pyexr
+pyfvvdp
+pyiqa
+scikit-image
+scipy
+tensorboard
+tqdm
+scikit-learn
+DeepDC-PyTorch

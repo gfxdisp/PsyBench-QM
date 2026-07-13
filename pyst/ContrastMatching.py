@@ -257,12 +257,11 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
             fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
         # Plot the results
-        # for i in range(len(predictions)):
-        for i in [len(predictions)-1]:  # Only plot the last contrast for clarity
+        for i in range(len(predictions)):
             #GT
             axis.plot(x_condition[i], gt_contrasts[i], linewidth=2, linestyle='--', marker='o', color=self.colors[i])
             #Prediction
-            # axis.plot(x_condition[i], predictions[i], linewidth=2, marker='x', color=self.colors[i])
+            axis.plot(x_condition[i], predictions[i], linewidth=2, marker='x', color=self.colors[i])
 
         axis.grid(alpha=0.4, axis='x')
 
@@ -303,14 +302,14 @@ class ContrastConstancySpatialFreqAchTest(SyntheticTest):
         axis.set_ylim([np.min(y_ticks), np.max(y_ticks)])
 
         custom_legend = [
-            # Line2D([0], [0], linestyle='-', marker='x', color='black', label='Metric Prediction'),
+            Line2D([0], [0], linestyle='-', marker='x', color='black', label='Metric Prediction'),
             Line2D([0], [0], linestyle='--', marker='o', color='black', label='Ground-truth')
         ]
 
         axis.legend(handles=custom_legend, loc=4, fontsize=fontsize-2)
 
-        # if title is not None:
-            # axis.set_title(title, fontsize=fontsize+2)
+        if title is not None:
+            axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
             fig.savefig(output_filename, dpi=200, bbox_inches='tight')

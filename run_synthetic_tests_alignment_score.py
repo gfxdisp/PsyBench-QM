@@ -5,7 +5,6 @@ from tqdm import trange
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.ContrastMatching import *
-from pyst.Glare import *
 from metrics import *
 
 import sys
@@ -23,14 +22,14 @@ if __name__ == '__main__':
     glare_names = ['']
 
     if test_index == 0:
-        tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
+        tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest]
         metrics = [cvvdp_met, fvvdp_met, funque_met, ldr_flip_metric, vmaf_met, psnry_metric, ssim_metric,
                    ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric,
                    dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric,
                    dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
         # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric, strred_metric]
         metrics = [vmaf_neg_met]
-        tests = [GaborPatchSpatialFreqAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest]
+        tests = [GaborPatchSpatialFreqAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest]
         
 
     elif test_index == 1:
@@ -45,21 +44,6 @@ if __name__ == '__main__':
         tests = [DiskTemporalFreqAchTest, GaborPatchSpatialFreqAchTransientTest]
         # metrics = [cvvdp_met, fvvdp_met, vmaf_met, funque_met]
         # metrics = [speedqa_metric]
-
-    elif test_index == 3:
-
-        tests = [GlareHalfRingLuminanceTest]
-        
-        metrics = [psnry_metric, ssim_metric, lpips_vgg_metric, lpips_metric, topiq_metric, vmaf_met, vmaf_neg_met]
-        # metrics = [dists_metric, cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met]
-        metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
-        metrics = [psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
-
-        apply_glare_options = [True]
-        glare_names = ['hdrvdp', 'cie99', 'deeley', 'ijspeert']
-
-        # apply_glare_options = [False]
-        # glare_names = ['']
 
     output_folder = 'results_alignment_score'
 

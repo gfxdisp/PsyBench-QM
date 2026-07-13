@@ -6,9 +6,6 @@ import shutil
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.ContrastMatching import *
-from pyst.JpegCompression import *
-from pyst.Glare import *
-from pyst.GaborAmbientLightTest import *
 from metrics import *
 
 from test_reports_utils.html_report import html_report
@@ -21,12 +18,12 @@ if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=level)
 
 
-    # tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
-    #          ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest,
-    #          GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
-    #          GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest,
-    #          ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest] #,GlareTest]
-    
+    tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest,
+             ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest,
+             GaborPatchSpatialFreqAchTransientTest, DiskTemporalFreqAchTest,
+             GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest,
+             ContrastConstancySpatialFreqAchTest, ContrastConstancyColorTest]
+
     metrics = [psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, dss_metric,
                fsim_metric, vsi_metric, mdsi_metric, haarpsi_metric, scielab_metric, ldr_flip_metric,
                de2000, hyab, ictcp, msswd_metric,
@@ -35,17 +32,6 @@ if __name__ == '__main__':
                mad_metric, hdrvdp3_metric, fvvdp_met, cvvdp_met]
                #, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met,
                #cvvdp_ml_saliency_plus_met, cvvdp_ml_dino_fusion_met, cvvdp_ml_dino_fusion_finetuned_met, cvvdp_ml_saliency_plus_finetuned_met, dino_v1_cls_met, cvvdp_ml_dino_fusion_bandfreq_met]
-
-    # tests = [GaborAmbientLightTest]
-    # metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met]
-    # metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, vmaf_met, vmaf_neg_met, psnry_metric, ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, lpips_metric]
-
-    # tests = [JpegCompressionTest]
-    # metrics = [psnry_metric, ssim_metric, cvvdp_met, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
-    
-    tests = [GlareHalfRingLuminanceTest]
-    # metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, vmaf_met, vmaf_neg_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, lpips_metric]
-    metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
 
     input_folder = 'results'
     output_folder = 'synthetic_test_webpage_plotly'

@@ -12,7 +12,7 @@ import pandas as pd
 import json
 
 
-class ContrastMakingTest(SyntheticTest):
+class ContrastMaskingTest(SyntheticTest):
     """
     Abstract class for all synthetic tests relying on a gabor masker!
     """
@@ -174,7 +174,7 @@ class ContrastMakingTest(SyntheticTest):
         if axis is None:
             fig, axis = plt.subplots(1, 1, figsize=(8, 4))
 
-        # contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
+        contour = axis.contour(x_condition, y_condition, predictions, 30, cmap=cmap)
 
         # Plot the csf results
 
@@ -184,9 +184,9 @@ class ContrastMakingTest(SyntheticTest):
 
         #Figure parameters
 
-        # colorbar = plt.colorbar(contour, ax=axis)
-        # if reverse_color_order:
-        #     colorbar.ax.invert_yaxis()
+        colorbar = plt.colorbar(contour, ax=axis)
+        if reverse_color_order:
+            colorbar.ax.invert_yaxis()
 
         axis.grid(alpha=0.4, axis='x')
 
@@ -227,8 +227,8 @@ class ContrastMakingTest(SyntheticTest):
 
         axis.legend(loc=4, fontsize=fontsize-2)
 
-        # if title is not None:
-        #     axis.set_title(title, fontsize=fontsize+2)
+        if title is not None:
+            axis.set_title(title, fontsize=fontsize+2)
 
         if output_filename is not None:
             fig.savefig(output_filename, dpi=200, bbox_inches='tight')
@@ -380,7 +380,7 @@ class ContrastMakingTest(SyntheticTest):
         return 'Contrast Masking Test'
 
 
-class ContrastMakingCoherentAchTest(ContrastMakingTest):
+class ContrastMaskingCoherentAchTest(ContrastMaskingTest):
 
     def __init__(self, width=420, height=300, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
         
@@ -438,7 +438,7 @@ class ContrastMakingCoherentAchTest(ContrastMakingTest):
         return 'Contrast - Masking - Phase - Coherent'
 
 
-class ContrastMakingIncoherentAchTest(ContrastMakingTest):
+class ContrastMaskingIncoherentAchTest(ContrastMaskingTest):
 
     def __init__(self, width=300, height=300, N_test_contrasts=20, N_masker_contrasts=20, is_alignmenet_score=False, device=None):
         

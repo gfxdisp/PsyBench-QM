@@ -6,9 +6,6 @@ from metrics.de2000 import de2000
 from pyst.GaborPatch import *
 from pyst.ContrastMasking import *
 from pyst.ContrastMatching import *
-from pyst.JpegCompression import *
-from pyst.Glare import *
-from pyst.GaborAmbientLightTest import *
 from metrics import *
 
 import sys
@@ -24,12 +21,9 @@ if __name__ == '__main__':
     test_index = int(sys.argv[1])
 
     if test_index == 0:
-        tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMakingCoherentAchTest, ContrastMakingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
+        tests = [GaborPatchSpatialFreqAchTest, GaborPatchLuminanceAchTest, GaborPatchSizeAchTest, ContrastMaskingCoherentAchTest, ContrastMaskingIncoherentAchTest, ContrastConstancySpatialFreqAchTest]
         metrics = [cvvdp_met, fvvdp_met, ldr_flip_metric, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric, cvvdp_ml_saliency_met, cvvdp_ml_transformer_met]
         # metrics = [scielab_metric, hdrvdp3_metric, speedqa_metric]
-
-        # tests = [JpegCompressionTest]
-        # metrics = [psnry_metric, ssim_metric]
 
     elif test_index == 1:
         tests = [GaborPatchSpatialFreqRGTest, GaborPatchSpatialFreqYVTest, ContrastConstancyColorTest]
@@ -46,19 +40,6 @@ if __name__ == '__main__':
 
     apply_glare_options = [False]
     glare_names = ['']
-    
-    if test_index == 3:
-        # tests = [GlareTest]
-        # tests = [GlareDiscTest]
-        tests = [GlareHalfRingLuminanceTest]
-        # metrics = [cvvdp_met, cvvdp_ncsf_mtf_trained_met, funque_met, vmaf_met, psnry_metric, ssim_metric, ms_ssim_metric, gmsd_metric, ms_gmsd_metric, vifp_metric, fsim_metric, vsi_metric, mdsi_metric, dss_metric, haarpsi_metric, mad_metric, nlpd_metric, wadiqam_metric, lpips_metric, lpips_vgg_metric, dists_metric, ahiq_metric, topiq_metric, hyab, de2000, ictcp, msswd_metric, stlpips_metric]
-        metrics = [cvvdp_met, cvvdp_ncsf_mtf_met, cvvdp_ncsf_mtf_cie99_met, cvvdp_ncsf_mtf_deeley_met, cvvdp_ncsf_mtf_ijspeert_met, psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
-        metrics = [psnry_metric, ssim_metric, ms_ssim_metric, lpips_vgg_metric, dists_metric, topiq_metric, vmaf_met]
-        apply_glare_options = [True]
-        glare_names = ['hdrvdp', 'cie99', 'deeley', 'ijspeert']
-
-        # apply_glare_options = [False]
-        # glare_names = ['']
 
     output_folder = 'results'
 

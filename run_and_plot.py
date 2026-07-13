@@ -7,12 +7,13 @@ which auto-discover every test/metric class in the pyst/ and metrics/
 packages - no manual registration needed.
 
 Every test is run in its normal (full condition range) mode, producing the
-main results/plots. If the test also supports alignment-score mode (a
+main results and a plot. If the test also supports alignment-score mode (a
 near-threshold condition sampling), it's additionally run that way
-automatically - no flag needed. Tests that don't support it (e.g. the
-Contrast Matching tests) are simply only run once; their normal-mode run is
-what produces their alignment score instead. Either way, each test's
-alignment score is computed automatically (via the test's own
+automatically - no flag needed - but that pass exists purely to measure
+alignment; it's not plotted. Tests that don't support alignment-score mode
+(e.g. the Contrast Matching tests) are simply only run once; their
+normal-mode run is what produces their alignment score instead. Either way,
+each test's alignment score is computed automatically (via the test's own
 compute_alignment_score(), see pyst/synthetic_test.py and the overrides in
 pyst/ContrastMatching.py) and merged into alignment_scores/<test's preview
 folder>.csv - there's no separate scoring step to run.
@@ -21,7 +22,7 @@ Scores CSVs always go to a fixed location - results/<test's preview folder>
 for the normal-mode run, results_alignment_score/... for the alignment-score
 one - the same location the old per-test scripts used, and what
 generate_webpage.py reads from by default. This isn't configurable. Only the
-*plots* go to the directory you choose with --plots-dir.
+*plot* (normal-mode only) goes to the directory you choose with --plots-dir.
 
 Examples:
     python run_and_plot.py --list-tests
@@ -99,8 +100,9 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
     results_test_dir = os.path.join(results_dir, preview_folder)
     os.makedirs(results_test_dir, exist_ok=True)
 
-    plots_test_dir = os.path.join(plots_dir, preview_folder)
-    os.makedirs(plots_test_dir, exist_ok=True)
+    if not alignment_score:
+        plots_test_dir = os.path.join(plots_dir, preview_folder)
+        os.makedirs(plots_test_dir, exist_ok=True)
 
     scores = np.full((len(Test), len(metric_names)), np.nan)
 
@@ -135,8 +137,8 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
         except AttributeError:
             results_df[header[i]] = conditions[i]
 
-    can_plot = hasattr(Test, 'plot')
-    if not can_plot:
+    can_plot = hasattr(Test, 'plot') and not alignment_score
+    if not can_plot and not alignment_score:
         logging.warning(
             f"{type(Test).__name__} has no plot() method yet, so static plots can't be generated for it "
             f"(scores are still saved to CSV). Use generate_webpage.py for an "
@@ -160,11 +162,11 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
             alignment_scores[metric_names[j]] = align_score
 
         if can_plot:
-            title = f"{metric_names[j]} — {test_name} ({mode_label})"
+            title = f"{metric_names[j]} — {test_name}"
             if align_score is not None:
                 title += f"\nAlignment Score = {align_score:.3f}"
 
-            plot_path = os.path.join(plots_test_dir, f"{metric_names[j]}_{mode_label}.png")
+            plot_path = os.path.join(plots_test_dir, f"{metric_names[j]}.png")
             try:
                 Test.plot(
                     predictions=scores[:, j],
@@ -174,7 +176,7 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
                 )
                 logging.info(f"Saved plot: {plot_path}")
             except Exception:
-                logging.exception(f"Failed to plot '{test_name}' ({mode_label}) / {metric_names[j]}")
+                logging.exception(f"Failed to plot '{test_name}' / {metric_names[j]}")
 
     if alignment_scores:
         _update_alignment_scores_csv(preview_folder, alignment_scores)

@@ -125,11 +125,11 @@ python run_and_plot.py --list-tests
 python run_and_plot.py --list-metrics
 ```
 
-`run_and_plot.py` runs each test in its normal (full condition range) mode, and - automatically, no flag needed - additionally in alignment-score mode (near-threshold condition sampling) if that test supports it. Tests that don't support alignment-score mode (`ContrastConstancySpatialFreqAchTest`, `ContrastConstancyColorTest`) are simply only run once, in normal mode.
+`run_and_plot.py` runs each test in its normal (full condition range) mode, and - automatically, no flag needed - additionally in alignment-score mode (near-threshold condition sampling) if that test supports it. Tests that don't support alignment-score mode (`ContrastConstancySpatialFreqAchTest`, `ContrastConstancyColorTest`) are simply only run once, in normal mode. The alignment-score-mode pass exists purely to measure alignment (see below) - it isn't plotted, only the normal-mode run is.
 
-For each test/metric pair and each mode it ran in, this saves both a scores CSV and a plot. These two outputs go to different places:
+For each test/metric pair and each mode it ran in, this saves a scores CSV; the normal-mode run additionally saves a plot. These two outputs go to different places:
 - Scores CSVs always go to a **fixed** location, `results/<test>/<metric>.csv` for the normal-mode run and `results_alignment_score/<test>/<metric>.csv` for the alignment-score one - not configurable, since `generate_webpage.py` reads from that fixed location by default.
-- Plots go to whatever directory you pass via `--plots-dir` (created automatically if it doesn't exist), one file per mode: `<metric>_normal.png` and `<metric>_alignment-score.png`.
+- Plots go to whatever directory you pass via `--plots-dir` (created automatically if it doesn't exist): `<metric>.png`, from the normal-mode run only.
 
 ```commandline
 python run_and_plot.py \

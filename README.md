@@ -134,7 +134,7 @@ For each test/metric pair and each mode it ran in, this saves both a scores CSV 
 ```commandline
 python run_and_plot.py \
     --tests GaborPatchSpatialFreqAchTest GaborPatchLuminanceAchTest GaborPatchSizeAchTest ContrastMaskingCoherentAchTest ContrastMaskingIncoherentAchTest \
-    --metrics topiq_metric \
+    --metrics TOPIQ \
     --plots-dir plots/achromatic_tests
 ```
 
@@ -142,7 +142,7 @@ For larger or repeatable runs, put the same options in a JSON config file instea
 ```json
 {
   "tests": ["GaborPatchSpatialFreqRGTest", "GaborPatchSpatialFreqYVTest", "ContrastConstancyColorTest"],
-  "metrics": ["topiq_metric"],
+  "metrics": ["TOPIQ"],
   "plots_dir": "plots/color_tests"
 }
 ```
@@ -162,7 +162,7 @@ To generate an interactive (Plotly) HTML report from results produced by `run_an
 ```commandline
 python generate_webpage.py \
     --tests GaborPatchSpatialFreqAchTest GaborPatchLuminanceAchTest GaborPatchSizeAchTest \
-    --metrics topiq_metric \
+    --metrics TOPIQ \
     --input-dir results \
     --webpage-dir synthetic_test_webpage_plotly
 ```

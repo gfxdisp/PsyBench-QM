@@ -119,7 +119,7 @@ if __name__ == '__main__':
         logging.info(f"Generating results for {test_name}")
 
         preview_folder = os.path.join(output_folder, 'previews', Test.get_preview_folder())
-        results_folder = os.path.join('results', Test.get_preview_folder())
+        results_folder = os.path.join(input_folder, Test.get_preview_folder())
 
         # Get alignment scores data for this test and all metrics !
         try:
@@ -216,9 +216,7 @@ if __name__ == '__main__':
 
                     hr_test_preview.beg_div(class_tag='cell-content')
                     hr_test_preview.insert_image(os.path.join('..' ,test_filename), mousedown_image=os.path.join('..', ref_filename), class_tag="toggle-image")
-                    if test_name =='JPEG Compression Test':
-                        hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]}, {y_variable_name} = {y_variable[condition_index]:.2g}")
-                    elif test_name != 'Contrast Matching - Across Cardinal Color Directions':
+                    if test_name != 'Contrast Matching - Across Cardinal Color Directions':
                         hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]:.2g}")
                     else:
                         hr_test_preview.insert_text(f"{x_variable_name} = {x_variable[condition_index]:.2g}, {y_variable_name} = {y_variable[condition_index]}")
@@ -267,8 +265,6 @@ if __name__ == '__main__':
                     alignment_score = alignment_scores_df[alignment_scores_df['Metric'] == metric_name]['Score'].to_numpy()[0]
                     if test_name.split(' - ')[0] == 'Contrast Matching':
                         title = metric_name + ' Metric<br>RMSE = ' + str(round(np.abs(alignment_score), 3))
-                    elif test_name == 'JPEG Compression Test':
-                        title = metric_name + ' Metric<br>Non monotonicity score = ' + str(round(np.abs(alignment_score)))
                     else:
                         title = metric_name + ' Metric<br>Alignment Score = '+str(round(np.abs(alignment_score), 3))
                 except:

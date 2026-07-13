@@ -30,11 +30,14 @@ Examples:
 
     python run_and_plot.py \\
         --tests GaborPatchSpatialFreqAchTest ContrastMaskingCoherentAchTest \\
-        --metrics cvvdp_met psnry_metric ssim_metric \\
+        --metrics ColorVideoVDP PSNR-Y SSIM \\
         --plots-dir plots/my_run
 
     python run_and_plot.py --config my_run.json
-        # my_run.json: {"tests": [...], "metrics": [...], "plots_dir": "..."}
+        # my_run.json: {"tests": [...], "metrics": [...], "plots_dir": "...", "plot_only": false}
+
+    python run_and_plot.py --config my_run.json --plot-only
+        # reuses existing results/ (and results_alignment_score/) instead of re-running metrics
 """
 import argparse
 import json
@@ -76,10 +79,15 @@ def _update_alignment_scores_csv(preview_folder, metric_scores):
     logging.info(f"Saved alignment scores: {csv_path}")
 
 
-def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score):
+def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score, plot_only=False):
     """
     Instantiate and run test class T, in alignment-score mode if requested.
     Returns silently (does nothing) if T doesn't support that mode.
+
+    If plot_only, metrics aren't actually run - predictions are instead read
+    back from the existing results CSVs (results/... or
+    results_alignment_score/..., matching the mode), so this only works if
+    run_and_plot.py already wrote them there in a previous, non-plot-only run.
     """
     try:
         Test = T(is_alignmenet_score=True) if alignment_score else T()
@@ -92,13 +100,11 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
 
     test_name = Test.short_name()
     mode_label = "alignment-score" if alignment_score else "normal"
-    logging.info(f"Running '{test_name}' in {mode_label} mode ({len(Test)} conditions) with {len(metric_names)} metric(s)")
 
     preview_folder = Test.get_preview_folder()
 
     results_dir = ALIGNMENT_SCORE_RESULTS_DIR if alignment_score else RESULTS_DIR
     results_test_dir = os.path.join(results_dir, preview_folder)
-    os.makedirs(results_test_dir, exist_ok=True)
 
     if not alignment_score:
         plots_test_dir = os.path.join(plots_dir, preview_folder)
@@ -106,36 +112,60 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
 
     scores = np.full((len(Test), len(metric_names)), np.nan)
 
-    for i in trange(len(Test), desc=f"{test_name} ({mode_label})"):
-        vid_source, display_photometry, display_geometry = Test.get_condition(i)
+    if plot_only:
+        if not os.path.isdir(results_test_dir):
+            logging.error(f"--plot-only: no existing results at {results_test_dir} for '{test_name}' "
+                           f"({mode_label} mode) - run without --plot-only first. Skipping.")
+            return
 
-        for j, Metric in enumerate(metric_instances):
+        logging.info(f"Reading existing results for '{test_name}' ({mode_label} mode) instead of running metrics")
+        for j, name in enumerate(metric_names):
+            csv_path = os.path.join(results_test_dir, f"{name}.csv")
+            if not os.path.exists(csv_path):
+                logging.error(f"--plot-only: missing {csv_path}, skipping metric {name} for '{test_name}' ({mode_label})")
+                continue
+            scores[:, j] = pd.read_csv(csv_path)['Prediction'].to_numpy()
+
+    else:
+        logging.info(f"Running '{test_name}' in {mode_label} mode ({len(Test)} conditions) with {len(metric_names)} metric(s)")
+        os.makedirs(results_test_dir, exist_ok=True)
+
+        for i in trange(len(Test), desc=f"{test_name} ({mode_label})"):
+            vid_source, display_photometry, display_geometry = Test.get_condition(i)
+
+            for j, Metric in enumerate(metric_instances):
+                try:
+                    Metric.set_display_model(display_photometry=display_photometry, display_geometry=display_geometry)
+
+                    if hasattr(Test, 'run_on_test_condition'):
+                        score = Test.run_on_test_condition(i, Metric)
+                    else:
+                        with torch.no_grad():
+                            score = Metric.predict_video_source(vid_source)
+
+                    if isinstance(score, tuple) and len(score) == 2:
+                        score, _ = score
+
+                    scores[i, j] = score
+                except Exception:
+                    logging.exception(f"Failed on '{test_name}' ({mode_label}), condition {i}, metric {metric_names[j]}")
+
+        header = Test.get_row_header()
+        conditions = Test.get_rows_conditions()
+
+        results_df = pd.DataFrame()
+        results_df.index.name = 'Index'
+        for i in range(len(header)):
             try:
-                Metric.set_display_model(display_photometry=display_photometry, display_geometry=display_geometry)
+                results_df[header[i]] = conditions[i].cpu().numpy()
+            except AttributeError:
+                results_df[header[i]] = conditions[i]
 
-                if hasattr(Test, 'run_on_test_condition'):
-                    score = Test.run_on_test_condition(i, Metric)
-                else:
-                    with torch.no_grad():
-                        score = Metric.predict_video_source(vid_source)
-
-                if isinstance(score, tuple) and len(score) == 2:
-                    score, _ = score
-
-                scores[i, j] = score
-            except Exception:
-                logging.exception(f"Failed on '{test_name}' ({mode_label}), condition {i}, metric {metric_names[j]}")
-
-    header = Test.get_row_header()
-    conditions = Test.get_rows_conditions()
-
-    results_df = pd.DataFrame()
-    results_df.index.name = 'Index'
-    for i in range(len(header)):
-        try:
-            results_df[header[i]] = conditions[i].cpu().numpy()
-        except AttributeError:
-            results_df[header[i]] = conditions[i]
+        for j in range(len(metric_names)):
+            results_df['Prediction'] = scores[:, j]
+            csv_path = os.path.join(results_test_dir, f"{metric_names[j]}.csv")
+            results_df.to_csv(csv_path)
+            logging.info(f"Saved scores: {csv_path}")
 
     can_plot = hasattr(Test, 'plot') and not alignment_score
     if not can_plot and not alignment_score:
@@ -148,11 +178,6 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
     alignment_scores = {}
 
     for j, Metric in enumerate(metric_instances):
-        results_df['Prediction'] = scores[:, j]
-        csv_path = os.path.join(results_test_dir, f"{metric_names[j]}.csv")
-        results_df.to_csv(csv_path)
-        logging.info(f"Saved scores: {csv_path}")
-
         align_score = None
         try:
             align_score = Test.compute_alignment_score(scores[:, j])
@@ -182,12 +207,15 @@ def _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score)
         _update_alignment_scores_csv(preview_folder, alignment_scores)
 
 
-def run_and_plot(tests, metrics, plots_dir):
+def run_and_plot(tests, metrics, plots_dir, plot_only=False):
     """
     tests: list of test classes (from pyst.registry)
     metrics: list of metric classes (from metrics.registry)
     plots_dir: directory to save plots into (created if missing) - scores
         CSVs do NOT go here, see module docstring
+    plot_only: don't run any metrics - just (re)generate plots and alignment
+        scores from whatever's already in results/ / results_alignment_score/
+        from a previous run. Fails per-test/mode if that data isn't there.
 
     Each test is run in normal mode, and additionally in alignment-score mode
     if it supports it - see module docstring for exactly what that writes
@@ -197,8 +225,8 @@ def run_and_plot(tests, metrics, plots_dir):
     metric_names = [M.name() for M in metrics]
 
     for T in tests:
-        _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score=False)
-        _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score=True)
+        _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score=False, plot_only=plot_only)
+        _run_one_mode(T, metric_instances, metric_names, plots_dir, alignment_score=True, plot_only=plot_only)
 
 
 def _load_config(path):
@@ -213,8 +241,13 @@ def main():
     parser.add_argument('--plots-dir', help="Directory to save plots into (created if it doesn't exist). "
                                              "Scores CSVs always go to a fixed results/ (or results_alignment_score/) "
                                              "location instead - see the module docstring.")
-    parser.add_argument('--config', help="JSON file with 'tests', 'metrics' and 'plots_dir' keys, as an "
-                                          "alternative to the flags above.")
+    parser.add_argument('--config', help="JSON file with 'tests', 'metrics', 'plots_dir' and optional "
+                                          "'plot_only' keys, as an alternative to the flags above.")
+    parser.add_argument('--plot-only', action='store_true',
+                         help="Don't run any metrics - just (re)generate plots and alignment scores from "
+                              "results already on disk (results/ and results_alignment_score/, from a previous "
+                              "non---plot-only run). Useful if you already have results and just want new plots, "
+                              "e.g. after a plot()-generation code change.")
     parser.add_argument('--list-tests', action='store_true', help="Print all available test names and exit.")
     parser.add_argument('--list-metrics', action='store_true', help="Print all available metric names and exit.")
     args = parser.parse_args()
@@ -237,12 +270,14 @@ def main():
         test_names = cfg['tests']
         metric_names = cfg['metrics']
         plots_dir = cfg['plots_dir']
+        plot_only = cfg.get('plot_only', False)
     else:
         if not args.tests or not args.metrics or not args.plots_dir:
             parser.error("--tests, --metrics and --plots-dir are required unless --config is given.")
         test_names = args.tests
         metric_names = args.metrics
         plots_dir = args.plots_dir
+        plot_only = args.plot_only
 
     try:
         test_classes = [tests_registry[name] for name in test_names]
@@ -254,7 +289,7 @@ def main():
     except KeyError as e:
         parser.error(f"Unknown metric {e}. Use --list-metrics to see available metrics.")
 
-    run_and_plot(test_classes, metric_classes, plots_dir)
+    run_and_plot(test_classes, metric_classes, plots_dir, plot_only=plot_only)
 
 
 if __name__ == '__main__':

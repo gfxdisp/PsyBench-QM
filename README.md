@@ -2,6 +2,9 @@
 The code is used to evaluate the quality metrics' ability to align with the psychophysical data and models of low-level human vision.
 The code can be only run using **CPU** or **CUDA**.
 
+Project webpage: https://www.cl.cam.ac.uk/research/rainbow/projects/psybench-qm/
+Full results (HTML report): https://www.cl.cam.ac.uk/research/rainbow/projects/psybench-qm/reports/html-report/
+
 ## Installation quickstart
 1. Start by creating a new environment for PyST and activate it:
 ```commandline
@@ -150,6 +153,11 @@ For larger or repeatable runs, put the same options in a JSON config file instea
 python run_and_plot.py --config my_run.json
 ```
 
+If you already have results on disk from a previous run and just want to (re)generate plots - e.g. after a `plot()` code change - add `--plot-only` (or `"plot_only": true` in the config) to skip re-running the metrics entirely and read predictions back from the existing `results`/`results_alignment_score` CSVs instead. It fails per test/mode (with a clear error, not crashing the rest) if there's nothing there yet to read.
+```commandline
+python run_and_plot.py --config my_run.json --plot-only
+```
+
 `run_and_plot.py` also computes each test's alignment score automatically - there's no separate scoring script or flag to run. Which of the two runs produces the score depends on the test:
 - Most tests (Gabor Patch, Contrast Masking, Disk) score by Spearman correlation between the psychophysical test's condition axis and the metric's predictions - computed from the alignment-score-mode run, since that's the only one where the near-threshold sampling makes this meaningful.
 - The Contrast Matching tests don't have an alignment-score-mode run at all, so their (RMSE/error-based) score comes from their normal-mode run instead.
@@ -178,4 +186,4 @@ python run_and_plot.py --config example_config.json
 python generate_webpage.py --config example_config.json
 ```
 
-The results of the webpage can be found in `./synthetic_test_webpage_plotly/index.html`, which is provided with the supplementary (but including more metrics).
+The webpage generated this way is the same report published at https://www.cl.cam.ac.uk/research/rainbow/projects/psybench-qm/reports/html-report/ (which includes more metrics than the example config above). See the project webpage at https://www.cl.cam.ac.uk/research/rainbow/projects/psybench-qm/ for more.

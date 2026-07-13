@@ -125,9 +125,11 @@ python run_and_plot.py --list-tests
 python run_and_plot.py --list-metrics
 ```
 
-`run_and_plot.py` runs one or more metrics on one or more tests, and for each test/metric pair saves both a scores CSV and a plot. These two outputs go to different places:
-- Scores CSVs always go to a **fixed** location, `results/<test>/<metric>.csv` (or `results_alignment_score/...` in `--alignment-score` mode) - not configurable, since `generate_webpage.py` reads from that fixed location by default.
-- Plots go to whatever directory you pass via `--plots-dir` (created automatically if it doesn't exist).
+`run_and_plot.py` runs each test in its normal (full condition range) mode, and - automatically, no flag needed - additionally in alignment-score mode (near-threshold condition sampling) if that test supports it. Tests that don't support alignment-score mode (`ContrastConstancySpatialFreqAchTest`, `ContrastConstancyColorTest`) are simply only run once, in normal mode.
+
+For each test/metric pair and each mode it ran in, this saves both a scores CSV and a plot. These two outputs go to different places:
+- Scores CSVs always go to a **fixed** location, `results/<test>/<metric>.csv` for the normal-mode run and `results_alignment_score/<test>/<metric>.csv` for the alignment-score one - not configurable, since `generate_webpage.py` reads from that fixed location by default.
+- Plots go to whatever directory you pass via `--plots-dir` (created automatically if it doesn't exist), one file per mode: `<metric>_normal.png` and `<metric>_alignment-score.png`.
 
 ```commandline
 python run_and_plot.py \
@@ -148,11 +150,9 @@ For larger or repeatable runs, put the same options in a JSON config file instea
 python run_and_plot.py --config my_run.json
 ```
 
-Pass `--alignment-score` to run tests in alignment-score mode (near-threshold condition sampling). Not every test supports this - `ContrastConstancySpatialFreqAchTest` and `ContrastConstancyColorTest` don't - unsupported tests are skipped with a clear error message rather than failing the whole run.
-
-`run_and_plot.py` also computes each test's alignment score automatically - there's no separate scoring script to run. Which run produces a score depends on the test:
-- Most tests (Gabor Patch, Contrast Masking, Disk) score by Spearman correlation between the psychophysical test's condition axis and the metric's predictions. This is only meaningful for the near-threshold condition sampling used in alignment-score mode, so it's computed **only when run with `--alignment-score`** - a normal run of these tests produces no alignment score.
-- The Contrast Matching tests are the opposite: they don't support `--alignment-score` at all, so their **normal run** is what produces their (RMSE/error-based) alignment score.
+`run_and_plot.py` also computes each test's alignment score automatically - there's no separate scoring script or flag to run. Which of the two runs produces the score depends on the test:
+- Most tests (Gabor Patch, Contrast Masking, Disk) score by Spearman correlation between the psychophysical test's condition axis and the metric's predictions - computed from the alignment-score-mode run, since that's the only one where the near-threshold sampling makes this meaningful.
+- The Contrast Matching tests don't have an alignment-score-mode run at all, so their (RMSE/error-based) score comes from their normal-mode run instead.
 
 Scores are shown in the plot title where available, and merged into `alignment_scores/<test>.csv`, accumulating across separate runs rather than being overwritten. See `compute_alignment_score()` in `pyst/synthetic_test.py` (default) and `pyst/ContrastMatching.py` (overrides) if you're adding a new test and want to define its own alignment score.
 

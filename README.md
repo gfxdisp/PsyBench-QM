@@ -147,7 +147,11 @@ python run_and_plot.py --config my_run.json
 
 Pass `--alignment-score` to run tests in alignment-score mode (near-threshold condition sampling). Not every test supports this - `ContrastConstancySpatialFreqAchTest` and `ContrastConstancyColorTest` don't - unsupported tests are skipped with a clear error message rather than failing the whole run.
 
-Whichever mode a test is run in, `run_and_plot.py` also computes its alignment score automatically for every metric - there's no separate scoring script to run. Most tests score by Spearman correlation between the swept condition and the metric's predictions (only meaningful in alignment-score mode); the Contrast Matching tests use their own RMSE/error-based score instead (meaningful in their normal run mode). Scores are shown in the plot title and merged into `alignment_scores/<test>.csv`, accumulating across separate runs rather than being overwritten. See `compute_alignment_score()` in `pyst/synthetic_test.py` (default) and `pyst/ContrastMatching.py` (overrides) if you're adding a new test and want to define its own alignment score.
+`run_and_plot.py` also computes each test's alignment score automatically - there's no separate scoring script to run. Which run produces a score depends on the test:
+- Most tests (Gabor Patch, Contrast Masking, Disk) score by Spearman correlation between the swept condition and the metric's predictions. This is only meaningful for a near-threshold sweep, so it's computed **only when run with `--alignment-score`** - a normal run of these tests produces no alignment score.
+- The Contrast Matching tests are the opposite: they don't support `--alignment-score` at all, so their **normal run** is what produces their (RMSE/error-based) alignment score.
+
+Scores are shown in the plot title where available, and merged into `alignment_scores/<test>.csv`, accumulating across separate runs rather than being overwritten. See `compute_alignment_score()` in `pyst/synthetic_test.py` (default) and `pyst/ContrastMatching.py` (overrides) if you're adding a new test and want to define its own alignment score.
 
 ## How to generate the results webpage
 

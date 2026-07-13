@@ -1,10 +1,17 @@
 """
 Run one or more metrics on one or more synthetic tests and save the results
-(a scores CSV and a static plot per test/metric pair) to a directory.
+(a scores CSV per test/metric pair, plus a static plot) to disk.
 
 Tests and metrics are looked up by name in pyst.registry / metrics.registry,
 which auto-discover every test/metric class in the pyst/ and metrics/
 packages - no manual registration needed.
+
+Scores CSVs always go to a fixed location - results/<test's preview folder>
+(or results_alignment_score/... in --alignment-score mode) - the same
+location the old per-test scripts used, and what generate_webpage.py reads
+from by default. This isn't configurable: other tools (get_alignment_scores'
+successor, generate_webpage.py) depend on knowing where to find it. Only the
+*plots* go to the directory you choose with --plots-dir.
 
 Each test's alignment score is computed automatically (via the test's own
 compute_alignment_score(), see pyst/synthetic_test.py and the overrides in
@@ -19,10 +26,10 @@ Examples:
     python run_and_plot.py \\
         --tests GaborPatchSpatialFreqAchTest ContrastMaskingCoherentAchTest \\
         --metrics cvvdp_met psnry_metric ssim_metric \\
-        --output-dir results/my_run
+        --plots-dir plots/my_run
 
     python run_and_plot.py --config my_run.json
-        # my_run.json: {"tests": [...], "metrics": [...], "output_dir": "...", "alignment_score": false}
+        # my_run.json: {"tests": [...], "metrics": [...], "plots_dir": "...", "alignment_score": false}
 """
 import argparse
 import json
@@ -37,6 +44,8 @@ from tqdm import trange
 from metrics.registry import get_metrics_registry
 from pyst.registry import get_tests_registry
 
+RESULTS_DIR = 'results'
+ALIGNMENT_SCORE_RESULTS_DIR = 'results_alignment_score'
 ALIGNMENT_SCORES_DIR = 'alignment_scores'
 
 
@@ -62,21 +71,21 @@ def _update_alignment_scores_csv(preview_folder, metric_scores):
     logging.info(f"Saved alignment scores: {csv_path}")
 
 
-def run_and_plot(tests, metrics, output_dir, alignment_score=False):
+def run_and_plot(tests, metrics, plots_dir, alignment_score=False):
     """
     tests: list of test classes (from pyst.registry)
     metrics: list of metric classes (from metrics.registry)
-    output_dir: directory to save scores/plots into (created if missing)
+    plots_dir: directory to save plots into (created if missing) - scores
+        CSVs do NOT go here, see module docstring
     alignment_score: run tests in alignment-score mode (not supported by every test)
 
-    Writes <output_dir>/<test.get_preview_folder()>/<metric_name>.csv (condition
-    columns + a 'Prediction' column) and, where the test supports it, a matching
-    <metric_name>.png plot in the same folder, plus an updated
-    alignment_scores/<test.get_preview_folder()>.csv. This is the same layout the
-    old per-test scripts produced, so results here are readable by
-    generate_webpage.py.
+    Writes results/<test.get_preview_folder()>/<metric_name>.csv (or under
+    results_alignment_score/ in alignment-score mode; condition columns plus
+    a 'Prediction' column - the fixed location other tools read from), and,
+    where the test supports it, <plots_dir>/<test.get_preview_folder()>/
+    <metric_name>.png, plus an updated alignment_scores/<preview folder>.csv.
     """
-    os.makedirs(output_dir, exist_ok=True)
+    results_dir = ALIGNMENT_SCORE_RESULTS_DIR if alignment_score else RESULTS_DIR
 
     metric_instances = [M() for M in metrics]
     metric_names = [M.name() for M in metrics]
@@ -91,8 +100,13 @@ def run_and_plot(tests, metrics, output_dir, alignment_score=False):
         test_name = Test.short_name()
         logging.info(f"Running '{test_name}' ({len(Test)} conditions) with {len(metrics)} metric(s)")
 
-        test_output_dir = os.path.join(output_dir, Test.get_preview_folder())
-        os.makedirs(test_output_dir, exist_ok=True)
+        preview_folder = Test.get_preview_folder()
+
+        results_test_dir = os.path.join(results_dir, preview_folder)
+        os.makedirs(results_test_dir, exist_ok=True)
+
+        plots_test_dir = os.path.join(plots_dir, preview_folder)
+        os.makedirs(plots_test_dir, exist_ok=True)
 
         scores = np.full((len(Test), len(metrics)), np.nan)
 
@@ -139,7 +153,7 @@ def run_and_plot(tests, metrics, output_dir, alignment_score=False):
 
         for j, Metric in enumerate(metric_instances):
             results_df['Prediction'] = scores[:, j]
-            csv_path = os.path.join(test_output_dir, f"{metric_names[j]}.csv")
+            csv_path = os.path.join(results_test_dir, f"{metric_names[j]}.csv")
             results_df.to_csv(csv_path)
             logging.info(f"Saved scores: {csv_path}")
 
@@ -156,7 +170,7 @@ def run_and_plot(tests, metrics, output_dir, alignment_score=False):
                 if align_score is not None:
                     title += f"\nAlignment Score = {align_score:.3f}"
 
-                plot_path = os.path.join(test_output_dir, f"{metric_names[j]}.png")
+                plot_path = os.path.join(plots_test_dir, f"{metric_names[j]}.png")
                 try:
                     Test.plot(
                         predictions=scores[:, j],
@@ -169,7 +183,7 @@ def run_and_plot(tests, metrics, output_dir, alignment_score=False):
                     logging.exception(f"Failed to plot '{test_name}' / {metric_names[j]}")
 
         if alignment_scores:
-            _update_alignment_scores_csv(Test.get_preview_folder(), alignment_scores)
+            _update_alignment_scores_csv(preview_folder, alignment_scores)
 
 
 def _load_config(path):
@@ -181,8 +195,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--tests', nargs='+', metavar='TEST', help="Test class name(s) to run. See --list-tests.")
     parser.add_argument('--metrics', nargs='+', metavar='METRIC', help="Metric name(s) to run. See --list-metrics.")
-    parser.add_argument('--output-dir', help="Directory to save plots/scores into (created if it doesn't exist).")
-    parser.add_argument('--config', help="JSON file with 'tests', 'metrics', 'output_dir' and optional "
+    parser.add_argument('--plots-dir', help="Directory to save plots into (created if it doesn't exist). "
+                                             "Scores CSVs always go to a fixed results/ (or results_alignment_score/) "
+                                             "location instead - see the module docstring.")
+    parser.add_argument('--config', help="JSON file with 'tests', 'metrics', 'plots_dir' and optional "
                                           "'alignment_score' keys, as an alternative to the flags above.")
     parser.add_argument('--alignment-score', action='store_true',
                          help="Run tests in alignment-score mode. Not supported by every test "
@@ -209,14 +225,14 @@ def main():
         cfg = _load_config(args.config)
         test_names = cfg['tests']
         metric_names = cfg['metrics']
-        output_dir = cfg['output_dir']
+        plots_dir = cfg['plots_dir']
         alignment_score = cfg.get('alignment_score', False)
     else:
-        if not args.tests or not args.metrics or not args.output_dir:
-            parser.error("--tests, --metrics and --output-dir are required unless --config is given.")
+        if not args.tests or not args.metrics or not args.plots_dir:
+            parser.error("--tests, --metrics and --plots-dir are required unless --config is given.")
         test_names = args.tests
         metric_names = args.metrics
-        output_dir = args.output_dir
+        plots_dir = args.plots_dir
         alignment_score = args.alignment_score
 
     try:
@@ -229,7 +245,7 @@ def main():
     except KeyError as e:
         parser.error(f"Unknown metric {e}. Use --list-metrics to see available metrics.")
 
-    run_and_plot(test_classes, metric_classes, output_dir, alignment_score=alignment_score)
+    run_and_plot(test_classes, metric_classes, plots_dir, alignment_score=alignment_score)
 
 
 if __name__ == '__main__':

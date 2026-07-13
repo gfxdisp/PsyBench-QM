@@ -125,12 +125,15 @@ python run_and_plot.py --list-tests
 python run_and_plot.py --list-metrics
 ```
 
-`run_and_plot.py` runs one or more metrics on one or more tests, and for each test/metric pair saves both a scores CSV and a plot into an output directory (created automatically if it doesn't exist):
+`run_and_plot.py` runs one or more metrics on one or more tests, and for each test/metric pair saves both a scores CSV and a plot. These two outputs go to different places:
+- Scores CSVs always go to a **fixed** location, `results/<test>/<metric>.csv` (or `results_alignment_score/...` in `--alignment-score` mode) - not configurable, since `generate_webpage.py` reads from that fixed location by default.
+- Plots go to whatever directory you pass via `--plots-dir` (created automatically if it doesn't exist).
+
 ```commandline
 python run_and_plot.py \
     --tests GaborPatchSpatialFreqAchTest GaborPatchLuminanceAchTest GaborPatchSizeAchTest ContrastMaskingCoherentAchTest ContrastMaskingIncoherentAchTest \
     --metrics topiq_metric \
-    --output-dir results/achromatic_tests
+    --plots-dir plots/achromatic_tests
 ```
 
 For larger or repeatable runs, put the same options in a JSON config file instead:
@@ -138,7 +141,7 @@ For larger or repeatable runs, put the same options in a JSON config file instea
 {
   "tests": ["GaborPatchSpatialFreqRGTest", "GaborPatchSpatialFreqYVTest", "ContrastConstancyColorTest"],
   "metrics": ["topiq_metric"],
-  "output_dir": "results/color_tests"
+  "plots_dir": "plots/color_tests"
 }
 ```
 ```commandline
@@ -155,16 +158,24 @@ Scores are shown in the plot title where available, and merged into `alignment_s
 
 ## How to generate the results webpage
 
-To generate an interactive (Plotly) HTML report from results produced by `run_and_plot.py`:
+To generate an interactive (Plotly) HTML report from results produced by `run_and_plot.py`, point it at that same fixed `results` directory and choose where the webpage itself goes with `--webpage-dir`:
 ```commandline
 python generate_webpage.py \
     --tests GaborPatchSpatialFreqAchTest GaborPatchLuminanceAchTest GaborPatchSizeAchTest \
     --metrics topiq_metric \
-    --input-dir results/achromatic_tests \
-    --output-dir synthetic_test_webpage_plotly
+    --input-dir results \
+    --webpage-dir synthetic_test_webpage_plotly
 ```
 As with `run_and_plot.py`, use `--list-tests` / `--list-metrics` to see the available names.
 
 The repository includes the computed results for multiple metrics in `results_alignment_score` that can be used to generate an HTML report.
+
+## Try it end-to-end
+
+[`example_config.json`](example_config.json) is a ready-to-run config covering the full achromatic, color, and temporal test set (11 tests across Gabor Patch, Contrast Masking, Contrast Matching, and Disk) against 34 commonly-used metrics, so you can check your setup works before running your own combinations. The same file works for both scripts, since scores always land in the same fixed `results` directory that `generate_webpage.py` reads from by default - `plots_dir` and `webpage_dir` in the config just control where their respective outputs (plots, HTML) are written:
+```commandline
+python run_and_plot.py --config example_config.json
+python generate_webpage.py --config example_config.json
+```
 
 The results of the webpage can be found in `./synthetic_test_webpage_plotly/index.html`, which is provided with the supplementary (but including more metrics).

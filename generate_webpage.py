@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 
 import numpy as np
@@ -20,12 +21,22 @@ def _parse_args():
                      "Tests and metrics are looked up by name - see --list-tests / --list-metrics.")
     parser.add_argument('--tests', nargs='+', metavar='TEST', help="Test class name(s) to include. See --list-tests.")
     parser.add_argument('--metrics', nargs='+', metavar='METRIC', help="Metric name(s) to include. See --list-metrics.")
-    parser.add_argument('--input-dir', default='results', help="Directory containing the per-test/metric score CSVs (default: results).")
-    parser.add_argument('--output-dir', default='synthetic_test_webpage_plotly', help="Directory to write the webpage into (default: synthetic_test_webpage_plotly).")
+    parser.add_argument('--input-dir', default='results', help="Directory containing the per-test/metric score CSVs (default: results - the fixed location run_and_plot.py writes to).")
+    parser.add_argument('--webpage-dir', default='synthetic_test_webpage_plotly', help="Directory to write the webpage into (default: synthetic_test_webpage_plotly).")
     parser.add_argument('--generate-stimuli', action='store_true', help="Also (re)generate the preview stimulus images/videos.")
+    parser.add_argument('--config', help="JSON file with 'tests' and 'metrics' keys, as an alternative to the flags "
+                                          "above - the same config file used for run_and_plot.py's --config works "
+                                          "here unchanged, since both scripts read/write the same fixed results/ "
+                                          "location by default. Optional 'input_dir' and 'webpage_dir' keys override "
+                                          "the --input-dir / --webpage-dir defaults.")
     parser.add_argument('--list-tests', action='store_true', help="Print all available test names and exit.")
     parser.add_argument('--list-metrics', action='store_true', help="Print all available metric names and exit.")
     return parser.parse_args()
+
+
+def _load_config(path):
+    with open(path) as f:
+        return json.load(f)
 
 
 if __name__ == '__main__':
@@ -46,23 +57,33 @@ if __name__ == '__main__':
         print('\n'.join(sorted(metrics_registry)))
         raise SystemExit(0)
 
-    if not args.tests or not args.metrics:
-        raise SystemExit("--tests and --metrics are required (or use --list-tests / --list-metrics to see options).")
+    if args.config:
+        cfg = _load_config(args.config)
+        test_names = cfg['tests']
+        metric_names = cfg['metrics']
+        input_folder = cfg.get('input_dir', 'results')
+        output_folder = cfg.get('webpage_dir', 'synthetic_test_webpage_plotly')
+        generate_stimuli = cfg.get('generate_stimuli', False)
+    else:
+        if not args.tests or not args.metrics:
+            raise SystemExit("--tests and --metrics are required unless --config is given "
+                              "(or use --list-tests / --list-metrics to see options).")
+        test_names = args.tests
+        metric_names = args.metrics
+        input_folder = args.input_dir
+        output_folder = args.webpage_dir
+        generate_stimuli = args.generate_stimuli
 
     try:
-        tests = [tests_registry[name] for name in args.tests]
+        tests = [tests_registry[name] for name in test_names]
     except KeyError as e:
         raise SystemExit(f"Unknown test {e}. Use --list-tests to see available tests.")
 
     try:
-        metrics = [metrics_registry[name] for name in args.metrics]
+        metrics = [metrics_registry[name] for name in metric_names]
     except KeyError as e:
         raise SystemExit(f"Unknown metric {e}. Use --list-metrics to see available metrics.")
 
-    input_folder = args.input_dir
-    output_folder = args.output_dir
-
-    generate_stimuli = args.generate_stimuli
     generate_metrics_results = True
 
 
